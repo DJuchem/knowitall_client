@@ -69,13 +69,13 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/playlists/
+    
     - assets/avatars/
     - assets/audio/
 
     - assets/music/     # Create this folder for bg music
     - assets/bg/        # Create this folder for wallpapers
-    - AssetManifest.json 
+    
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

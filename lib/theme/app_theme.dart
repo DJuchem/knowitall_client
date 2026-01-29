@@ -5,7 +5,8 @@ class AppTheme {
   static const Color primaryColor = Color(0xFF0F1221);
   static const Color accentPink = Color(0xFFFF58CC);
   static const Color accentBlue = Color(0xFF47C8FF);
-  
+  static const Color surfaceColor = Color(0xFF1E1E2C); 
+
   static ThemeData get themeData {
     return ThemeData(
       brightness: Brightness.dark,
@@ -14,20 +15,22 @@ class AppTheme {
       colorScheme: const ColorScheme.dark(
         primary: accentPink,
         secondary: accentBlue,
+        surface: surfaceColor,
       ),
       fontFamily: 'Roboto',
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.black.withOpacity(0.3),
+        // Fixed: Use withValues(alpha:) instead of withOpacity()
+        fillColor: Colors.black.withValues(alpha: 0.3),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-        hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
       ),
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// 1. The Background (Mimics your CSS Radial Gradients)
+// 1. The Background (Mimics CSS Radial Gradients)
 // ---------------------------------------------------------------------------
 class CyberpunkBackground extends StatelessWidget {
   final Widget child;
@@ -48,7 +51,10 @@ class CyberpunkBackground extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [AppTheme.accentPink.withOpacity(0.15), Colors.transparent],
+                colors: [
+                  AppTheme.accentPink.withValues(alpha: 0.15), // Fixed
+                  Colors.transparent
+                ],
               ),
             ),
           ),
@@ -62,13 +68,16 @@ class CyberpunkBackground extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [AppTheme.accentBlue.withOpacity(0.15), Colors.transparent],
+                colors: [
+                  AppTheme.accentBlue.withValues(alpha: 0.15), // Fixed
+                  Colors.transparent
+                ],
               ),
             ),
           ),
         ),
         
-        // The actual content
+        // The actual content wrapped in SafeArea
         SafeArea(child: child),
       ],
     );
@@ -96,8 +105,8 @@ class GlassContainer extends StatelessWidget {
       margin: margin,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.12)),
-        color: Colors.white.withOpacity(0.05), // CSS: rgba(255,255,255,0.14) reduced for flutter
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)), // Fixed
+        color: Colors.white.withValues(alpha: 0.05), // Fixed
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
