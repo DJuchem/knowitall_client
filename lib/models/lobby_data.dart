@@ -3,44 +3,47 @@ import 'dart:convert';
 class LobbyData {
   String code;
   String host;
-  bool started;
   List<Player> players;
+  List<Player> spectators;
   List<ChatMessage> chat;
+  bool started;
+  String mode;
   int timer;
-  List<dynamic> quizData; 
-  int currentQuestionIndex;
+  String? difficulty;
+  int currentQuestionIndex; 
+  List<dynamic>? quizData;
 
   LobbyData({
     required this.code,
     required this.host,
-    this.started = false,
-    this.players = const [],
-    this.chat = const [],
-    this.timer = 0,
-    this.quizData = const [],
-    this.currentQuestionIndex = 0,
+    required this.players,
+    required this.spectators,
+    required this.chat,
+    required this.started,
+    required this.mode,
+    required this.timer,
+    this.difficulty,
+    required this.currentQuestionIndex,
+    this.quizData,
   });
 
   factory LobbyData.fromJson(Map<String, dynamic> json) {
-    // Helper to safely parse the Quiz JSON list
-    List<dynamic> parseQuizData(dynamic raw) {
-      if (raw == null) return [];
-      if (raw is List) return raw;
-      if (raw is String) {
-        try { return jsonDecode(raw); } catch (_) { return []; }
-      }
-      return [];
-    }
+    var pList = json['players'] as List? ?? [];
+    var sList = json['spectators'] as List? ?? [];
+    var cList = json['chat'] as List? ?? [];
 
     return LobbyData(
       code: json['code'] ?? '',
       host: json['host'] ?? '',
+      players: pList.map((i) => Player.fromJson(i)).toList(),
+      spectators: sList.map((i) => Player.fromJson(i)).toList(),
+      chat: cList.map((i) => ChatMessage.fromJson(i)).toList(),
       started: json['started'] ?? false,
-      players: (json['players'] as List? ?? []).map((e) => Player.fromJson(e)).toList(),
-      chat: (json['chat'] as List? ?? []).map((e) => ChatMessage.fromJson(e)).toList(),
-      timer: json['timer'] ?? 0,
-      quizData: parseQuizData(json['quizData'] ?? json['QuizDataJson']), // Handle both keys
-      currentQuestionIndex: json['currentQuestionIndex'] ?? json['questionIndex'] ?? 0,
+      mode: json['mode'] ?? 'unknown',
+      timer: json['timer'] ?? 30,
+      difficulty: json['difficulty'],
+      currentQuestionIndex: json['questionIndex'] ?? 0, 
+      quizData: json['quizData'],
     );
   }
 }
@@ -49,16 +52,24 @@ class Player {
   String name;
   int score;
   bool isOnline;
-  bool isSpectator;
+  bool isReady;
+  String? avatar;
 
-  Player({required this.name, this.score = 0, this.isOnline = true, this.isSpectator = false});
+  Player({
+    required this.name, 
+    required this.score, 
+    required this.isOnline, 
+    required this.isReady, 
+    this.avatar
+  });
 
   factory Player.fromJson(Map<String, dynamic> json) {
     return Player(
       name: json['name'] ?? 'Unknown',
       score: json['score'] ?? 0,
-      isOnline: json['online'] ?? json['isOnline'] ?? true,
-      isSpectator: json['spectator'] ?? false,
+      isOnline: json['online'] ?? false,
+      isReady: json['ready'] ?? false, 
+      avatar: json['avatar'],
     );
   }
 }
@@ -66,8 +77,15 @@ class Player {
 class ChatMessage {
   String from;
   String text;
-  ChatMessage({required this.from, required this.text});
+  String? avatar;
+
+  ChatMessage({required this.from, required this.text, this.avatar});
+
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
-    return ChatMessage(from: json['from'] ?? '?', text: json['text'] ?? '');
+    return ChatMessage(
+      from: json['from'] ?? '?',
+      text: json['text'] ?? '',
+      avatar: json['avatar'],
+    );
   }
 }

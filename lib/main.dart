@@ -5,18 +5,20 @@ import 'screens/welcome_screen.dart';
 import 'screens/lobby_screen.dart';
 import 'screens/quiz_screen.dart'; 
 import 'screens/results_screen.dart'; 
+import 'screens/game_over_screen.dart'; 
+
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => GameProvider()),
       ],
-      child: MyApp(),
+      child: KnowItAll(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class KnowItAll extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -37,6 +39,7 @@ class GameRouter extends StatelessWidget {
     if (state == AppState.lobby) return LobbyScreen();
     if (state == AppState.quiz) return QuizScreen();
     if (state == AppState.results) return ResultsScreen();
+    if (state == AppState.gameOver) return GameOverScreen(); 
     
     return Scaffold(body: Center(child: Text("Quiz Screen Coming Soon...")));
   }
