@@ -1,11 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
 import '../theme/app_theme.dart';
-import 'lobby_screen.dart'; // REQUIRED IMPORT
-
-
+import 'lobby_screen.dart';
 
 class CreateGameScreen extends StatefulWidget {
   const CreateGameScreen({Key? key}) : super(key: key);
@@ -16,13 +16,14 @@ class CreateGameScreen extends StatefulWidget {
 
 class _CreateGameScreenState extends State<CreateGameScreen> {
   final _customCodeController = TextEditingController();
+  
   String _selectedMode = "general-knowledge";
   String _difficulty = "mixed";
   String _selectedCategory = ""; 
   int _questionCount = 10;
   bool _isLoading = false; 
+  bool _isFetchingCats = true;
 
-  // Maps for UI
   final Map<String, String> _modes = { 
     "General Knowledge": "general-knowledge", 
     "Math Calculations": "calculations", 
@@ -30,26 +31,35 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
     "Music Quiz": "music" 
   };
   
-  final Map<String, String> _categories = { 
-    "Any Category": "", "Books": "10", "Film": "11", "Music": "12", "Video Games": "15" 
-  };
+  Map<String, String> _categories = { "Any Category": "" };
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCategories();
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final res = await http.get(Uri.parse("https://opentdb.com/api_category.php"));
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body);
+        final cats = data['trivia_categories'] as List;
+        final Map<String, String> newCats = { "Any Category": "" };
+        for (var c in cats) newCats[c['name'].toString()] = c['id'].toString();
+        if (mounted) setState(() { _categories = newCats; _isFetchingCats = false; });
+      }
+    } catch (e) { if (mounted) setState(() => _isFetchingCats = false); }
+  }
 
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
-    // Explicit high-contrast text color
-    final textColor = isDark ? Colors.white : Colors.black87;
+    final textColor = theme.colorScheme.onSurface;
 
     return BaseScaffold(
-      appBar: AppBar(
-        title: Text("CONFIGURE GAME", style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
-        iconTheme: IconThemeData(color: textColor),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: Text("CONFIGURE GAME", style: TextStyle(color: textColor, fontWeight: FontWeight.bold)), iconTheme: IconThemeData(color: textColor), backgroundColor: Colors.transparent, elevation: 0),
       body: Center(
         child: SingleChildScrollView(
           child: GlassContainer( 
@@ -62,16 +72,13 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                 if (_selectedMode == "general-knowledge") ...[
                   const SizedBox(height: 20),
                   _buildLabel("TOPIC", textColor),
-                  _buildDropdown(_categories, _selectedCategory, textColor, (val) => setState(() => _selectedCategory = val!)),
+                  if (_isFetchingCats) const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()))
+                  else _buildDropdown(_categories, _selectedCategory, textColor, (val) => setState(() => _selectedCategory = val!)),
                 ],
 
                 const SizedBox(height: 20),
                 _buildLabel("QUESTIONS: $_questionCount", textColor),
-                Slider(
-                  value: _questionCount.toDouble(), min: 5, max: 100, divisions: 19,
-                  activeColor: theme.colorScheme.primary,
-                  onChanged: (v) => setState(() => _questionCount = v.toInt()),
-                ),
+                Slider(value: _questionCount.toDouble(), min: 5, max: 50, divisions: 45, activeColor: theme.colorScheme.primary, onChanged: (v) => setState(() => _questionCount = v.toInt())),
 
                 _buildLabel("DIFFICULTY", textColor),
                 _buildDropdown({"Mixed": "mixed", "Easy": "easy", "Medium": "medium", "Hard": "hard"}, _difficulty, textColor, (val) => setState(() => _difficulty = val!)),
@@ -80,11 +87,7 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                 TextField(
                   controller: _customCodeController, 
                   style: TextStyle(color: textColor, fontSize: 18), 
-                  decoration: InputDecoration(
-                    labelText: "CUSTOM CODE (OPTIONAL)", 
-                    labelStyle: TextStyle(color: textColor.withValues(alpha: 0.6)),
-                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: textColor.withValues(alpha: 0.3))),
-                  )
+                  decoration: InputDecoration(labelText: "CUSTOM CODE (OPTIONAL)", labelStyle: TextStyle(color: textColor.withOpacity(0.6)), enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: textColor.withOpacity(0.3))))
                 ),
 
                 const SizedBox(height: 40),
@@ -92,15 +95,15 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                 _isLoading 
                   ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
                   : ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 18)
-                      ),
+                      style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, padding: const EdgeInsets.symmetric(vertical: 18)),
                       onPressed: () async {
                         setState(() => _isLoading = true);
                         try {
+                          // FIX: Use the name already stored in provider (from Welcome Screen)
+                          String hostName = game.myName.isEmpty ? "Host" : game.myName;
+                          
                           await game.createLobby(
-                            game.myName, _selectedMode, _questionCount, 
+                            hostName, _selectedMode, _questionCount, 
                             _selectedCategory, 30, _difficulty, 
                             _customCodeController.text.trim()
                           );
@@ -125,27 +128,6 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
     );
   }
 
-  Widget _buildLabel(String text, Color color) => Padding(
-    padding: const EdgeInsets.only(bottom: 10.0), 
-    child: Text(text, style: TextStyle(color: color.withValues(alpha: 0.8), fontWeight: FontWeight.bold, fontSize: 16))
-  );
-
-  Widget _buildDropdown(Map<String, String> items, String value, Color color, Function(String?) onChange) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16), 
-    decoration: BoxDecoration(
-      color: Theme.of(context).cardColor.withValues(alpha: 0.5), 
-      borderRadius: BorderRadius.circular(16), 
-      border: Border.all(color: color.withValues(alpha: 0.2))
-    ), 
-    child: DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
-        value: items.containsValue(value) ? value : items.values.first, 
-        dropdownColor: Theme.of(context).cardColor, 
-        isExpanded: true, 
-        style: TextStyle(color: color, fontSize: 18), 
-        items: items.entries.map((e) => DropdownMenuItem(value: e.value, child: Text(e.key))).toList(), 
-        onChanged: onChange
-      )
-    )
-  );
+  Widget _buildLabel(String text, Color color) => Padding(padding: const EdgeInsets.only(bottom: 10.0), child: Text(text, style: TextStyle(color: color.withOpacity(0.8), fontWeight: FontWeight.bold, fontSize: 16)));
+  Widget _buildDropdown(Map<String, String> items, String value, Color color, Function(String?) onChange) => Container(padding: const EdgeInsets.symmetric(horizontal: 16), decoration: BoxDecoration(color: Theme.of(context).cardColor.withOpacity(0.5), borderRadius: BorderRadius.circular(16), border: Border.all(color: color.withOpacity(0.2))), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: items.containsValue(value) ? value : items.values.first, dropdownColor: Theme.of(context).cardColor, isExpanded: true, style: TextStyle(color: color, fontSize: 18), items: items.entries.map((e) => DropdownMenuItem(value: e.value, child: Text(e.key))).toList(), onChanged: onChange)));
 }

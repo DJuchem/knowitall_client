@@ -3,107 +3,231 @@ import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/base_scaffold.dart';
-import '../widgets/game_avatar.dart'; // Ensure you have this file from previous steps
+import '../widgets/game_avatar.dart';
+import 'quiz_screen.dart'; 
+import 'lobby_screen.dart'; 
+import 'welcome_screen.dart'; 
+import 'game_over_screen.dart'; 
 
-class ResultsScreen extends StatelessWidget {
+class ResultsScreen extends StatefulWidget {
+  const ResultsScreen({super.key});
+
+  @override
+  State<ResultsScreen> createState() => _ResultsScreenState();
+}
+
+class _ResultsScreenState extends State<ResultsScreen> {
+
+  // --- NAVIGATION LISTENERS ---
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final game = Provider.of<GameProvider>(context);
+
+    // 1. Next Question Trigger (Host pressed Next)
+    if (game.appState == AppState.quiz) {
+       WidgetsBinding.instance.addPostFrameCallback((_) {
+         if (mounted) {
+           Navigator.of(context).pushReplacement(
+             MaterialPageRoute(builder: (_) => const QuizScreen())
+           );
+         }
+       });
+    }
+
+    // 2. Game Over Trigger (Last question finished)
+    if (game.appState == AppState.gameOver) {
+       WidgetsBinding.instance.addPostFrameCallback((_) {
+         if (mounted) {
+           Navigator.of(context).pushReplacement(
+             MaterialPageRoute(builder: (_) => const GameOverScreen())
+           );
+         }
+       });
+    }
+
+    // 3. Back to Lobby Trigger (Host pressed "Back to Lobby")
+    if (game.appState == AppState.lobby) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+         if (mounted) {
+           // Use pushAndRemoveUntil to clear history so they can't go back to results
+           Navigator.of(context).pushAndRemoveUntil(
+             MaterialPageRoute(builder: (_) => const LobbyScreen()),
+             (route) => false
+           );
+         }
+       });
+    }
+
+    // 4. Leave Trigger (Player pressed Leave)
+    if (game.appState == AppState.welcome) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+         if (mounted) {
+           Navigator.of(context).pushAndRemoveUntil(
+             MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+             (route) => false
+           );
+         }
+       });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
     final results = game.lastResults;
     final lobby = game.lobby;
+    final theme = Theme.of(context);
 
-    if (results == null || lobby == null) return const BaseScaffold(body: Center(child: CircularProgressIndicator()));
+    // Safety check
+    if (results == null || lobby == null) {
+      return const BaseScaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // --- CHECK FOR LAST QUESTION ---
+    int totalQs = lobby.quizData?.length ?? 0;
+    int currentIdx = lobby.currentQuestionIndex;
+    // If we just finished the last question index
+    bool isLast = currentIdx >= (totalQs - 1);
 
     final correctAnswer = results['correctAnswer']?.toString() ?? "Unknown";
     final List playerResults = results['results'] ?? [];
     
-    // Sort so winner is first if you want, or keep server order
+    // Sort by score
     playerResults.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
 
     return BaseScaffold(
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const SizedBox(height: 40),
-            Text("ROUND COMPLETE", style: Theme.of(context).textTheme.titleLarge?.copyWith(letterSpacing: 2)),
+            const SizedBox(height: 60),
+            Text("ROUND COMPLETE", style: theme.textTheme.titleLarge?.copyWith(letterSpacing: 2, color: Colors.white)),
             const SizedBox(height: 20),
 
-            // Correct Answer Card
+            // --- CORRECT ANSWER CARD ---
             GlassContainer(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  const Text("The answer was:", style: TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 10),
-                  Text(correctAnswer, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary), textAlign: TextAlign.center),
+                  const Text("The correct answer was:", style: TextStyle(color: Colors.white54)),
+                  const SizedBox(height: 8),
+                  Text(
+                    correctAnswer, 
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.amber), 
+                    textAlign: TextAlign.center
+                  ),
                 ],
               ),
             ),
 
             const SizedBox(height: 20),
-            
-            // Leaderboard List
+            const Text("Leaderboard:", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+
+            // --- PLAYER RESULTS LIST ---
             GlassContainer(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(10),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
               child: ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: playerResults.length,
-                separatorBuilder: (_,__) => const Divider(),
+                separatorBuilder: (_, __) => const Divider(height: 1, color: Colors.white10),
                 itemBuilder: (ctx, i) {
                   final p = playerResults[i];
                   final bool isCorrect = p['correct'] == true;
-                  final double timeTaken = (p['time_spent'] ?? 0).toDouble(); // Assuming server sends this now? Or calculate locally?
-                  // If server doesn't send time_spent in results array, you might need to adjust server logic
-                  // For now, let's assume 'earned' points implies speed. 
+                  final String chosen = p['chosenAnswer']?.toString() ?? "No Answer";
+                  final String name = p['name']?.toString() ?? "Unknown";
+                  final int score = p['score'] ?? 0;
                   final int earned = p['earned'] ?? 0;
 
                   return ListTile(
-                    leading: GameAvatar(path: "assets/avatars/avatar1.webp", radius: 20), // Replace with real lookup if available
-                    title: Text(p['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: isCorrect 
-                      ? Text("Correct (+${earned}pts)", style: const TextStyle(color: Colors.green))
-                      : const Text("Wrong", style: TextStyle(color: Colors.red)),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text("${p['score']} PTS", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary)),
-                        // #8 TIME DISPLAY (Requires server update to send 'time_spent' in results list, otherwise hide)
-                        // Text("${timeTaken.toStringAsFixed(1)}s", style: const TextStyle(fontSize: 10, color: Colors.grey)), 
-                      ],
+                    leading: CircleAvatar(
+                      backgroundColor: isCorrect ? Colors.green.withValues(alpha: 0.2) : Colors.red.withValues(alpha: 0.2),
+                      child: Icon(isCorrect ? Icons.check : Icons.close, color: isCorrect ? Colors.green : Colors.red),
                     ),
+                    title: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    subtitle: Text(
+                      "Chose: $chosen ${isCorrect ? '(+$earned)' : ''}", 
+                      style: TextStyle(color: isCorrect ? Colors.greenAccent : Colors.white54, fontStyle: FontStyle.italic)
+                    ),
+                    trailing: Text("$score", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
                   );
                 },
               ),
             ),
-            
-            const SizedBox(height: 30),
-            
-            // Host Controls
+
+            const SizedBox(height: 40),
+
+            // --- HOST CONTROLS ---
             if (game.amIHost)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 40),
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
+              Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isLast ? Colors.redAccent : Colors.green, // Visual cue
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        minimumSize: const Size(double.infinity, 50)
+                      ),
+                      icon: Icon(isLast ? Icons.flag : Icons.arrow_forward, color: Colors.white),
+                      label: Text(
+                        isLast ? "FINISH GAME" : "NEXT QUESTION", 
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)
+                      ),
+                      onPressed: () async {
+                        await game.nextQuestion();
+                      },
+                    ),
                   ),
-                  onPressed: () => game.nextQuestion(),
-                  icon: const Icon(Icons.arrow_forward, color: Colors.white),
-                  label: const Text("NEXT QUESTION", style: TextStyle(fontSize: 20, color: Colors.white)),
-                ),
+                  const SizedBox(height: 16),
+                  TextButton.icon(
+                    icon: const Icon(Icons.settings, color: Colors.white54),
+                    label: const Text("Abort to Lobby", style: TextStyle(color: Colors.white54)),
+                    onPressed: () => game.resetToLobby(),
+                  )
+                ],
               )
             else
-              const Text("Waiting for Host...", style: TextStyle(color: Colors.grey)),
+              Column(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 20),
+                    child: Text("Waiting for Host...", style: TextStyle(color: Colors.white54)),
+                  ),
+                  TextButton(
+                    onPressed: () => _confirmLeave(context, game),
+                    child: const Text("Leave Game", style: TextStyle(color: Colors.redAccent)),
+                  ),
+                ],
+              ),
               
             const SizedBox(height: 40),
           ],
         ),
       ),
+    );
+  }
+
+  void _confirmLeave(BuildContext context, GameProvider game) {
+    showDialog(
+      context: context, 
+      builder: (_) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: const Text("Leave Game?"),
+        content: const Text("You will be returned to the main menu."),
+        actions: [
+          TextButton(child: const Text("Cancel"), onPressed: () => Navigator.pop(context)),
+          TextButton(
+            child: const Text("LEAVE", style: TextStyle(color: Colors.red)), 
+            onPressed: () { 
+              game.leaveLobby(); 
+              Navigator.pop(context); 
+            }
+          ),
+        ],
+      )
     );
   }
 }

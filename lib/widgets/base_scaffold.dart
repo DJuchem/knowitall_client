@@ -21,7 +21,7 @@ class BaseScaffold extends StatelessWidget {
   });
 
   // HELPER: Sanitize path to prevent "assets/assets/..." error
-  String _cleanPath(String path) {
+  String cleanPath(String path) {
     if (path.startsWith("assets/") && path.indexOf("assets/", 1) > -1) {
       return path.replaceFirst("assets/", "");
     }
@@ -52,7 +52,7 @@ class BaseScaffold extends StatelessWidget {
           // 1. Wallpaper
           Positioned.fill(
             child: Image.asset(
-              _cleanPath(game.wallpaper),
+              cleanPath(game.wallpaper),
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(color: const Color(0xFF0F1221)),
             ),

@@ -41,6 +41,7 @@ dependencies:
   animate_do: ^3.0.2    # For easy "Fancy" animations
   image_picker: ^1.0.4  # For uploading avatars
   confetti: ^0.7.0      # For streak animations
+  youtube_player_iframe: ^5.2.2
 
 dev_dependencies:
   flutter_test:

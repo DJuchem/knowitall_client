@@ -5,6 +5,7 @@ import '../providers/game_provider.dart';
 import '../widgets/avatar_selector.dart';
 import '../widgets/client_settings_dialog.dart';
 import 'create_game_screen.dart'; 
+
 import 'lobby_screen.dart'; // REQUIRED IMPORT
 
 class WelcomeScreen extends StatefulWidget {
@@ -28,6 +29,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       return false;
     }
     return true;
+  }
+
+  String cleanPath(String path) {
+    if (path.startsWith("assets/assets/")) {
+      return path.replaceFirst("assets/assets/", "assets/");
+    }
+    return path;
   }
 
   @override
@@ -67,7 +75,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       padding: const EdgeInsets.all(20),
                       // REMOVE TEXT, ADD LOGO:
                       child: Image.asset(
-                        game.config.logoPath, // Uses "assets/logo.png" by default
+                        cleanPath(game.config.logoPath), // Uses "assets/logo.png" by default
                         height: 150, 
                         fit: BoxFit.contain,
                         errorBuilder: (_,__,___) => const Icon(Icons.psychology, size: 100, color: Colors.white),

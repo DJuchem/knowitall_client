@@ -11,7 +11,7 @@ class GameConfig {
   
   GameConfig({
     this.appTitle = "KNOW IT ALL",
-    this.logoPath = "assets/logo.png",
+    this.logoPath = "logo.png", // FIX: Removed 'assets/' prefix to prevent 404
     this.enabledModes = const ["general-knowledge", "calculations", "flags", "music"],
   });
 }
@@ -99,8 +99,6 @@ class GameProvider extends ChangeNotifier {
   // --- MUSIC LOGIC ---
   Future<void> initMusic() async {
     if (!_isMusicEnabled) return;
-
-    // FIX: Check actual player state to prevent restart on navigation
     if (_isPlaying && _musicPlayer.state == PlayerState.playing) return;
 
     try {
@@ -115,7 +113,7 @@ class GameProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint("Audio Blocked/Failed: $e");
-      _isPlaying = false; // Triggers UI button
+      _isPlaying = false; 
       notifyListeners();
     }
   }
@@ -123,7 +121,7 @@ class GameProvider extends ChangeNotifier {
   void setMusicTrack(String assetPath) {
     _bgMusic = assetPath;
     if (_isMusicEnabled) {
-      _musicPlayer.stop(); // Force stop to switch track
+      _musicPlayer.stop();
       _isPlaying = false;
       initMusic(); 
     }
@@ -171,21 +169,31 @@ class GameProvider extends ChangeNotifier {
 
   // --- SIGNALR ---
   Future<void> connect(String url) async {
+    debugPrint("CONNECTING TO: $url");
     await _service.init(url);
+    
     _service.onLobbyUpdate = (data) { 
         if(data != null) {
-            final newLobby = LobbyData.fromJson(data);
-            // Increment unread if chat grew
-            if (_currentLobby != null && newLobby.chat.length > _currentLobby!.chat.length) {
-                _unreadCount += (newLobby.chat.length - _currentLobby!.chat.length);
-            }
-            _currentLobby = newLobby; 
+            _mergeLobbyData(data); // FIX: Use merge instead of overwrite
             notifyListeners();
         } 
     };
-    _service.onGameCreated = (data) { _handleLobbyData(data); _appState=AppState.lobby; notifyListeners(); };
-    _service.onGameJoined = (data) { _handleLobbyData(data); _appState=AppState.lobby; notifyListeners(); };
-    _service.onGameStarted = (data) { _handleGameStart(data); _appState=AppState.quiz; _currentStreak=0; notifyListeners(); };
+    _service.onGameCreated = (data) { 
+        debugPrint("GAME CREATED: $data");
+        _mergeLobbyData(data); // FIX: Use merge
+        _appState = AppState.lobby; 
+        notifyListeners(); 
+    };
+    _service.onGameJoined = (data) { 
+        debugPrint("GAME JOINED: $data");
+        _mergeLobbyData(data); // FIX: Use merge
+        _appState = AppState.lobby; 
+        notifyListeners(); 
+    };
+    _service.onGameStarted = (data) { 
+        debugPrint("GAME STARTED SIGNAL RECEIVED");
+        _handleGameStart(data); 
+    };
     _service.onNewRound = (data) { 
        final map = data as Map<String, dynamic>;
        if(_currentLobby != null) _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
@@ -215,16 +223,66 @@ class GameProvider extends ChangeNotifier {
     _service.onError = (err) { _errorMessage = err.toString(); notifyListeners(); };
   }
 
-  void _handleLobbyData(dynamic data) { _currentLobby = LobbyData.fromJson(data); }
+  // --- CRITICAL FIX: DATA PRESERVATION METHOD ---
+  // Prevents the "empty" lobby update from wiping out our quiz data
+  void _mergeLobbyData(dynamic data) { 
+      final newLobby = LobbyData.fromJson(data);
+      
+      // If we already have quiz data, and the new update doesn't, KEEP the old data!
+      if (_currentLobby != null && _currentLobby!.quizData != null && _currentLobby!.quizData!.isNotEmpty) {
+          if (newLobby.quizData == null || newLobby.quizData!.isEmpty) {
+              debugPrint("PRESERVING QUIZ DATA during Lobby Update");
+              newLobby.quizData = _currentLobby!.quizData;
+          }
+      }
+
+      // Logic for unread count
+      if (_currentLobby != null && newLobby.chat.length > _currentLobby!.chat.length) {
+          _unreadCount += (newLobby.chat.length - _currentLobby!.chat.length);
+      }
+      
+      _currentLobby = newLobby; 
+  }
   
+void stopMusic() {
+    _musicPlayer.stop();
+    _isPlaying = false;
+    notifyListeners();
+  }
+
   void _handleGameStart(dynamic data) {
-      final map = data as Map<String, dynamic>;
-      if (_currentLobby != null) {
-        if (map['quizData'] != null) {
-           final temp = LobbyData.fromJson({'quizData': map['quizData'], 'players': [], 'spectators': [], 'chat': [], 'code': '', 'host': '', 'mode': '', 'started': true, 'timer': 0, 'questionIndex': 0, 'difficulty': ''});
-           _currentLobby!.quizData = temp.quizData;
+      try {
+        final map = data as Map<String, dynamic>;
+        debugPrint("PARSING GAME START DATA. Keys: ${map.keys}");
+        
+        if (_currentLobby != null) {
+          _currentLobby!.started = true;
+          
+          if (map['quizData'] != null) {
+             final List rawList = map['quizData'];
+             debugPrint("QUIZ DATA FOUND. Items: ${rawList.length}");
+             
+             // Ensure robust casting
+             _currentLobby!.quizData = rawList.map((item) {
+                return item as Map<String, dynamic>;
+             }).toList();
+          } else {
+             debugPrint("WARNING: quizData IS NULL IN PAYLOAD!");
+          }
+          
+          _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
+        } else {
+           debugPrint("ERROR: Current Lobby is null during Start Game");
         }
-        _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
+        
+        // Update State
+        _appState = AppState.quiz; 
+        _currentStreak = 0;
+        notifyListeners(); 
+      } catch (e) {
+        debugPrint("CRITICAL ERROR in _handleGameStart: $e");
+        _errorMessage = "Failed to load quiz data.";
+        notifyListeners();
       }
   }
 
@@ -234,7 +292,6 @@ class GameProvider extends ChangeNotifier {
   
   Future<void> createLobby(String name, String mode, int qCount, String category, int timer, String difficulty, String customCode) async { 
     _myName = name; 
-    // Optimistic music start
     initMusic();
     await _service.createGame(name, mode, qCount, category, timer, difficulty, customCode); 
   }
@@ -266,14 +323,11 @@ class GameProvider extends ChangeNotifier {
     if (_currentLobby != null) await _service.postChat(_currentLobby!.code, msg); 
   }
 
-  // --- CRITICAL FIX: OPTIMISTIC LEAVE ---
   Future<void> leaveLobby() async { 
-    // 1. Tell Server (Fire and Forget)
+    debugPrint("PROVIDER: Leaving Lobby...");
     if (_currentLobby != null) { 
       _service.leaveLobby(_currentLobby!.code).catchError((e) => print("Leave error: $e"));
     }
-    
-    // 2. IMMEDIATE UI RESET
     _appState = AppState.welcome; 
     _currentLobby = null; 
     _currentStreak = 0;
