@@ -3,11 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/base_scaffold.dart';
-import '../widgets/game_avatar.dart';
-import 'quiz_screen.dart'; 
-import 'lobby_screen.dart'; 
-import 'welcome_screen.dart'; 
-import 'game_over_screen.dart'; 
 
 class ResultsScreen extends StatefulWidget {
   const ResultsScreen({super.key});
@@ -17,61 +12,6 @@ class ResultsScreen extends StatefulWidget {
 }
 
 class _ResultsScreenState extends State<ResultsScreen> {
-
-  // --- NAVIGATION LISTENERS ---
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final game = Provider.of<GameProvider>(context);
-
-    // 1. Next Question Trigger (Host pressed Next)
-    if (game.appState == AppState.quiz) {
-       WidgetsBinding.instance.addPostFrameCallback((_) {
-         if (mounted) {
-           Navigator.of(context).pushReplacement(
-             MaterialPageRoute(builder: (_) => const QuizScreen())
-           );
-         }
-       });
-    }
-
-    // 2. Game Over Trigger (Last question finished)
-    if (game.appState == AppState.gameOver) {
-       WidgetsBinding.instance.addPostFrameCallback((_) {
-         if (mounted) {
-           Navigator.of(context).pushReplacement(
-             MaterialPageRoute(builder: (_) => const GameOverScreen())
-           );
-         }
-       });
-    }
-
-    // 3. Back to Lobby Trigger (Host pressed "Back to Lobby")
-    if (game.appState == AppState.lobby) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-         if (mounted) {
-           // Use pushAndRemoveUntil to clear history so they can't go back to results
-           Navigator.of(context).pushAndRemoveUntil(
-             MaterialPageRoute(builder: (_) => const LobbyScreen()),
-             (route) => false
-           );
-         }
-       });
-    }
-
-    // 4. Leave Trigger (Player pressed Leave)
-    if (game.appState == AppState.welcome) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-         if (mounted) {
-           Navigator.of(context).pushAndRemoveUntil(
-             MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-             (route) => false
-           );
-         }
-       });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
@@ -79,21 +19,17 @@ class _ResultsScreenState extends State<ResultsScreen> {
     final lobby = game.lobby;
     final theme = Theme.of(context);
 
-    // Safety check
     if (results == null || lobby == null) {
       return const BaseScaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // --- CHECK FOR LAST QUESTION ---
-    int totalQs = lobby.quizData?.length ?? 0;
-    int currentIdx = lobby.currentQuestionIndex;
-    // If we just finished the last question index
-    bool isLast = currentIdx >= (totalQs - 1);
+    final totalQs = lobby.quizData?.length ?? 0;
+    final currentIdx = lobby.currentQuestionIndex;
+    final isLast = totalQs > 0 ? currentIdx >= (totalQs - 1) : false;
 
     final correctAnswer = results['correctAnswer']?.toString() ?? "Unknown";
-    final List playerResults = results['results'] ?? [];
-    
-    // Sort by score
+    final List playerResults = (results['results'] ?? []) as List;
+
     playerResults.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
 
     return BaseScaffold(
@@ -104,7 +40,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
             Text("ROUND COMPLETE", style: theme.textTheme.titleLarge?.copyWith(letterSpacing: 2, color: Colors.white)),
             const SizedBox(height: 20),
 
-            // --- CORRECT ANSWER CARD ---
             GlassContainer(
               margin: const EdgeInsets.symmetric(horizontal: 24),
               padding: const EdgeInsets.all(20),
@@ -113,9 +48,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   const Text("The correct answer was:", style: TextStyle(color: Colors.white54)),
                   const SizedBox(height: 8),
                   Text(
-                    correctAnswer, 
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.amber), 
-                    textAlign: TextAlign.center
+                    correctAnswer,
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.amber),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -125,7 +60,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
             const Text("Leaderboard:", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
 
-            // --- PLAYER RESULTS LIST ---
             GlassContainer(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               child: ListView.separated(
@@ -148,8 +82,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     ),
                     title: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     subtitle: Text(
-                      "Chose: $chosen ${isCorrect ? '(+$earned)' : ''}", 
-                      style: TextStyle(color: isCorrect ? Colors.greenAccent : Colors.white54, fontStyle: FontStyle.italic)
+                      "Chose: $chosen ${isCorrect ? '(+$earned)' : ''}",
+                      style: TextStyle(color: isCorrect ? Colors.greenAccent : Colors.white54, fontStyle: FontStyle.italic),
                     ),
                     trailing: Text("$score", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
                   );
@@ -159,7 +93,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
             const SizedBox(height: 40),
 
-            // --- HOST CONTROLS ---
             if (game.amIHost)
               Column(
                 children: [
@@ -167,17 +100,18 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isLast ? Colors.redAccent : Colors.green, // Visual cue
+                        backgroundColor: isLast ? Colors.redAccent : Colors.green,
                         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                        minimumSize: const Size(double.infinity, 50)
+                        minimumSize: const Size(double.infinity, 50),
                       ),
                       icon: Icon(isLast ? Icons.flag : Icons.arrow_forward, color: Colors.white),
                       label: Text(
-                        isLast ? "FINISH GAME" : "NEXT QUESTION", 
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)
+                        isLast ? "FINISH GAME" : "NEXT QUESTION",
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                       onPressed: () async {
                         await game.nextQuestion();
+                        // server drives appState -> root switches screen
                       },
                     ),
                   ),
@@ -202,7 +136,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   ),
                 ],
               ),
-              
+
             const SizedBox(height: 40),
           ],
         ),
@@ -212,7 +146,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   void _confirmLeave(BuildContext context, GameProvider game) {
     showDialog(
-      context: context, 
+      context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
         title: const Text("Leave Game?"),
@@ -220,14 +154,14 @@ class _ResultsScreenState extends State<ResultsScreen> {
         actions: [
           TextButton(child: const Text("Cancel"), onPressed: () => Navigator.pop(context)),
           TextButton(
-            child: const Text("LEAVE", style: TextStyle(color: Colors.red)), 
-            onPressed: () { 
-              game.leaveLobby(); 
-              Navigator.pop(context); 
-            }
+            child: const Text("LEAVE", style: TextStyle(color: Colors.red)),
+            onPressed: () {
+              game.leaveLobby();
+              Navigator.pop(context);
+            },
           ),
         ],
-      )
+      ),
     );
   }
 }

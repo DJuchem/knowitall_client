@@ -16,7 +16,7 @@ class GameConfig {
   });
 }
 
-enum AppState { welcome, lobby, quiz, results, gameOver }
+enum AppState { welcome, create, lobby, quiz, results, gameOver }
 
 class GameProvider extends ChangeNotifier {
   final SignalRService _service = SignalRService();
@@ -88,6 +88,23 @@ class GameProvider extends ChangeNotifier {
     _unreadCount = 0; 
     notifyListeners(); 
   }
+void setAppState(AppState s) {
+  if (_appState == s) return;
+  _appState = s;
+  notifyListeners();
+}
+
+// Add to GameProvider
+void goToWelcome() {
+  _appState = AppState.welcome;
+  notifyListeners();
+}
+
+void goToCreate() {
+  _appState = AppState.create; // you DO have AppState.create (your router error proves it)
+  notifyListeners();
+}
+
 
   void updateTheme({Color? color, String? bg, Brightness? brightness}) {
     if (color != null) _themeColor = color;
@@ -233,6 +250,7 @@ class GameProvider extends ChangeNotifier {
           if (newLobby.quizData == null || newLobby.quizData!.isEmpty) {
               debugPrint("PRESERVING QUIZ DATA during Lobby Update");
               newLobby.quizData = _currentLobby!.quizData;
+              //amIHost = newLobby.host;
           }
       }
 

@@ -39,47 +39,97 @@ class _ChatSheetState extends State<ChatSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           // HEADER
-          InkWell(
-            onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: BorderRadius.circular(24),
-            child: SizedBox(
-              height: 68, // FIX: Matches container height constraint minus borders
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Row(
-                  children: [
-                    Icon(_isExpanded ? Icons.expand_more : Icons.chat_bubble, color: Theme.of(context).colorScheme.primary, size: 28),
-                    const SizedBox(width: 12),
-                    Text("CHAT", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Theme.of(context).textTheme.bodyLarge?.color)),
-                    
-                    if (!_isExpanded && game.unreadCount > 0)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12),
-                        child: Bounce(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(20)),
-                            child: Text("${game.unreadCount}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                          ),
-                        ),
-                      ),
+LayoutBuilder(
+  builder: (context, constraints) {
+    final w = constraints.maxWidth;
 
-                    const Spacer(),
-                    
-                    if (!_isExpanded && chat.isNotEmpty)
-                      Flexible(
-                        child: Text(
-                          "${chat.last.from}: ${chat.last.text}",
-                          style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 16),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ),
-                  ],
+    // When the parent gives you very little width (like 75),
+    // you MUST reduce padding and hide non-essential content.
+    final bool tiny = w < 180;
+    final bool small = w < 260;
+
+    final horizontalPad = tiny ? 10.0 : (small ? 14.0 : 24.0);
+    final titleSize = tiny ? 14.0 : 18.0;
+    final iconSize = tiny ? 22.0 : 28.0;
+
+    return InkWell(
+      onTap: () => setState(() => _isExpanded = !_isExpanded),
+      borderRadius: BorderRadius.circular(24),
+      child: SizedBox(
+        height: 68,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: horizontalPad),
+          child: Row(
+            children: [
+              Icon(
+                _isExpanded ? Icons.expand_more : Icons.chat_bubble,
+                color: Theme.of(context).colorScheme.primary,
+                size: iconSize,
+              ),
+              SizedBox(width: tiny ? 6 : 12),
+
+              // Make title flexible so it can shrink/ellipsis
+              Flexible(
+                fit: FlexFit.loose,
+                child: Text(
+                  "CHAT",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: titleSize,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
                 ),
               ),
-            ),
+
+              // Badge can also cause overflow in narrow widths → hide when tiny
+              if (!tiny && !_isExpanded && game.unreadCount > 0)
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Bounce(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        "${game.unreadCount}",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              const Spacer(),
+
+              // Preview text must be hidden on small widths, otherwise it will overflow.
+              if (!small && !_isExpanded && chat.isNotEmpty)
+                Flexible(
+                  child: Text(
+                    "${chat.last.from}: ${chat.last.text}",
+                    style: TextStyle(
+                      color: isDark ? Colors.white54 : Colors.black54,
+                      fontSize: 16,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
+                ),
+            ],
           ),
+        ),
+      ),
+    );
+  },
+),
+
 
           // EXPANDED BODY
           if (_isExpanded)

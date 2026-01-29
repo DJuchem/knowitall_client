@@ -2,36 +2,31 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+
 import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
 import '../theme/app_theme.dart';
-import 'lobby_screen.dart';
 
 class CreateGameScreen extends StatefulWidget {
-  const CreateGameScreen({Key? key}) : super(key: key);
+  const CreateGameScreen({super.key});
 
   @override
-  _CreateGameScreenState createState() => _CreateGameScreenState();
+  State<CreateGameScreen> createState() => _CreateGameScreenState();
 }
 
 class _CreateGameScreenState extends State<CreateGameScreen> {
-  final _customCodeController = TextEditingController();
-  
-  String _selectedMode = "general-knowledge";
-  String _difficulty = "mixed";
-  String _selectedCategory = ""; 
-  int _questionCount = 10;
-  bool _isLoading = false; 
-  bool _isFetchingCats = true;
+  final _nameCtrl = TextEditingController(text: "Host");
+  final _codeCtrl = TextEditingController();
 
-  final Map<String, String> _modes = { 
-    "General Knowledge": "general-knowledge", 
-    "Math Calculations": "calculations", 
-    "Guess the Flag": "flags", 
-    "Music Quiz": "music" 
-  };
-  
-  Map<String, String> _categories = { "Any Category": "" };
+  String _mode = "general-knowledge";
+  int _qCount = 10;
+  int _timer = 30;
+  String _difficulty = "mixed";
+
+  // OpenTDB categories
+  bool _loadingCats = true;
+  List<Map<String, dynamic>> _cats = [];
+  String _catId = "";
 
   @override
   void initState() {
@@ -39,95 +34,175 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
     _fetchCategories();
   }
 
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _codeCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _fetchCategories() async {
+    setState(() => _loadingCats = true);
     try {
       final res = await http.get(Uri.parse("https://opentdb.com/api_category.php"));
-      if (res.statusCode == 200) {
-        final data = json.decode(res.body);
-        final cats = data['trivia_categories'] as List;
-        final Map<String, String> newCats = { "Any Category": "" };
-        for (var c in cats) newCats[c['name'].toString()] = c['id'].toString();
-        if (mounted) setState(() { _categories = newCats; _isFetchingCats = false; });
-      }
-    } catch (e) { if (mounted) setState(() => _isFetchingCats = false); }
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      final list = (data["trivia_categories"] as List).cast<Map<String, dynamic>>();
+      setState(() {
+        _cats = list;
+        _loadingCats = false;
+      });
+    } catch (_) {
+      setState(() {
+        _cats = [];
+        _loadingCats = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
     final theme = Theme.of(context);
-    final textColor = theme.colorScheme.onSurface;
 
     return BaseScaffold(
-      appBar: AppBar(title: Text("CONFIGURE GAME", style: TextStyle(color: textColor, fontWeight: FontWeight.bold)), iconTheme: IconThemeData(color: textColor), backgroundColor: Colors.transparent, elevation: 0),
-      body: Center(
-        child: SingleChildScrollView(
-          child: GlassContainer( 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildLabel("GAME MODE", textColor),
-                _buildDropdown(_modes, _selectedMode, textColor, (val) => setState(() => _selectedMode = val!)),
+      showSettings: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => game.goToWelcome(), // no Navigator
+        ),
+      ),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: GlassContainer(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text("Create Game",
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        )),
+                    const SizedBox(height: 16),
 
-                if (_selectedMode == "general-knowledge") ...[
-                  const SizedBox(height: 20),
-                  _buildLabel("TOPIC", textColor),
-                  if (_isFetchingCats) const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()))
-                  else _buildDropdown(_categories, _selectedCategory, textColor, (val) => setState(() => _selectedCategory = val!)),
-                ],
-
-                const SizedBox(height: 20),
-                _buildLabel("QUESTIONS: $_questionCount", textColor),
-                Slider(value: _questionCount.toDouble(), min: 5, max: 50, divisions: 45, activeColor: theme.colorScheme.primary, onChanged: (v) => setState(() => _questionCount = v.toInt())),
-
-                _buildLabel("DIFFICULTY", textColor),
-                _buildDropdown({"Mixed": "mixed", "Easy": "easy", "Medium": "medium", "Hard": "hard"}, _difficulty, textColor, (val) => setState(() => _difficulty = val!)),
-
-                const SizedBox(height: 20),
-                TextField(
-                  controller: _customCodeController, 
-                  style: TextStyle(color: textColor, fontSize: 18), 
-                  decoration: InputDecoration(labelText: "CUSTOM CODE (OPTIONAL)", labelStyle: TextStyle(color: textColor.withOpacity(0.6)), enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: textColor.withOpacity(0.3))))
-                ),
-
-                const SizedBox(height: 40),
-
-                _isLoading 
-                  ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
-                  : ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: theme.colorScheme.primary, padding: const EdgeInsets.symmetric(vertical: 18)),
-                      onPressed: () async {
-                        setState(() => _isLoading = true);
-                        try {
-                          // FIX: Use the name already stored in provider (from Welcome Screen)
-                          String hostName = game.myName.isEmpty ? "Host" : game.myName;
-                          
-                          await game.createLobby(
-                            hostName, _selectedMode, _questionCount, 
-                            _selectedCategory, 30, _difficulty, 
-                            _customCodeController.text.trim()
-                          );
-
-                          if (!mounted) return;
-                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LobbyScreen()));
-                          
-                        } catch (e) {
-                          if (mounted) {
-                            setState(() => _isLoading = false);
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
-                          }
-                        }
-                      },
-                      child: const Text("LAUNCH LOBBY", style: TextStyle(color: Colors.white, fontSize: 20)),
+                    TextField(
+                      controller: _nameCtrl,
+                      decoration: const InputDecoration(labelText: "Host name"),
                     ),
-              ],
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: _codeCtrl,
+                      decoration: const InputDecoration(labelText: "Custom code (optional)"),
+                    ),
+                    const SizedBox(height: 12),
+
+                    DropdownButtonFormField<String>(
+                      value: _mode,
+                      decoration: const InputDecoration(labelText: "Mode"),
+                      items: game.config.enabledModes
+                          .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                          .toList(),
+                      onChanged: (v) => setState(() => _mode = v ?? "general-knowledge"),
+                    ),
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            value: _qCount,
+                            decoration: const InputDecoration(labelText: "Questions"),
+                            items: const [5, 10, 15, 20]
+                                .map((n) => DropdownMenuItem(value: n, child: Text("$n")))
+                                .toList(),
+                            onChanged: (v) => setState(() => _qCount = v ?? 10),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        SizedBox(
+                          width: 140,
+                          child: DropdownButtonFormField<int>(
+                            value: _timer,
+                            decoration: const InputDecoration(labelText: "Timer"),
+                            items: const [15, 20, 30, 45, 60]
+                                .map((n) => DropdownMenuItem(value: n, child: Text("${n}s")))
+                                .toList(),
+                            onChanged: (v) => setState(() => _timer = v ?? 30),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    DropdownButtonFormField<String>(
+                      value: _difficulty,
+                      decoration: const InputDecoration(labelText: "Difficulty"),
+                      items: const ["mixed", "easy", "medium", "hard"]
+                          .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                          .toList(),
+                      onChanged: (v) => setState(() => _difficulty = v ?? "mixed"),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Category only relevant for OpenTDB mode
+                    if (_mode == "general-knowledge") ...[
+                      _loadingCats
+                          ? const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: Center(child: CircularProgressIndicator()),
+                            )
+                          : DropdownButtonFormField<String>(
+                              value: _catId.isEmpty ? "" : _catId,
+                              decoration: const InputDecoration(labelText: "Category (OpenTDB)"),
+                              items: [
+                                const DropdownMenuItem(value: "", child: Text("Any")),
+                                ..._cats.map((c) => DropdownMenuItem(
+                                      value: "${c['id']}",
+                                      child: Text("${c['name']}"),
+                                    )),
+                              ],
+                              onChanged: (v) => setState(() => _catId = v ?? ""),
+                            ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    const SizedBox(height: 10),
+
+                    SizedBox(
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final host = _nameCtrl.text.trim();
+                          if (host.isEmpty) return;
+
+                          await game.createLobby(
+                            host,
+                            _mode,
+                            _qCount,
+                            _catId, // OpenTDB category id (or "")
+                            _timer,
+                            _difficulty,
+                            _codeCtrl.text.trim().toUpperCase(),
+                          );
+                          // No navigation. Server will emit game_created/lobby_update and provider sets AppState.lobby.
+                        },
+                        child: const Text("CREATE", style: TextStyle(fontWeight: FontWeight.w900)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
       ),
     );
   }
-
-  Widget _buildLabel(String text, Color color) => Padding(padding: const EdgeInsets.only(bottom: 10.0), child: Text(text, style: TextStyle(color: color.withOpacity(0.8), fontWeight: FontWeight.bold, fontSize: 16)));
-  Widget _buildDropdown(Map<String, String> items, String value, Color color, Function(String?) onChange) => Container(padding: const EdgeInsets.symmetric(horizontal: 16), decoration: BoxDecoration(color: Theme.of(context).cardColor.withOpacity(0.5), borderRadius: BorderRadius.circular(16), border: Border.all(color: color.withOpacity(0.2))), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: items.containsValue(value) ? value : items.values.first, dropdownColor: Theme.of(context).cardColor, isExpanded: true, style: TextStyle(color: color, fontSize: 18), items: items.entries.map((e) => DropdownMenuItem(value: e.value, child: Text(e.key))).toList(), onChanged: onChange)));
 }
