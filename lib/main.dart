@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/game_provider.dart';
-import 'screens/welcome_screen.dart';
-import 'screens/lobby_screen.dart';
-import 'screens/quiz_screen.dart'; 
-import 'screens/results_screen.dart'; 
-import 'screens/game_over_screen.dart'; 
+
+// 1. Import Provider source strictly
+import 'providers/game_provider.dart'; 
+
+// 2. Import WelcomeScreen but HIDE any accidental GameProvider inside it
+import 'screens/welcome_screen.dart' hide GameProvider; 
+
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(
@@ -13,34 +15,25 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => GameProvider()),
       ],
-      child: KnowItAll(),
+      child: const KnowItAllApp(),
     ),
   );
 }
 
-class KnowItAll extends StatelessWidget {
+class KnowItAllApp extends StatelessWidget {
+  const KnowItAllApp({super.key});
+
   @override
   Widget build(BuildContext context) {
+    final game = Provider.of<GameProvider>(context);
+
     return MaterialApp(
       title: 'KnowItAll',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: GameRouter(),
+      debugShowCheckedModeBanner: false,
+      themeMode: game.brightness == Brightness.dark ? ThemeMode.dark : ThemeMode.light,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      home: WelcomeScreen(),
     );
-  }
-}
-
-class GameRouter extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final state = context.watch<GameProvider>().appState;
-
-    // Simple routing based on state enum
-    if (state == AppState.welcome) return WelcomeScreen();
-    if (state == AppState.lobby) return LobbyScreen();
-    if (state == AppState.quiz) return QuizScreen();
-    if (state == AppState.results) return ResultsScreen();
-    if (state == AppState.gameOver) return GameOverScreen(); 
-    
-    return Scaffold(body: Center(child: Text("Quiz Screen Coming Soon...")));
   }
 }

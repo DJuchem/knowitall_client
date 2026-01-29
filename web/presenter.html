@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KnowItAll TV</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.25/signalr.min.js"></script>
+    <style>
+        :root {
+            --primary: #0F1221;
+            --pink: #F50057;
+            --blue: #00E5FF;
+            --surface: rgba(30, 30, 44, 0.9);
+        }
+        body {
+            margin: 0;
+            background-color: var(--primary);
+            background-image: url('assets/bg/cyberpunk.jpg'); /* Ensure this path exists relative to wwwroot */
+            background-size: cover;
+            background-blend-mode: darken;
+            color: white;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        /* Glass Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            max-width: 80%;
+            width: 800px;
+        }
+        h1 { font-size: 4rem; margin: 0; text-shadow: 0 0 20px var(--pink); }
+        h2 { font-size: 2.5rem; color: var(--blue); }
+        .code-box {
+            font-size: 6rem;
+            font-weight: 900;
+            letter-spacing: 10px;
+            margin: 20px 0;
+            color: white;
+        }
+        .timer-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .timer-fill {
+            height: 100%;
+            width: 100%;
+            background: var(--pink);
+            transition: width 1s linear;
+        }
+        .hidden { display: none; }
+        
+        /* Player Grid */
+        .player-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .player-chip {
+            background: rgba(0,0,0,0.3);
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 1px solid var(--blue);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="view-lobby" class="glass-card">
+        <h2>JOIN GAME</h2>
+        <div class="code-box" id="lobby-code">----</div>
+        <div class="player-grid" id="player-list">
+            </div>
+        <div style="margin-top:20px; color: #aaa;">Waiting for host to start...</div>
+    </div>
+
+    <div id="view-game" class="glass-card hidden">
+        <h2 id="q-index" style="color: var(--blue)">Question 1</h2>
+        <h1 id="q-text">Loading...</h1>
+        <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+    </div>
+
+    <div id="view-results" class="glass-card hidden">
+        <h1>ROUND OVER</h1>
+        <h2 id="correct-answer" style="color: #0f0"></h2>
+        <div class="player-grid" id="leaderboard"></div>
+    </div>
+
+    <script>
+        // CONFIG
+        const URL = "/ws"; // Adjust if needed: http://192.168.x.x:5074/ws
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(URL)
+            .withAutomaticReconnect()
+            .build();
+
+        let timerInterval;
+
+        // UI HELPERS
+        const show = (id) => {
+            ['view-lobby', 'view-game', 'view-results'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        };
+
+        // --- SIGNALR EVENTS ---
+
+        connection.on("lobby_update", (lobby) => {
+            // Check state
+            if (!lobby.started) {
+                show('view-lobby');
+                document.getElementById('lobby-code').innerText = lobby.code;
+                const list = document.getElementById('player-list');
+                list.innerHTML = lobby.players.map(p => 
+                    `<div class="player-chip">${p.name}</div>`
+                ).join('');
+            }
+        });
+
+        connection.on("new_round", (data) => {
+            show('view-game');
+            document.getElementById('q-index').innerText = `Question ${data.questionIndex + 1}`;
+            document.getElementById('q-text').innerText = data.questionData.Question; // Note PascalCase from C# JSON? Check casing.
+            
+            // Timer Animation
+            const fill = document.getElementById('timer-fill');
+            fill.style.transition = 'none';
+            fill.style.width = '100%';
+            setTimeout(() => {
+                fill.style.transition = `width ${data.timer}s linear`;
+                fill.style.width = '0%';
+            }, 100);
+        });
+
+        connection.on("question_results", (data) => {
+            show('view-results');
+            document.getElementById('correct-answer').innerText = data.correctAnswer;
+            
+            // Sort and show top 5
+            const sorted = data.results.sort((a,b) => b.score - a.score).slice(0, 5);
+            const board = document.getElementById('leaderboard');
+            board.innerHTML = sorted.map((p, i) => 
+                `<div class="player-chip" style="border-color:${i===0?'gold':'white'}">
+                    #${i+1} ${p.name} : ${p.score} pts
+                 </div>`
+            ).join('');
+        });
+
+        // --- STARTUP ---
+        async function start() {
+            try {
+                await connection.start();
+                console.log("Connected");
+                // Join as TV Spectator
+                // Hardcoded lobby for now? OR ask user to type it?
+                // For TV convenience, usually you hardcode a "TV" lobby or provide a minimal input UI.
+                // Here we assume we want to join lobby "AAAA" or prompt:
+                const code = prompt("Enter Lobby Code for TV View:", "");
+                if(code) await connection.invoke("JoinGame", code.toUpperCase(), "TV-Display", "", true);
+            } catch (err) {
+                console.error(err);
+                setTimeout(start, 5000);
+            }
+        }
+
+        start();
+    </script>
+</body>
+</html>

@@ -1,121 +1,114 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'dart:ui';
 
 class AppTheme {
-  static const Color primaryColor = Color(0xFF0F1221);
+  static const Color primaryDark = Color(0xFF0F1221);
+  static const Color primaryLight = Color(0xFFF0F2F5);
   static const Color accentPink = Color(0xFFFF58CC);
   static const Color accentBlue = Color(0xFF47C8FF);
-  static const Color surfaceColor = Color(0xFF1E1E2C); 
 
-  static ThemeData get themeData {
+  // --- DARK THEME ---
+  static ThemeData get darkTheme {
     return ThemeData(
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: primaryColor,
-      primaryColor: primaryColor,
+      scaffoldBackgroundColor: primaryDark,
+      primaryColor: primaryDark,
       colorScheme: const ColorScheme.dark(
         primary: accentPink,
         secondary: accentBlue,
-        surface: surfaceColor,
+        surface: Color(0xFF1E1E2C),
       ),
       fontFamily: 'Roboto',
+      textTheme: const TextTheme(
+        bodyMedium: TextStyle(fontSize: 18, height: 1.4),
+        bodyLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+        titleLarge: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+        labelLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        // Fixed: Use withValues(alpha:) instead of withOpacity()
         fillColor: Colors.black.withValues(alpha: 0.3),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 18),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 22),
+          textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      ),
+    );
+  }
+
+  // --- LIGHT THEME ---
+  static ThemeData get lightTheme {
+    return ThemeData(
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: primaryLight,
+      primaryColor: Colors.white,
+      colorScheme: const ColorScheme.light(
+        primary: Color(0xFF6200EA),
+        secondary: accentPink,
+        surface: Colors.white,
+        onSurface: Colors.black87,
+      ),
+      fontFamily: 'Roboto',
+      textTheme: const TextTheme(
+        bodyMedium: TextStyle(fontSize: 18, color: Colors.black87, height: 1.4),
+        bodyLarge: TextStyle(fontSize: 22, color: Colors.black87, fontWeight: FontWeight.w600),
+        titleLarge: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: Colors.black),
+        labelLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.black12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        hintStyle: TextStyle(color: Colors.grey[600], fontSize: 18),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 22),
+          textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
       ),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// 1. The Background (Mimics CSS Radial Gradients)
-// ---------------------------------------------------------------------------
-class CyberpunkBackground extends StatelessWidget {
-  final Widget child;
-  const CyberpunkBackground({Key? key, required this.child}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Dark Base
-        Container(color: AppTheme.primaryColor),
-        
-        // Top-Left Pink Glow
-        Positioned(
-          top: -100, left: -100,
-          child: Container(
-            width: 400, height: 400,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  AppTheme.accentPink.withValues(alpha: 0.15), // Fixed
-                  Colors.transparent
-                ],
-              ),
-            ),
-          ),
-        ),
-        
-        // Bottom-Right Blue Glow
-        Positioned(
-          bottom: -100, right: -100,
-          child: Container(
-            width: 400, height: 400,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  AppTheme.accentBlue.withValues(alpha: 0.15), // Fixed
-                  Colors.transparent
-                ],
-              ),
-            ),
-          ),
-        ),
-        
-        // The actual content wrapped in SafeArea
-        SafeArea(child: child),
-      ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 2. The Glass Card (Mimics backdrop-filter: blur)
-// ---------------------------------------------------------------------------
 class GlassContainer extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry margin;
+  final double blur;
 
   const GlassContainer({
-    Key? key, 
+    super.key,
     required this.child, 
-    this.padding = const EdgeInsets.all(24),
-    this.margin = const EdgeInsets.all(16)
-  }) : super(key: key);
+    this.padding = const EdgeInsets.all(24), 
+    this.margin = const EdgeInsets.all(16), 
+    this.blur = 15
+  });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: margin,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)), // Fixed
-        color: Colors.white.withValues(alpha: 0.05), // Fixed
+        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+        color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.65), 
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 15, offset: const Offset(0, 5))],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // The Real Blur
-          child: Padding(
-            padding: padding,
-            child: child,
-          ),
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: Padding(padding: padding, child: child),
         ),
       ),
     );

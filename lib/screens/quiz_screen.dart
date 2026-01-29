@@ -1,10 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:confetti/confetti.dart';
 import '../providers/game_provider.dart';
-import '../theme/app_theme.dart';
+import '../widgets/base_scaffold.dart';
+import '../theme/app_theme.dart'; // For GlassContainer
+
 
 class QuizScreen extends StatefulWidget {
+  const QuizScreen({Key? key}) : super(key: key);
+
   @override
   _QuizScreenState createState() => _QuizScreenState();
 }
@@ -12,91 +17,63 @@ class QuizScreen extends StatefulWidget {
 class _QuizScreenState extends State<QuizScreen> {
   int _timeLeft = 30;
   Timer? _timer;
-  
-  // Internal state to track the specific question currently displayed
   int _internalIndex = -1;
   String _questionText = "Loading...";
-  String? _mediaUrl; // Can be an Image path, URL, or Audio link
+  String? _mediaUrl;
   List<String> _answers = [];
-  
   String? _selectedAnswer;
   bool _hasAnswered = false;
+  late ConfettiController _confettiController;
 
   @override
   void initState() {
     super.initState();
-    // Force process the lobby data immediately after the widget builds
+    _confettiController = ConfettiController(duration: const Duration(seconds: 2));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final game = Provider.of<GameProvider>(context, listen: false);
-      if (game.lobby != null) {
-        _processLobbyData(game, force: true); 
-      }
+      if (game.lobby != null) _processLobbyData(game, force: true);
     });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _confettiController.dispose();
     super.dispose();
   }
 
-  // --- TIMER LOGIC ---
-  void startTimer() {
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
-      
-      setState(() {
-        if (_timeLeft > 0) {
-          _timeLeft--;
-        } else {
-          timer.cancel();
-          // Auto-submit if time runs out
-          if (!_hasAnswered) {
-             _submitAnswer("", context);
-          }
-        }
-      });
-    });
-  }
-
-  // --- DATA PARSING ---
   void _processLobbyData(GameProvider game, {bool force = false}) {
     final lobby = game.lobby;
-    // Safety checks
     if (lobby == null || lobby.quizData == null || lobby.quizData!.isEmpty) return;
 
-    // Detect if we moved to a new question OR if we are forcing a reload (first mount)
     if (lobby.currentQuestionIndex != _internalIndex || force) {
       _internalIndex = lobby.currentQuestionIndex;
       _hasAnswered = false;
       _selectedAnswer = null;
-      _timeLeft = lobby.timer; // Reset timer to lobby setting
+      _timeLeft = lobby.timer;
       
-      // Safety bounds check
-      final int dataIndex = _internalIndex >= lobby.quizData!.length ? 0 : _internalIndex;
-      final q = lobby.quizData![dataIndex]; // This is the JSON object from DB/API
+      final int idx = _internalIndex >= lobby.quizData!.length ? 0 : _internalIndex;
+      final q = lobby.quizData![idx];
 
-      // Parsing Fields (Handles uppercase/lowercase differences in JSON)
-      String txt = q['Question'] ?? q['question'] ?? "Error loading question";
+      String txt = q['Question'] ?? q['question'] ?? "Error";
       String? img = q['Image'] ?? q['image'];
       String correct = q['CorrectAnswer'] ?? q['correctAnswer'] ?? "";
       List<dynamic> incorrect = (q['IncorrectAnswers'] ?? q['incorrectAnswers'] ?? []) as List<dynamic>;
 
-      _mediaUrl = img;
-
-      // Combine and Shuffle Answers
       List<String> newAnswers = [correct, ...incorrect.map((e) => e.toString())];
       newAnswers.shuffle();
 
-      // Start the round
+      if (game.currentStreak >= 3) {
+        _confettiController.play();
+      }
+
       startTimer();
       
-      // Update UI (delayed to avoid build conflicts)
       Future.delayed(Duration.zero, () {
         if (mounted) {
           setState(() {
             _questionText = txt;
+            _mediaUrl = img;
             _answers = newAnswers;
           });
         }
@@ -104,164 +81,196 @@ class _QuizScreenState extends State<QuizScreen> {
     }
   }
 
-  // --- ACTION: SUBMIT ---
-  void _submitAnswer(String answer, BuildContext ctx) {
-    if (_hasAnswered) return; // Prevent double submission
-
-    setState(() {
-      _selectedAnswer = answer;
-      _hasAnswered = true;
+  void startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      setState(() {
+        if (_timeLeft > 0) {
+          _timeLeft--;
+        } else {
+          timer.cancel();
+          if (!_hasAnswered) _submitAnswer("", context);
+        }
+      });
     });
-
-    double timeTaken = (Provider.of<GameProvider>(ctx, listen: false).lobby!.timer - _timeLeft).toDouble();
-    if (timeTaken < 0) timeTaken = 0;
-
-    // Send to Server
-    Provider.of<GameProvider>(ctx, listen: false).submitAnswer(answer, timeTaken, _internalIndex);
   }
 
-  // --- UI BUILDER ---
+  void _submitAnswer(String answer, BuildContext ctx) {
+    if (_hasAnswered) return;
+    setState(() { _selectedAnswer = answer; _hasAnswered = true; });
+    
+    final game = Provider.of<GameProvider>(ctx, listen: false);
+    double timeTaken = (game.lobby!.timer - _timeLeft).toDouble();
+    if (timeTaken < 0) timeTaken = 0;
+    
+    game.submitAnswer(answer, timeTaken, _internalIndex);
+  }
+
+  void _confirmLeave(BuildContext context, GameProvider game) {
+    showDialog(
+      context: context, 
+      builder: (_) => AlertDialog(
+        // FIX: Dynamic Surface Color
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: Text("Leave Game?", style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        content: Text("You will be removed from the lobby.", style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
+        actions: [
+          TextButton(child: const Text("Cancel"), onPressed: () => Navigator.pop(context)),
+          TextButton(
+            child: const Text("LEAVE", style: TextStyle(color: Colors.red)), 
+            onPressed: () { 
+              Navigator.pop(context); 
+              game.leaveLobby(); 
+            }
+          ),
+        ],
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
-    
-    // Check for updates every build
     _processLobbyData(game);
+    
+    double totalTime = (game.lobby?.timer ?? 30).toDouble();
+    double progress = totalTime > 0 ? _timeLeft / totalTime : 0;
 
-    // Dynamic Background from Theme Engine
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(game.wallpaper), 
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.6), BlendMode.darken),
-          ),
+    return BaseScaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.exit_to_app, color: Colors.redAccent),
+          onPressed: () => _confirmLeave(context, game),
         ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // --- HEADER (Progress & Timer) ---
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
-                      child: Text(
-                        "Q: ${_internalIndex + 1} / ${game.lobby?.quizData?.length ?? '?'}", 
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
-                      ),
-                    ),
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          value: (game.lobby?.timer ?? 30) > 0 ? _timeLeft / (game.lobby!.timer) : 0, 
-                          color: game.themeColor,
-                          backgroundColor: Colors.white24,
-                        ),
-                        Text("$_timeLeft", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const Spacer(),
-
-              // --- MEDIA & QUESTION AREA ---
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1), // Glass Effect
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withOpacity(0.2)),
-                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 15)],
-                ),
-                child: Column(
-                  children: [
-                    // Media Handling
-                    if (_mediaUrl != null && _mediaUrl!.isNotEmpty) ...[
-                      if (_mediaUrl!.contains("youtube") || _mediaUrl!.endsWith("mp3"))
-                        // Audio/Music Placeholder
-                        Container(
-                          height: 150,
-                          width: double.infinity,
-                          decoration: BoxDecoration(color: Colors.black38, borderRadius: BorderRadius.circular(16)),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.music_note, size: 60, color: game.themeColor),
-                              const SizedBox(height: 8),
-                              const Text("Audio Clip", style: TextStyle(color: Colors.white70)),
-                            ],
-                          ),
-                        )
-                      else
-                        // Image Handler (Network or Asset)
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          constraints: const BoxConstraints(maxHeight: 200),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: _mediaUrl!.startsWith("http")
-                                ? Image.network(_mediaUrl!, fit: BoxFit.contain, errorBuilder: (_,__,___) => const SizedBox())
-                                : Image.asset(_mediaUrl!, fit: BoxFit.contain, errorBuilder: (_,__,___) => const SizedBox()),
-                          ),
-                        ),
-                    ],
-                    
-                    // The Question
-                    Text(
-                      _questionText,
-                      style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 0.5),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-
-              const Spacer(),
-
-              // --- ANSWER BUTTONS ---
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                child: _hasAnswered 
-                ? Column(
+        title: game.currentStreak > 1 
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.local_fire_department, color: Colors.orange),
+                const SizedBox(width: 5),
+                Text("${game.currentStreak}", style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 24))
+              ],
+            )
+          : null,
+        centerTitle: true,
+      ),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                // TIMER BAR
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const CircularProgressIndicator(color: Colors.white),
-                      const SizedBox(height: 10),
-                      Text("Answer locked. Waiting...", style: TextStyle(color: Colors.white.withOpacity(0.7))),
-                    ],
-                  )
-                : Column(
-                    children: _answers.map((ans) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _selectedAnswer == ans ? game.themeColor : Colors.white.withOpacity(0.1),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 60),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(color: _selectedAnswer == ans ? game.themeColor : Colors.white24)
-                          ),
-                          elevation: _selectedAnswer == ans ? 10 : 0,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 12,
+                          backgroundColor: Colors.white10,
+                          color: progress < 0.3 ? Colors.redAccent : (progress < 0.6 ? Colors.amber : Colors.greenAccent),
                         ),
-                        onPressed: () => _submitAnswer(ans, context),
-                        child: Text(ans, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                       ),
-                    )).toList(),
+                      const SizedBox(height: 4),
+                      Text("$_timeLeft s", style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold))
+                    ],
                   ),
-              ),
-              const SizedBox(height: 10),
-            ],
+                ),
+
+                const Spacer(),
+
+                // QUESTION & MEDIA
+                GlassContainer(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      if (_mediaUrl != null && _mediaUrl!.isNotEmpty) ...[
+                        if (_mediaUrl!.contains("youtube") || _mediaUrl!.endsWith("mp3"))
+                          Container(
+                            height: 120,
+                            width: double.infinity,
+                            decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(12)),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.music_note, size: 50, color: game.themeColor),
+                                const SizedBox(height: 8),
+                                const Text("Audio Clip", style: TextStyle(color: Colors.white70)),
+                              ],
+                            ),
+                          )
+                        else
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            constraints: const BoxConstraints(maxHeight: 200),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              // Handle Network vs Asset
+                              child: _mediaUrl!.startsWith("http")
+                                  ? Image.network(_mediaUrl!, fit: BoxFit.contain, errorBuilder: (_,__,___) => const SizedBox())
+                                  : Image.asset(_mediaUrl!, fit: BoxFit.contain, errorBuilder: (_,__,___) => const SizedBox()),
+                            ),
+                          ),
+                      ],
+                      Text(
+                        _questionText,
+                        style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Spacer(),
+
+                // ANSWER BUTTONS
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: _hasAnswered 
+                  ? const Center(child: Text("Answer Locked. Waiting...", style: TextStyle(color: Colors.white54, fontSize: 18)))
+                  : Column(
+                      children: _answers.map((ans) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            // FIX: withValues
+                            backgroundColor: _selectedAnswer == ans ? game.themeColor : Colors.white.withValues(alpha: 0.1),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 60),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(color: _selectedAnswer == ans ? game.themeColor : Colors.white24, width: 1.5)
+                            ),
+                            elevation: _selectedAnswer == ans ? 8 : 0,
+                          ),
+                          onPressed: () => _submitAnswer(ans, context),
+                          child: Text(ans, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                        ),
+                      )).toList(),
+                    ),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
           ),
-        ),
+
+          // CONFETTI
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
+            ),
+          ),
+        ],
       ),
     );
   }

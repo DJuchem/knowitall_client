@@ -39,6 +39,8 @@ dependencies:
   json_annotation: ^4.9.0
   audioplayers: ^6.0.0  # For Background Music
   animate_do: ^3.0.2    # For easy "Fancy" animations
+  image_picker: ^1.0.4  # For uploading avatars
+  confetti: ^0.7.0      # For streak animations
 
 dev_dependencies:
   flutter_test:

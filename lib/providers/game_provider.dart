@@ -3,20 +3,54 @@ import 'package:audioplayers/audioplayers.dart';
 import '../models/lobby_data.dart';
 import '../services/signalr_service.dart';
 
+// --- DEPLOYMENT CONFIG ---
+class GameConfig {
+  String appTitle;
+  String logoPath;
+  List<String> enabledModes;
+  
+  GameConfig({
+    this.appTitle = "KNOW IT ALL",
+    this.logoPath = "assets/logo.png",
+    this.enabledModes = const ["general-knowledge", "calculations", "flags", "music"],
+  });
+}
+
 enum AppState { welcome, lobby, quiz, results, gameOver }
 
 class GameProvider extends ChangeNotifier {
   final SignalRService _service = SignalRService();
-  final AudioPlayer _musicPlayer = AudioPlayer(); // Music Engine
+  final AudioPlayer _musicPlayer = AudioPlayer(); 
+  final AudioPlayer _sfxPlayer = AudioPlayer();
+  
+  // CONFIG INSTANCE
+  final GameConfig config = GameConfig();
 
-  // --- CLIENT SETTINGS (Theming) ---
-  Color _themeColor = const Color(0xFFE91E63); // Default Cyberpunk Pink
-  String _wallpaper = "assets/bg/cyberpunk.jpg"; // Default BG
-  String _bgMusic = "assets/music/default.mp3"; // Default Music
-  bool _isMusicPlaying = false;
+  // ASSETS
+  final Map<String, String> _musicOptions = {
+    "Cyber Action": "assets/music/action.mp3",
+    "Chill Lo-Fi": "assets/music/chill.mp3",
+    "Game Default": "assets/music/default.mp3",
+  };
+  final Map<String, String> _wallpaperOptions = {
+    "Cyber City": "assets/bg/cyberpunk.jpg",
+    "Matrix Code": "assets/bg/matrix.jpg",
+    "Space Void": "assets/bg/space.jpg",
+    "Retro Sunset": "assets/bg/retro.jpg",
+  };
+
+  // SETTINGS
+  Color _themeColor = const Color(0xFFE91E63);
+  String _wallpaper = "assets/bg/cyberpunk.jpg"; 
+  String _bgMusic = "assets/music/default.mp3"; 
+  Brightness _brightness = Brightness.dark; 
+  
+  // AUDIO STATE
+  bool _isMusicEnabled = true; 
+  bool _isPlaying = false;
   double _volume = 0.5;
 
-  // --- GAME STATE ---
+  // GAME STATE
   AppState _appState = AppState.welcome;
   LobbyData? _currentLobby;
   Map<String, dynamic>? _lastResults;
@@ -24,8 +58,10 @@ class GameProvider extends ChangeNotifier {
   
   String _myName = "Player";
   String _myAvatar = "assets/avatars/avatar1.webp";
+  int _currentStreak = 0;
+  int _unreadCount = 0;
 
-  // Getters
+  // GETTERS
   AppState get appState => _appState;
   LobbyData? get lobby => _currentLobby;
   Map<String, dynamic>? get lastResults => _lastResults;
@@ -33,84 +69,154 @@ class GameProvider extends ChangeNotifier {
   String get myName => _myName;
   String get myAvatar => _myAvatar;
   bool get amIHost => _currentLobby != null && _currentLobby!.host.trim().toLowerCase() == _myName.trim().toLowerCase();
-
-  // Theme Getters
+  
   Color get themeColor => _themeColor;
   String get wallpaper => _wallpaper;
-  bool get isMusicPlaying => _isMusicPlaying;
+  String get currentMusic => _bgMusic;
+  bool get isMusicEnabled => _isMusicEnabled;
+  bool get isMusicPlaying => _isPlaying; 
+  int get currentStreak => _currentStreak;
+  Brightness get brightness => _brightness;
+  int get unreadCount => _unreadCount;
 
-  // --- MUSIC ENGINE ---
+  Map<String, String> get musicOptions => _musicOptions;
+  Map<String, String> get wallpaperOptions => _wallpaperOptions;
+
+  // --- ACTIONS ---
+
+  void resetUnreadCount() { 
+    _unreadCount = 0; 
+    notifyListeners(); 
+  }
+
+  void updateTheme({Color? color, String? bg, Brightness? brightness}) {
+    if (color != null) _themeColor = color;
+    if (bg != null) _wallpaper = bg;
+    if (brightness != null) _brightness = brightness;
+    notifyListeners();
+  }
+
+  // --- MUSIC LOGIC ---
   Future<void> initMusic() async {
-    // Only start if not already playing
-    if (!_isMusicPlaying) {
-      _musicPlayer.setReleaseMode(ReleaseMode.loop); // Loop music
+    if (!_isMusicEnabled) return;
+
+    // FIX: Check actual player state to prevent restart on navigation
+    if (_isPlaying && _musicPlayer.state == PlayerState.playing) return;
+
+    try {
+      _musicPlayer.setReleaseMode(ReleaseMode.loop);
       _musicPlayer.setVolume(_volume);
-      // Ensure you have a file at assets/music/menu.mp3 or change this
-      try {
-        await _musicPlayer.play(AssetSource(_bgMusic.replaceFirst('assets/', '')));
-        _isMusicPlaying = true;
-      } catch (e) {
-        print("Music Error (Ensure assets/music/ exists): $e");
-      }
+      
+      // Fix for AudioPlayers adding "assets/" automatically
+      final cleanPath = _bgMusic.startsWith("assets/") ? _bgMusic.substring(7) : _bgMusic;
+      await _musicPlayer.play(AssetSource(cleanPath));
+      
+      _isPlaying = true;
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Audio Blocked/Failed: $e");
+      _isPlaying = false; // Triggers UI button
       notifyListeners();
     }
   }
 
-  void toggleMusic(bool enable) {
-    if (enable) {
-      _musicPlayer.resume();
-      _isMusicPlaying = true;
-    } else {
-      _musicPlayer.pause();
-      _isMusicPlaying = false;
+  void setMusicTrack(String assetPath) {
+    _bgMusic = assetPath;
+    if (_isMusicEnabled) {
+      _musicPlayer.stop(); // Force stop to switch track
+      _isPlaying = false;
+      initMusic(); 
     }
     notifyListeners();
   }
 
-  void setVolume(double val) {
-    _volume = val;
-    _musicPlayer.setVolume(val);
+  void toggleMusic(bool enable) {
+    _isMusicEnabled = enable;
+    if (enable) {
+      initMusic(); 
+    } else {
+      _musicPlayer.stop();
+      _isPlaying = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> playSfx(String type) async {
+    String file = "";
+    switch (type) {
+      case "correct": file = "audio/correct.mp3"; break;
+      case "wrong": file = "audio/wrong.mp3"; break;
+      case "streak": file = "audio/streak.mp3"; break;
+      case "gameover": file = "audio/gameover.mp3"; break;
+    }
+    if (file.isNotEmpty) {
+      try {
+        await _sfxPlayer.stop();
+        await _sfxPlayer.play(AssetSource(file), mode: PlayerMode.lowLatency);
+      } catch (_) {}
+    }
+  }
+
+  void handleAnswerResult(bool correct) {
+    if (correct) {
+      _currentStreak++;
+      if (_currentStreak > 0 && _currentStreak % 3 == 0) playSfx("streak");
+      else playSfx("correct");
+    } else {
+      _currentStreak = 0;
+      playSfx("wrong");
+    }
     notifyListeners();
   }
 
-  void updateTheme(Color color, String bgPath) {
-    _themeColor = color;
-    _wallpaper = bgPath;
-    notifyListeners();
-  }
-
-  // --- SIGNALR & GAME LOGIC (Unchanged from previous fixes) ---
+  // --- SIGNALR ---
   Future<void> connect(String url) async {
     await _service.init(url);
-
-    _service.onLobbyUpdate = (data) {
-      if (data != null) {
-        _currentLobby = LobbyData.fromJson(data as Map<String, dynamic>);
-        notifyListeners();
-      }
+    _service.onLobbyUpdate = (data) { 
+        if(data != null) {
+            final newLobby = LobbyData.fromJson(data);
+            // Increment unread if chat grew
+            if (_currentLobby != null && newLobby.chat.length > _currentLobby!.chat.length) {
+                _unreadCount += (newLobby.chat.length - _currentLobby!.chat.length);
+            }
+            _currentLobby = newLobby; 
+            notifyListeners();
+        } 
     };
-
-    _service.onGameCreated = (data) { _handleLobbyData(data); _appState = AppState.lobby; notifyListeners(); };
-    _service.onGameJoined = (data) { _handleLobbyData(data); _appState = AppState.lobby; notifyListeners(); };
-    _service.onGameStarted = (data) { _handleGameStart(data); _appState = AppState.quiz; notifyListeners(); };
-    _service.onNewRound = (data) {
+    _service.onGameCreated = (data) { _handleLobbyData(data); _appState=AppState.lobby; notifyListeners(); };
+    _service.onGameJoined = (data) { _handleLobbyData(data); _appState=AppState.lobby; notifyListeners(); };
+    _service.onGameStarted = (data) { _handleGameStart(data); _appState=AppState.quiz; _currentStreak=0; notifyListeners(); };
+    _service.onNewRound = (data) { 
        final map = data as Map<String, dynamic>;
-       if (_currentLobby != null) _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
+       if(_currentLobby != null) _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
        _appState = AppState.quiz; 
        notifyListeners();
     };
-    _service.onQuestionResults = (data) { _lastResults = data as Map<String, dynamic>; _appState = AppState.results; notifyListeners(); };
-    _service.onGameOver = (data) { _appState = AppState.gameOver; notifyListeners(); };
-    _service.onGameReset = (data) { _appState = AppState.lobby; notifyListeners(); };
-    _service.onLobbyDeleted = (data) { _appState = AppState.welcome; _currentLobby = null; _errorMessage = "Host ended session."; notifyListeners(); };
+    _service.onQuestionResults = (data) { 
+      _lastResults = data as Map<String, dynamic>; 
+      _appState = AppState.results; 
+      
+      bool amICorrect = false;
+      if (_lastResults != null && _lastResults!['results'] != null) {
+        final myRes = (_lastResults!['results'] as List).firstWhere((r) => r['name'] == _myName, orElse: () => null);
+        if (myRes != null) amICorrect = myRes['correct'] == true;
+      }
+      handleAnswerResult(amICorrect);
+      notifyListeners(); 
+    };
+    _service.onGameOver = (data) { _appState = AppState.gameOver; playSfx("gameover"); notifyListeners(); };
+    _service.onGameReset = (data) { _appState = AppState.lobby; _currentStreak = 0; notifyListeners(); };
+    _service.onLobbyDeleted = (data) { 
+        _appState = AppState.welcome; 
+        _currentLobby = null; 
+        _errorMessage = "Host ended session."; 
+        notifyListeners(); 
+    };
     _service.onError = (err) { _errorMessage = err.toString(); notifyListeners(); };
   }
 
-  void _handleLobbyData(dynamic data) {
-    final map = data as Map<String, dynamic>;
-    _currentLobby = LobbyData.fromJson(map);
-  }
-
+  void _handleLobbyData(dynamic data) { _currentLobby = LobbyData.fromJson(data); }
+  
   void _handleGameStart(dynamic data) {
       final map = data as Map<String, dynamic>;
       if (_currentLobby != null) {
@@ -122,35 +228,68 @@ class GameProvider extends ChangeNotifier {
       }
   }
 
-  void setPlayerInfo(String name, String avatar) {
-    _myName = name;
-    _myAvatar = avatar;
-    notifyListeners();
+  void setPlayerInfo(String name, String avatar) { _myName = name; _myAvatar = avatar; notifyListeners(); }
+  
+  // --- ACTIONS ---
+  
+  Future<void> createLobby(String name, String mode, int qCount, String category, int timer, String difficulty, String customCode) async { 
+    _myName = name; 
+    // Optimistic music start
+    initMusic();
+    await _service.createGame(name, mode, qCount, category, timer, difficulty, customCode); 
   }
 
-  Future<void> createLobby(String name, String mode, int qCount, String category, int timer, String difficulty, String customCode) async {
-    _myName = name;
-    await _service.createGame(name, mode, qCount, category, timer, difficulty, customCode);
-  }
-
-  Future<void> joinLobby(String code, String name, String avatar) async {
-    _myName = name;
-    _myAvatar = avatar;
+  Future<void> joinLobby(String code, String name, String avatar) async { 
+    _myName = name; 
+    _myAvatar = avatar; 
+    initMusic();
     await _service.joinGame(code, name, avatar, false); 
   }
 
-  Future<void> updateSettings(String mode, int qCount, String category, int timer, String difficulty) async {
-    if (_currentLobby != null) {
-      await _service.updateSettings(_currentLobby!.code, mode, qCount, category, timer, difficulty);
-    }
+  Future<void> updateSettings(String mode, int qCount, String category, int timer, String difficulty) async { 
+    if (_currentLobby != null) await _service.updateSettings(_currentLobby!.code, mode, qCount, category, timer, difficulty); 
   }
 
-  Future<void> startGame() async { if (_currentLobby != null) await _service.startGame(_currentLobby!.code); }
-  Future<void> submitAnswer(String answer, double time, int questionId) async { if (_currentLobby != null) await _service.submitAnswer(_currentLobby!.code, questionId, answer, time); }
-  Future<void> nextQuestion() async { if (_currentLobby != null) await _service.nextQuestion(_currentLobby!.code); }
-  Future<void> sendChat(String msg) async { if (_currentLobby != null) await _service.postChat(_currentLobby!.code, msg); }
-  Future<void> leaveLobby() async { if (_currentLobby != null) { await _service.leaveLobby(_currentLobby!.code); _appState = AppState.welcome; _currentLobby = null; notifyListeners(); } }
-  Future<void> toggleReady(bool isReady) async { if (_currentLobby != null) await _service.toggleReady(_currentLobby!.code, isReady); }
-  Future<void> playAgain() async { if (_currentLobby != null) await _service.playAgain(_currentLobby!.code); }
-  Future<void> resetToLobby() async { if (_currentLobby != null) await _service.resetToLobby(_currentLobby!.code); }
+  Future<void> startGame() async { 
+    if (_currentLobby != null) await _service.startGame(_currentLobby!.code); 
+  }
+
+  Future<void> submitAnswer(String answer, double time, int questionId) async { 
+    if (_currentLobby != null) await _service.submitAnswer(_currentLobby!.code, questionId, answer, time); 
+  }
+
+  Future<void> nextQuestion() async { 
+    if (_currentLobby != null) await _service.nextQuestion(_currentLobby!.code); 
+  }
+
+  Future<void> sendChat(String msg) async { 
+    if (_currentLobby != null) await _service.postChat(_currentLobby!.code, msg); 
+  }
+
+  // --- CRITICAL FIX: OPTIMISTIC LEAVE ---
+  Future<void> leaveLobby() async { 
+    // 1. Tell Server (Fire and Forget)
+    if (_currentLobby != null) { 
+      _service.leaveLobby(_currentLobby!.code).catchError((e) => print("Leave error: $e"));
+    }
+    
+    // 2. IMMEDIATE UI RESET
+    _appState = AppState.welcome; 
+    _currentLobby = null; 
+    _currentStreak = 0;
+    _lastResults = null;
+    notifyListeners(); 
+  }
+
+  Future<void> toggleReady(bool isReady) async { 
+    if (_currentLobby != null) await _service.toggleReady(_currentLobby!.code, isReady); 
+  }
+
+  Future<void> playAgain() async { 
+    if (_currentLobby != null) await _service.playAgain(_currentLobby!.code); 
+  }
+
+  Future<void> resetToLobby() async { 
+    if (_currentLobby != null) await _service.resetToLobby(_currentLobby!.code); 
+  }
 }

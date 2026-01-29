@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/base_scaffold.dart';
+import '../widgets/game_avatar.dart'; // Ensure you have this file from previous steps
 
 class ResultsScreen extends StatelessWidget {
   @override
@@ -10,76 +12,96 @@ class ResultsScreen extends StatelessWidget {
     final results = game.lastResults;
     final lobby = game.lobby;
 
-    if (results == null || lobby == null || lobby.quizData == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    int totalQs = lobby.quizData!.length;
-    int currentIdx = lobby.currentQuestionIndex;
-    bool isLast = currentIdx >= (totalQs - 1);
+    if (results == null || lobby == null) return const BaseScaffold(body: Center(child: CircularProgressIndicator()));
 
     final correctAnswer = results['correctAnswer']?.toString() ?? "Unknown";
     final List playerResults = results['results'] ?? [];
+    
+    // Sort so winner is first if you want, or keep server order
+    playerResults.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
 
-    return Scaffold(
-      body: CyberpunkBackground(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const SizedBox(height: 60),
-              const Text("Round Complete!", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-              const SizedBox(height: 20),
-              GlassContainer(
-                margin: const EdgeInsets.symmetric(horizontal: 24),
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    const Text("The correct answer was:", style: TextStyle(color: Colors.white54)),
-                    const SizedBox(height: 8),
-                    Text(correctAnswer, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.accentPink), textAlign: TextAlign.center),
-                  ],
-                ),
+    return BaseScaffold(
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            Text("ROUND COMPLETE", style: Theme.of(context).textTheme.titleLarge?.copyWith(letterSpacing: 2)),
+            const SizedBox(height: 20),
+
+            // Correct Answer Card
+            GlassContainer(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+              child: Column(
+                children: [
+                  const Text("The answer was:", style: TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 10),
+                  Text(correctAnswer, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary), textAlign: TextAlign.center),
+                ],
               ),
-              const SizedBox(height: 20),
-              const Text("Player Answers:", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              GlassContainer(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: playerResults.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1, color: Colors.white10),
-                  itemBuilder: (ctx, i) {
-                    final p = playerResults[i];
-                    final bool isCorrect = p['correct'] == true;
-                    final String chosen = p['chosenAnswer']?.toString() ?? "No Answer";
-                    final String name = p['name']?.toString() ?? "Unknown";
-                    final int score = p['score'] ?? 0;
-                    return ListTile(
-                      leading: CircleAvatar(backgroundColor: isCorrect ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2), child: Icon(isCorrect ? Icons.check : Icons.close, color: isCorrect ? Colors.green : Colors.red)),
-                      title: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      subtitle: Text("Chose: $chosen", style: TextStyle(color: isCorrect ? Colors.greenAccent : Colors.white54, fontStyle: FontStyle.italic)),
-                      trailing: Text("$score pts", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                    );
-                  },
-                ),
+            ),
+
+            const SizedBox(height: 20),
+            
+            // Leaderboard List
+            GlassContainer(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.all(10),
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: playerResults.length,
+                separatorBuilder: (_,__) => const Divider(),
+                itemBuilder: (ctx, i) {
+                  final p = playerResults[i];
+                  final bool isCorrect = p['correct'] == true;
+                  final double timeTaken = (p['time_spent'] ?? 0).toDouble(); // Assuming server sends this now? Or calculate locally?
+                  // If server doesn't send time_spent in results array, you might need to adjust server logic
+                  // For now, let's assume 'earned' points implies speed. 
+                  final int earned = p['earned'] ?? 0;
+
+                  return ListTile(
+                    leading: GameAvatar(path: "assets/avatars/avatar1.webp", radius: 20), // Replace with real lookup if available
+                    title: Text(p['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: isCorrect 
+                      ? Text("Correct (+${earned}pts)", style: const TextStyle(color: Colors.green))
+                      : const Text("Wrong", style: TextStyle(color: Colors.red)),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text("${p['score']} PTS", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary)),
+                        // #8 TIME DISPLAY (Requires server update to send 'time_spent' in results list, otherwise hide)
+                        // Text("${timeTaken.toStringAsFixed(1)}s", style: const TextStyle(fontSize: 10, color: Colors.grey)), 
+                      ],
+                    ),
+                  );
+                },
               ),
-              const SizedBox(height: 40),
-              if (game.amIHost)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 40),
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(backgroundColor: isLast ? Colors.redAccent : Colors.green, padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16)),
-                    icon: Icon(isLast ? Icons.flag : Icons.arrow_forward),
-                    label: Text(isLast ? "END GAME" : "NEXT QUESTION", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    onPressed: () async { await game.nextQuestion(); },
+            ),
+            
+            const SizedBox(height: 30),
+            
+            // Host Controls
+            if (game.amIHost)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 40),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
                   ),
-                )
-              else
-                const Padding(padding: EdgeInsets.only(bottom: 40), child: Text("Waiting for Host...", style: TextStyle(color: Colors.white54))),
-            ],
-          ),
+                  onPressed: () => game.nextQuestion(),
+                  icon: const Icon(Icons.arrow_forward, color: Colors.white),
+                  label: const Text("NEXT QUESTION", style: TextStyle(fontSize: 20, color: Colors.white)),
+                ),
+              )
+            else
+              const Text("Waiting for Host...", style: TextStyle(color: Colors.grey)),
+              
+            const SizedBox(height: 40),
+          ],
         ),
       ),
     );

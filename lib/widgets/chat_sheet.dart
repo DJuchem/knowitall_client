@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
-import '../theme/app_theme.dart';
+import 'package:animate_do/animate_do.dart';
 
 class ChatSheet extends StatefulWidget {
   @override
@@ -9,211 +9,163 @@ class ChatSheet extends StatefulWidget {
 }
 
 class _ChatSheetState extends State<ChatSheet> {
-  final _controller = TextEditingController();
-  
-  // State
-  bool _isOpen = false;
-  int _lastViewedCount = 0;
+  final _msgController = TextEditingController();
+  bool _isExpanded = false;
+  final List<String> _quickEmojis = ["😂", "❤️", "👍", "🔥", "🤔", "😮", "👋", "🎉"];
 
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
-    final messages = game.lobby?.chat ?? [];
-    
-    // Unread Logic
-    if (_isOpen) _lastViewedCount = messages.length;
-    int unread = messages.length - _lastViewedCount;
-    if (unread < 0) unread = 0;
+    final chat = game.lobby?.chat ?? [];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Height Calculations
-    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-    final double closedHeight = 60.0 + MediaQuery.of(context).padding.bottom; 
-    // Open height: Header + Keyboard + Some space for messages
-    final double openHeight = 400.0 + keyboardHeight;
+    if (_isExpanded && game.unreadCount > 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => game.resetUnreadCount());
+    }
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOutCubic,
-      height: _isOpen ? openHeight : closedHeight,
+      // FIX: Increased collapsed height slightly to prevent overflow
+      height: _isExpanded ? 500 : 70, 
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E2C),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, offset: const Offset(0, -5))
-        ],
+        color: isDark ? Colors.black.withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: isDark ? Colors.white24 : Colors.black12),
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, -5))],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // --- HEADER (Tap to Toggle) ---
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _isOpen = !_isOpen;
-                if (!_isOpen) FocusScope.of(context).unfocus();
-              });
-            },
-            child: Container(
-              height: 60,
-              color: Colors.transparent, // Hitbox
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: const BoxDecoration(
-                  color: AppTheme.primaryColor,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
+          // HEADER
+          InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            borderRadius: BorderRadius.circular(24),
+            child: SizedBox(
+              height: 68, // FIX: Matches container height constraint minus borders
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Lobby Chat", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                    if (unread > 0 && !_isOpen)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(12)),
-                        child: Text("$unread NEW", style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    Icon(_isExpanded ? Icons.expand_more : Icons.chat_bubble, color: Theme.of(context).colorScheme.primary, size: 28),
+                    const SizedBox(width: 12),
+                    Text("CHAT", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Theme.of(context).textTheme.bodyLarge?.color)),
+                    
+                    if (!_isExpanded && game.unreadCount > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 12),
+                        child: Bounce(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(20)),
+                            child: Text("${game.unreadCount}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                          ),
+                        ),
                       ),
-                    Icon(_isOpen ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up, color: Colors.white54),
+
+                    const Spacer(),
+                    
+                    if (!_isExpanded && chat.isNotEmpty)
+                      Flexible(
+                        child: Text(
+                          "${chat.last.from}: ${chat.last.text}",
+                          style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 16),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
                   ],
                 ),
               ),
             ),
           ),
 
-          // --- CHAT BODY ---
-          if (_isOpen)
+          // EXPANDED BODY
+          if (_isExpanded)
             Expanded(
               child: Column(
                 children: [
-                  // Messages List
+                  const Divider(height: 1),
                   Expanded(
-                    child: Container(
-                      color: const Color(0xFF252538),
-                      child: messages.isEmpty
-                          ? const Center(child: Text("No messages yet.", style: TextStyle(color: Colors.white30)))
-                          : ListView.builder(
-                              reverse: true,
-                              itemCount: messages.length,
-                              padding: const EdgeInsets.all(16),
-                              itemBuilder: (ctx, i) {
-                                final msg = messages[messages.length - 1 - i];
-                                final isMe = msg.from == game.myName;
-                                
-                                // Default avatar if missing in JSON
-                                final avatarPath = msg.avatar ?? "assets/avatars/avatar1.webp"; 
-                                
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
-                                  child: Row(
-                                    mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      // Opponent Avatar
-                                      if (!isMe) ...[
-                                        CircleAvatar(
-                                          radius: 16,
-                                          backgroundImage: AssetImage(avatarPath), 
-                                          backgroundColor: Colors.grey,
-                                          onBackgroundImageError: (_,__) => {}, // Prevent crash on bad asset
-                                        ),
-                                        const SizedBox(width: 8),
-                                      ],
-
-                                      // Bubble
-                                      Flexible(
-                                        child: Column(
-                                          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                                          children: [
-                                            // Name Label (only for others)
-                                            if (!isMe)
-                                              Padding(
-                                                padding: const EdgeInsets.only(left: 4, bottom: 2),
-                                                child: Text(msg.from, style: const TextStyle(fontSize: 10, color: Colors.white54)),
-                                              ),
-                                            
-                                            // Message Box
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-                                              decoration: BoxDecoration(
-                                                color: isMe ? Colors.blueAccent : const Color(0xFF3A3A50),
-                                                borderRadius: BorderRadius.only(
-                                                  topLeft: const Radius.circular(16),
-                                                  topRight: const Radius.circular(16),
-                                                  bottomLeft: isMe ? const Radius.circular(16) : Radius.zero,
-                                                  bottomRight: isMe ? Radius.zero : const Radius.circular(16),
-                                                ),
-                                              ),
-                                              child: Text(msg.text, style: const TextStyle(color: Colors.white, fontSize: 15)),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-
-                                      // My Avatar
-                                      if (isMe) ...[
-                                        const SizedBox(width: 8),
-                                        CircleAvatar(
-                                          radius: 16,
-                                          backgroundImage: AssetImage(avatarPath),
-                                          backgroundColor: Colors.blue[900],
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                );
-                              },
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: chat.length,
+                      itemBuilder: (ctx, i) {
+                        final msg = chat[i];
+                        final isMe = msg.from == game.myName;
+                        return Align(
+                          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            constraints: const BoxConstraints(maxWidth: 300),
+                            decoration: BoxDecoration(
+                              color: isMe ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2) : Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.white10),
                             ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(msg.from, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 4),
+                                Text(msg.text, style: TextStyle(fontSize: 18, color: isDark ? Colors.white : Colors.black87)),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  
+                  // EMOJI BAR
+                  Container(
+                    height: 50,
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: _quickEmojis.length,
+                      separatorBuilder: (_,__) => const SizedBox(width: 20),
+                      itemBuilder: (ctx, i) {
+                        return GestureDetector(
+                          onTap: () {
+                            final text = _msgController.text;
+                            final selection = _msgController.selection;
+                            final newText = text.replaceRange(selection.start >= 0 ? selection.start : text.length, selection.end >= 0 ? selection.end : text.length, _quickEmojis[i]);
+                            _msgController.value = TextEditingValue(
+                              text: newText,
+                              selection: TextSelection.collapsed(offset: (selection.start >= 0 ? selection.start : text.length) + _quickEmojis[i].length),
+                            );
+                          },
+                          child: Center(child: Text(_quickEmojis[i], style: const TextStyle(fontSize: 32))),
+                        );
+                      },
                     ),
                   ),
 
-                  // Input Field
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(color: AppTheme.primaryColor),
+                  // INPUT
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: Row(
                       children: [
                         Expanded(
-                          child: SizedBox(
-                            height: 45,
-                            child: TextField(
-                              controller: _controller,
-                              style: const TextStyle(color: Colors.white),
-                              
-                              // --- FEATURES: Enter to Send + Emojis ---
-                              textInputAction: TextInputAction.send,
-                              keyboardType: TextInputType.text, 
-                              
-                              onSubmitted: (val) {
-                                if (val.trim().isNotEmpty) {
-                                   game.sendChat(val.trim());
-                                   _controller.clear();
-                                   // Keep focus or unfocus based on preference:
-                                   // FocusScope.of(context).requestFocus(_focusNode); 
-                                 }
-                              },
-                              
-                              decoration: InputDecoration(
-                                hintText: "Type a message...",
-                                hintStyle: const TextStyle(color: Colors.white30),
-                                filled: true,
-                                fillColor: const Color(0xFF1E1E2C),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide.none),
-                              ),
+                          child: TextField(
+                            controller: _msgController,
+                            style: TextStyle(color: isDark ? Colors.white : Colors.black, fontSize: 18),
+                            decoration: const InputDecoration(
+                              hintText: "Type a message...",
+                              contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                             ),
+                            onSubmitted: (_) => _send(game),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {
-                            if (_controller.text.trim().isNotEmpty) {
-                              game.sendChat(_controller.text.trim());
-                              _controller.clear();
-                            }
-                          },
-                          child: const CircleAvatar(
-                            backgroundColor: Colors.blueAccent,
-                            radius: 20,
-                            child: Icon(Icons.send, color: Colors.white, size: 18),
-                          ),
+                        const SizedBox(width: 10),
+                        FloatingActionButton(
+                          child: const Icon(Icons.send),
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          onPressed: () => _send(game),
                         )
                       ],
                     ),
@@ -224,5 +176,11 @@ class _ChatSheetState extends State<ChatSheet> {
         ],
       ),
     );
+  }
+
+  void _send(GameProvider game) {
+    if (_msgController.text.trim().isEmpty) return;
+    game.sendChat(_msgController.text.trim());
+    _msgController.clear();
   }
 }
