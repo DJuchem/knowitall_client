@@ -19,7 +19,13 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
   int _questionCount = 10;
   bool _isLoading = false; 
 
-  final Map<String, String> _modes = { "General Knowledge": "general-knowledge", "Math Calculations": "calculations" };
+  final Map<String, String> _modes = {
+    "General Knowledge": "general-knowledge",
+    "Math Calculations": "calculations",
+    "Guess the Flag": "flags", // Requires DB images in assets/flags/
+    "Music Quiz": "music",     // Requires DB youtube links
+  };
+  
   final Map<String, String> _categories = { "Any Category": "", "Books": "10", "Film": "11", "Music": "12", "Video Games": "15", "Science": "17", "Computers": "18" };
 
   @override
@@ -49,7 +55,7 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                   const SizedBox(height: 16),
                   _buildLabel("Questions: $_questionCount"),
                   Slider(
-                    value: _questionCount.toDouble(), min: 5, max: 20, divisions: 3,
+                    value: _questionCount.toDouble(), min: 5, max: 100, divisions: 19,
                     activeColor: AppTheme.accentPink,
                     onChanged: (v) => setState(() => _questionCount = v.toInt()),
                   ),

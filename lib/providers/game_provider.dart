@@ -3,6 +3,7 @@ import '../models/lobby_data.dart';
 import '../services/signalr_service.dart';
 
 enum AppState { welcome, lobby, quiz, results, gameOver }
+enum GameTheme { cyberpunk, clean }
 
 class GameProvider extends ChangeNotifier {
   final SignalRService _service = SignalRService();
@@ -23,6 +24,15 @@ class GameProvider extends ChangeNotifier {
   String get myAvatar => _myAvatar;
   
   bool get amIHost => _currentLobby != null && _currentLobby!.host.trim().toLowerCase() == _myName.trim().toLowerCase();
+
+
+  GameTheme _currentTheme = GameTheme.cyberpunk;
+    GameTheme get currentTheme => _currentTheme;
+
+    void toggleTheme() {
+      _currentTheme = _currentTheme == GameTheme.cyberpunk ? GameTheme.clean : GameTheme.cyberpunk;
+      notifyListeners();
+    }
 
   Future<void> connect(String url) async {
     await _service.init(url);
@@ -98,9 +108,9 @@ class GameProvider extends ChangeNotifier {
     await _service.joinGame(code, name, avatar, false); 
   }
 
-  Future<void> updateSettings(String mode, int timer, String difficulty) async {
+Future<void> updateSettings(String mode, int qCount, String category, int timer, String difficulty) async {
     if (_currentLobby != null) {
-      await _service.updateSettings(_currentLobby!.code, mode, timer, difficulty);
+      await _service.updateSettings(_currentLobby!.code, mode, qCount, category, timer, difficulty);
     }
   }
 

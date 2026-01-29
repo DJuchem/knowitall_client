@@ -37,6 +37,8 @@ dependencies:
   signalr_netcore: ^1.4.4
   provider: ^6.1.5+1
   json_annotation: ^4.9.0
+  audioplayers: ^6.0.0  # For Background Music
+  animate_do: ^3.0.2    # For easy "Fancy" animations
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +66,17 @@ flutter:
   # assets:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
+
+  assets:
+    - assets/images/
+    - assets/playlists/
+    - assets/avatars/
+    - assets/audio/
+
+    - assets/music/     # Create this folder for bg music
+    - assets/bg/        # Create this folder for wallpapers
+    - AssetManifest.json 
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

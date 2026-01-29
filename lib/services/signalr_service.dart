@@ -47,8 +47,8 @@ class SignalRService {
     await _hubConnection?.invoke("JoinGame", args: [code, name, avatar, spectator]);
   }
 
-  Future<void> updateSettings(String code, String mode, int timer, String difficulty) async {
-    await _hubConnection?.invoke("UpdateSettings", args: [code, mode, timer, difficulty]);
+Future<void> updateSettings(String code, String mode, int qCount, String category, int timer, String difficulty) async {
+    await _hubConnection?.invoke("UpdateSettings", args: [code, mode, qCount, category, timer, difficulty]);
   }
 
   Future<void> startGame(String code) async { await _hubConnection?.invoke("StartGame", args: [code]); }
