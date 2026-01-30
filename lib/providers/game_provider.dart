@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // ✅ Added Import
 import '../models/lobby_data.dart';
 import '../services/signalr_service.dart';
 
@@ -82,30 +81,6 @@ class GameProvider extends ChangeNotifier {
 
   Map<String, String> get musicOptions => _musicOptions;
   Map<String, String> get wallpaperOptions => _wallpaperOptions;
-
-  // ✅ Constructor loads saved user
-  GameProvider() {
-    _loadUser();
-  }
-
-  // ✅ Load User from Disk
-  Future<void> _loadUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    _myName = prefs.getString('username') ?? "Player";
-    _myAvatar = prefs.getString('avatar') ?? "assets/avatars/avatar1.webp";
-    notifyListeners();
-  }
-
-  // ✅ Save User to Disk (FIX FOR ERROR)
-  Future<void> saveUser(String name, String avatar) async {
-    _myName = name;
-    _myAvatar = avatar;
-    notifyListeners(); // Update UI immediately
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('username', name);
-    await prefs.setString('avatar', avatar);
-  }
 
   void resetUnreadCount() {
     _unreadCount = 0;
@@ -315,6 +290,7 @@ class GameProvider extends ChangeNotifier {
     _currentLobby = newLobby;
   }
 
+  // ✅ FIX: avoid notifyListeners during build/layout
   void stopMusic() {
     _musicPlayer.stop();
     _isPlaying = false;
@@ -352,17 +328,15 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  // Helper just in case you use setPlayerInfo elsewhere
   void setPlayerInfo(String name, String avatar) {
     _myName = name;
     _myAvatar = avatar;
     notifyListeners();
   }
 
-  // ✅ Create Lobby
+  // ✅ FIX: CreateLobby sends avatar too
   Future<void> createLobby(
     String name,
-    String hostAvatar,
     String mode,
     int qCount,
     String category,
@@ -375,7 +349,7 @@ class GameProvider extends ChangeNotifier {
 
     await _service.createGame(
       _myName,
-      hostAvatar,
+      _myAvatar,
       mode,
       qCount,
       category,

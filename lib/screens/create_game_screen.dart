@@ -39,6 +39,9 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
     "Odd One Out": "odd_one_out",
     "True / False": "true_false",
     "Population": "population",
+    "Capitals": "capitals",
+    "Anniversary": "anniversary",
+    "Fill in the Blank": "fill_in_the_blank",
   };
 
   @override
