@@ -1,10 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 
 class SignalRService {
-  HubConnection? _hubConnection;
+  // ✅ Change: Nullable to prevent 'LateInitializationError' crashes
+  HubConnection? _connection;
 
-  // Events
   Function(dynamic)? onLobbyUpdate;
   Function(dynamic)? onGameCreated;
   Function(dynamic)? onGameJoined;
@@ -17,61 +16,99 @@ class SignalRService {
   Function(dynamic)? onError;
 
   Future<void> init(String url) async {
-    if (_hubConnection?.state == HubConnectionState.Connected) return;
+    // Prevent re-initializing if already connected
+    if (_connection?.state == HubConnectionState.Connected) return;
 
-    _hubConnection = HubConnectionBuilder()
-        .withUrl(url, options: HttpConnectionOptions(
-            skipNegotiation: true, // Force WebSockets on Web to avoid some CORS pre-flight issues
-            transport: HttpTransportType.WebSockets
-        ))
+    _connection = HubConnectionBuilder()
+        .withUrl(url)
         .withAutomaticReconnect()
         .build();
 
-    _hubConnection?.onclose(({Exception? error}) {
-      debugPrint("SignalR Connection Closed: $error");
-      onError?.call("Disconnected from server.");
-    });
+    _connection?.on("lobby_update", (args) => onLobbyUpdate?.call(args?[0]));
+    _connection?.on("game_created", (args) => onGameCreated?.call(args?[0]));
+    _connection?.on("game_joined", (args) => onGameJoined?.call(args?[0]));
+    _connection?.on("game_started", (args) => onGameStarted?.call(args?[0]));
+    _connection?.on("new_round", (args) => onNewRound?.call(args?[0]));
+    _connection?.on("question_results", (args) => onQuestionResults?.call(args?[0]));
+    _connection?.on("game_over", (args) => onGameOver?.call(args?[0]));
+    _connection?.on("game_reset", (args) => onGameReset?.call(args?[0]));
+    _connection?.on("lobby_deleted", (args) => onLobbyDeleted?.call(args?[0]));
+    _connection?.on("error", (args) => onError?.call(args?[0]));
 
-    // Register Listeners
-    _hubConnection?.on("lobby_update", (args) => onLobbyUpdate?.call(args![0]));
-    _hubConnection?.on("game_created", (args) => onGameCreated?.call(args![0]));
-    _hubConnection?.on("game_joined", (args) => onGameJoined?.call(args![0]));
-    _hubConnection?.on("game_started", (args) => onGameStarted?.call(args![0]));
-    _hubConnection?.on("new_round", (args) => onNewRound?.call(args![0]));
-    _hubConnection?.on("question_results", (args) => onQuestionResults?.call(args![0]));
-    _hubConnection?.on("game_over", (args) => onGameOver?.call(args![0]));
-    _hubConnection?.on("game_reset", (args) => onGameReset?.call(null));
-    _hubConnection?.on("lobby_deleted", (args) => onLobbyDeleted?.call(null));
+    await _connection?.start();
+  }
 
-    // Start Connection
+  // ✅ Helper: Safely invokes methods, throwing a readable error if disconnected
+  Future<void> _invoke(String methodName, List<Object>? args) async {
+    if (_connection == null || _connection!.state != HubConnectionState.Connected) {
+      throw Exception("Connection lost. Please restart or check internet.");
+    }
+    await _connection!.invoke(methodName, args: args);
+  }
+
+  Future<void> createGame(
+    String hostName,
+    String hostAvatar,
+    String mode,
+    int questionCount,
+    String category,
+    int timer,
+    String difficulty,
+    String customCode,
+  ) async {
+    await _invoke("CreateGame", [
+      hostName,
+      hostAvatar,
+      mode,
+      questionCount,
+      category,
+      timer,
+      difficulty,
+      customCode
+    ]);
+  }
+
+  Future<void> joinGame(String code, String name, String avatar, bool isHost) async {
+    await _invoke("JoinGame", [code, name, avatar, isHost]);
+  }
+
+  Future<void> updateSettings(String code, String mode, int questionCount, String category, int timer, String difficulty) async {
+    await _invoke("UpdateSettings", [code, mode, questionCount, category, timer, difficulty]);
+  }
+
+  Future<void> toggleReady(String code, bool isReady) async {
+    await _invoke("ToggleReady", [code, isReady]);
+  }
+
+  Future<void> startGame(String code) async {
+    await _invoke("StartGame", [code]);
+  }
+
+  Future<void> submitAnswer(String code, int questionId, String answer, double time) async {
+    await _invoke("SubmitAnswer", [code, questionId, answer, time]);
+  }
+
+  Future<void> nextQuestion(String code) async {
+    await _invoke("NextQuestion", [code]);
+  }
+
+  Future<void> postChat(String code, String msg) async {
+    await _invoke("PostChat", [code, msg]);
+  }
+
+  Future<void> leaveLobby(String code) async {
     try {
-      await _hubConnection?.start();
-      debugPrint("SignalR Connected ID: ${_hubConnection?.connectionId}");
-    } catch (e) {
-      debugPrint("SignalR Connection Failed: $e");
-      rethrow; // Pass error to Provider to show UI message
+      await _invoke("LeaveLobby", [code]);
+    } catch (_) {
+      // Ignore errors when leaving (e.g. if already disconnected)
     }
   }
 
-  // Invokers
-  Future<void> createGame(String n, String m, int q, String c, int t, String d, String code) async {
-    await _hubConnection?.invoke("CreateGame", args: [n, m, q, c, t, d, code]);
+  Future<void> playAgain(String code) async {
+    await _invoke("PlayAgain", [code]);
   }
 
-  Future<void> joinGame(String code, String name, String avatar, bool spectator) async {
-    await _hubConnection?.invoke("JoinGame", args: [code, name, avatar, spectator]);
+  Future<void> resetToLobby(String code) async {
+    await _invoke("ResetToLobby", [code]);
   }
-
-  Future<void> updateSettings(String code, String m, int q, String c, int t, String d) async {
-    await _hubConnection?.invoke("UpdateSettings", args: [code, m, q, c, t, d]);
-  }
-
-  Future<void> startGame(String code) async => await _hubConnection?.invoke("StartGame", args: [code]);
-  Future<void> nextQuestion(String code) async => await _hubConnection?.invoke("NextQuestion", args: [code]);
-  Future<void> submitAnswer(String code, int qId, String ans, double time) async => await _hubConnection?.invoke("SubmitAnswer", args: [code, qId, ans, time]);
-  Future<void> postChat(String code, String msg) async => await _hubConnection?.invoke("PostChat", args: [code, msg]);
-  Future<void> toggleReady(String code, bool isReady) async => await _hubConnection?.invoke("ToggleReady", args: [code, isReady]);
-  Future<void> leaveLobby(String code) async => await _hubConnection?.invoke("LeaveLobby", args: [code]);
-  Future<void> playAgain(String code) async => await _hubConnection?.invoke("PlayAgain", args: [code]);
-  Future<void> resetToLobby(String code) async => await _hubConnection?.invoke("ResetToLobby", args: [code]);
 }

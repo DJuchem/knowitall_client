@@ -6,6 +6,7 @@ import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
 import '../theme/app_theme.dart';
+import 'dart:math';
 
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});
@@ -57,56 +58,105 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _initMedia(String? payload, String type, GameProvider game) {
-    _mediaStopTimer?.cancel();
+  _mediaStopTimer?.cancel();
 
-    if (!type.contains("music") || payload == null || payload.isEmpty) {
-      _ytController?.close();
-      _ytController = null;
-      if (!game.isMusicPlaying && game.isMusicEnabled) game.initMusic();
-      return;
-    }
+  // Not music => tear down YT and resume background music (if enabled)
+  if (!type.toLowerCase().contains("music") || payload == null || payload.trim().isEmpty) {
+    _ytController?.close();
+    _ytController = null;
+    if (!game.isMusicPlaying && game.isMusicEnabled) game.initMusic();
+    return;
+  }
 
-    game.stopMusic();
+  // Music question => stop background music while YT plays
+  game.stopMusic();
 
-    String videoId = payload;
-    int startSec = 0;
-    int? endSec;
+  final raw = payload.trim();
 
-    if (payload.contains('|')) {
-      final parts = payload.split('|');
-      videoId = parts[0];
+  // Payload formats supported:
+  //  1) "VIDEOID" (start at 0)
+  //  2) "VIDEOID|start-end"  (explicit segment)
+  //  3) "VIDEOID|min-max"    (RANGE: pick random start in [min..max], no explicit end)
+  String videoId = raw;
+  int startSec = 0;
+  int? endSec;
 
-      if (parts.length > 1) {
-        final range = parts[1].split('-');
-        if (range.isNotEmpty) startSec = int.tryParse(range[0]) ?? 0;
-        if (range.length > 1) endSec = int.tryParse(range[1]);
+  if (raw.contains('|')) {
+    final parts = raw.split('|');
+    videoId = parts[0].trim();
+
+    if (parts.length > 1) {
+      final rangePart = parts[1].trim();
+      if (rangePart.contains('-')) {
+        final ab = rangePart.split('-');
+        final a = int.tryParse(ab[0].trim());
+        final b = (ab.length > 1) ? int.tryParse(ab[1].trim()) : null;
+
+        if (a != null && b != null) {
+          // Interpret "a-b" as:
+          // - explicit (start-end) if end > start and values look like a segment
+          // - otherwise treat as a start range (min-max) and pick random start
+          //
+          // Your requirement: "aYUU1MybL9U|40-100" is a START RANGE.
+          // So we treat ALL "a-b" as start-range unless it's clearly an explicit segment
+          // (i.e., you later decide to send start-end like "65-83").
+          if (b > a && (b - a) <= 30) {
+            // short window => assume explicit segment start-end (legacy support)
+            startSec = a;
+            endSec = b;
+          } else {
+            // treat as start range min-max
+            final minS = a < b ? a : b;
+            final maxS = a < b ? b : a;
+            startSec = Random().nextInt((maxS - minS) + 1) + minS;
+            endSec = null; // range mode doesn't define end here
+          }
+        } else if (a != null) {
+          startSec = a;
+        }
+      } else {
+        // "VIDEOID|NN"
+        final s = int.tryParse(rangePart);
+        if (s != null) startSec = s;
       }
     }
-
-    if (_ytController != null) {
-      _ytController!.loadVideoById(videoId: videoId, startSeconds: startSec.toDouble());
-    } else {
-      _ytController = YoutubePlayerController.fromVideoId(
-        videoId: videoId,
-        autoPlay: true,
-        params: const YoutubePlayerParams(
-          showControls: false,
-          showFullscreenButton: false,
-          loop: false,
-          mute: false,
-        ),
-      );
-    }
-
-    if (endSec != null && endSec > startSec) {
-      final durationMs = (endSec - startSec) * 1000;
-      _mediaStopTimer = Timer(Duration(milliseconds: durationMs), () {
-        if (mounted && _ytController != null) {
-          _ytController!.pauseVideo();
-        }
-      });
-    }
   }
+
+  // Load / (re)create controller
+  if (_ytController != null) {
+    _ytController!.loadVideoById(videoId: videoId, startSeconds: startSec.toDouble());
+    _ytController!.playVideo();
+  } else {
+    _ytController = YoutubePlayerController(
+      params: const YoutubePlayerParams(
+        showControls: false,
+        showFullscreenButton: false,
+        loop: false,
+        mute: false,
+      ),
+    );
+    _ytController!.loadVideoById(videoId: videoId, startSeconds: startSec.toDouble());
+    _ytController!.playVideo();
+  }
+
+  // IMPORTANT FIX: do NOT stop before countdown ends.
+  // If server gave an explicit endSec, we still must not stop early.
+  // We clamp the stop time to at least the lobby timer duration.
+  final int questionSeconds = game.lobby?.timer ?? 30;
+
+  int stopAfterSeconds = questionSeconds;
+
+  if (endSec != null && endSec > startSec) {
+    final segLen = endSec - startSec;
+    // never stop earlier than the question timer
+    stopAfterSeconds = (segLen < questionSeconds) ? questionSeconds : segLen;
+  }
+
+  _mediaStopTimer = Timer(Duration(seconds: stopAfterSeconds), () {
+    if (!mounted || _ytController == null) return;
+    _ytController!.pauseVideo();
+  });
+}
 
   void _processLobbyData(GameProvider game, {bool force = false}) {
     final lobby = game.lobby;

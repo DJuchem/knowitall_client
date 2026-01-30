@@ -6,17 +6,27 @@ import '../widgets/avatar_selector.dart';
 import '../widgets/client_settings_dialog.dart';
 
 class WelcomeScreen extends StatefulWidget {
-  const WelcomeScreen({Key? key}) : super(key: key);
+  const WelcomeScreen({super.key});
 
   @override
-  _WelcomeScreenState createState() => _WelcomeScreenState();
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
-  String _selectedAvatar = "assets/avatars/avatar1.webp";
+
+  // IMPORTANT: must match AvatarSelector.dart paths
+  String _selectedAvatar = "assets/avatars/avatar_0.png";
+
   final String _serverUrl = "http://localhost:5074/ws";
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _codeController.dispose();
+    super.dispose();
+  }
 
   bool _validateName(BuildContext context) {
     if (_nameController.text.trim().isEmpty) {
@@ -32,6 +42,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   String cleanPath(String path) {
+    // Fix “assets/assets/..” on web
     if (path.startsWith("assets/assets/")) {
       return path.replaceFirst("assets/assets/", "assets/");
     }
@@ -50,22 +61,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           children: [
             Positioned.fill(
               child: Image.asset(
-                game.wallpaper,
+                cleanPath(game.wallpaper),
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    Container(color: const Color(0xFF0F1221)),
+                alignment: Alignment.topCenter,
+                errorBuilder: (_, __, ___) => Container(color: const Color(0xFF0F1221)),
               ),
             ),
             Positioned.fill(
-              child: Container(color: Colors.black.withValues(alpha: 0.6)),
+              child: Container(color: Colors.black.withOpacity(0.6)),
             ),
 
             Positioned(
               top: 40,
               right: 20,
               child: IconButton(
-                icon: const Icon(Icons.settings,
-                    color: Colors.white70, size: 36),
+                icon: const Icon(Icons.settings, color: Colors.white70, size: 36),
                 onPressed: () => showDialog(
                   context: context,
                   builder: (_) => ClientSettingsDialog(),
@@ -79,11 +89,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 child: Column(
                   children: [
                     FadeInDown(
-                      child: Container(
+                      child: Padding(
                         padding: const EdgeInsets.all(20),
                         child: Image.asset(
                           cleanPath(game.config.logoPath),
-                          height: 150,
+                          height: 360,
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) => const Icon(
                             Icons.psychology,
@@ -93,25 +103,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    FadeIn(
-                      child: Text(
-                        game.config.appTitle,
-                        style: textTheme.titleLarge
-                            ?.copyWith(color: Colors.white, fontSize: 48),
-                      ),
-                    ),
-                    const SizedBox(height: 50),
+
+                    const SizedBox(height: 28),
 
                     FadeInUp(
                       child: Container(
                         width: 600,
-                        padding: const EdgeInsets.all(40),
+                        padding: const EdgeInsets.all(34),
                         decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surface
-                              .withValues(alpha: 0.9),
+                          color: Theme.of(context).colorScheme.surface.withOpacity(0.90),
                           borderRadius: BorderRadius.circular(30),
                           border: Border.all(color: Colors.white10),
                         ),
@@ -121,44 +121,38 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               controller: _nameController,
                               style: textTheme.bodyLarge,
                               decoration: InputDecoration(
-                                prefixIcon:
-                                    Icon(Icons.person, color: game.themeColor),
+                                prefixIcon: Icon(Icons.person, color: game.themeColor),
                                 labelText: "YOUR NICKNAME",
                               ),
                             ),
-                            const SizedBox(height: 30),
+                            const SizedBox(height: 24),
 
                             AvatarSelector(
-                              initialAvatar: _selectedAvatar,
-                              onSelect: (val) =>
-                                  setState(() => _selectedAvatar = val),
+                              initialAvatar: cleanPath(_selectedAvatar),
+                              onSelect: (val) {
+                                setState(() => _selectedAvatar = cleanPath(val));
+                              },
                             ),
 
-                            const SizedBox(height: 40),
+                            const SizedBox(height: 28),
 
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: game.themeColor,
-                                ),
+                                style: ElevatedButton.styleFrom(backgroundColor: game.themeColor),
                                 onPressed: () async {
                                   if (!_validateName(context)) return;
 
                                   game.initMusic();
-                                  game.setPlayerInfo(
-                                      _nameController.text, _selectedAvatar);
-
+                                  game.setPlayerInfo(_nameController.text.trim(), cleanPath(_selectedAvatar));
                                   await game.connect(_serverUrl);
-
-                                  // NO Navigator: switch to Create screen via state
                                   game.setAppState(AppState.create);
                                 },
                                 child: const Text("CREATE NEW GAME"),
                               ),
                             ),
 
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 18),
 
                             Row(
                               children: [
@@ -166,19 +160,19 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   child: TextField(
                                     controller: _codeController,
                                     style: textTheme.bodyLarge,
-                                    decoration: const InputDecoration(
-                                      labelText: "GAME CODE",
-                                    ),
+                                    decoration: const InputDecoration(labelText: "GAME CODE"),
                                   ),
                                 ),
                                 const SizedBox(width: 15),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white10,
+                                    foregroundColor: Colors.white,
                                   ),
                                   onPressed: () async {
                                     if (!_validateName(context)) return;
-                                    if (_codeController.text.isEmpty) {
+                                    final code = _codeController.text.trim();
+                                    if (code.isEmpty) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         const SnackBar(
                                           content: Text("Enter a Game Code!"),
@@ -189,20 +183,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                     }
 
                                     game.initMusic();
-                                    game.setPlayerInfo(
-                                        _nameController.text, _selectedAvatar);
+                                    game.setPlayerInfo(_nameController.text.trim(), cleanPath(_selectedAvatar));
 
                                     await game.connect(_serverUrl);
                                     await game.joinLobby(
-                                      _codeController.text,
-                                      _nameController.text,
-                                      _selectedAvatar,
+                                      code,
+                                      _nameController.text.trim(),
+                                      cleanPath(_selectedAvatar),
                                     );
-
-                                    // NO Navigator: server -> onGameJoined -> appState=lobby
                                   },
-                                  child: const Icon(Icons.arrow_forward,
-                                      color: Colors.white, size: 30),
+                                  child: const Icon(Icons.arrow_forward, color: Colors.white, size: 30),
                                 )
                               ],
                             ),

@@ -7,7 +7,11 @@ class AvatarSelector extends StatefulWidget {
   final Function(String) onSelect;
   final String initialAvatar;
 
-  const AvatarSelector({Key? key, required this.onSelect, this.initialAvatar = "assets/avatars/avatar1.webp"}) : super(key: key);
+  const AvatarSelector({
+    Key? key,
+    required this.onSelect,
+    this.initialAvatar = "assets/avatars/avatar1.webp",
+  }) : super(key: key);
 
   @override
   _AvatarSelectorState createState() => _AvatarSelectorState();
@@ -33,11 +37,14 @@ class _AvatarSelectorState extends State<AvatarSelector> {
       setState(() {
         _avatars = found;
         _isLoading = false;
+
         if (!_selected.startsWith("data:image") && !_avatars.contains(_selected) && _avatars.isNotEmpty) {
-           _selected = _avatars.first;
+          _selected = _avatars.first;
         }
       });
-    } catch (_) { setState(() => _isLoading = false); }
+    } catch (_) {
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _pickImage() async {
@@ -59,7 +66,17 @@ class _AvatarSelectorState extends State<AvatarSelector> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()));
+    if (_isLoading) {
+      return const SizedBox(height: 120, child: Center(child: CircularProgressIndicator()));
+    }
+
+    final theme = Theme.of(context);
+
+    // Build a “display list” where uploaded image (if any) is first
+    final items = <String>[
+      if (_selected.startsWith("data:image")) _selected,
+      ..._avatars.where((a) => !_selected.startsWith("data:image") || a != _selected),
+    ];
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -68,45 +85,48 @@ class _AvatarSelectorState extends State<AvatarSelector> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("SELECT IDENTITY", style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 14, letterSpacing: 1.5)),
+            Text(
+              "SELECT IDENTITY",
+              style: theme.textTheme.bodyLarge?.copyWith(fontSize: 14, letterSpacing: 1.5),
+            ),
             TextButton.icon(
               icon: const Icon(Icons.cloud_upload),
               label: const Text("UPLOAD"),
               onPressed: _pickImage,
-            )
+            ),
           ],
         ),
         const SizedBox(height: 10),
         Container(
-          height: 110,
+          height: 160, // enough room for 2 rows
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Theme.of(context).inputDecorationTheme.fillColor,
-            borderRadius: BorderRadius.circular(16)
+            color: theme.inputDecorationTheme.fillColor,
+            borderRadius: BorderRadius.circular(16),
           ),
           child: GridView.builder(
-            scrollDirection: Axis.vertical,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 5, crossAxisSpacing: 12, mainAxisSpacing: 12),
-            itemCount: _avatars.length + (_selected.startsWith("data:image") ? 1 : 0),
+            scrollDirection: Axis.horizontal, // <- horizontal scroll
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2, // <- TWO ROWS
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+            ),
+            itemCount: items.length,
             itemBuilder: (ctx, i) {
-              // Show uploaded image first if it exists
-              String path;
-              if (_selected.startsWith("data:image")) {
-                if (i == 0) path = _selected;
-                else path = _avatars[i - 1];
-              } else {
-                path = _avatars[i];
-              }
-
+              final path = items[i];
               final isSelected = path == _selected;
+
               return GestureDetector(
-                onTap: () { setState(() => _selected = path); widget.onSelect(path); },
+                onTap: () {
+                  setState(() => _selected = path);
+                  widget.onSelect(path);
+                },
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent, 
-                      width: 3
+                      color: isSelected ? theme.colorScheme.primary : Colors.transparent,
+                      width: 3,
                     ),
                   ),
                   child: CircleAvatar(backgroundImage: _getImage(path)),
