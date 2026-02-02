@@ -7,7 +7,6 @@ import '../models/lobby_data.dart';
 import '../widgets/chat_sheet.dart';
 import '../widgets/lobby_settings_sheet.dart';
 import '../widgets/game_avatar.dart';
-import '../screens/quiz_screen.dart';
 
 class LobbyScreen extends StatefulWidget {
   const LobbyScreen({Key? key}) : super(key: key);
@@ -18,7 +17,6 @@ class LobbyScreen extends StatefulWidget {
 
 class _LobbyScreenState extends State<LobbyScreen> {
   int _prevPlayerCount = 0;
-  bool _didNavToQuiz = false;
 
   @override
   void initState() {
@@ -31,28 +29,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     });
   }
 
-  void _checkNavigation(GameProvider game) {
-    // If lobby was deleted (host left), navigate back
-    if (game.lobby == null && game.appState == AppState.welcome) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      });
-      return;
-    }
-
-    // Navigate to Quiz
-    if (_didNavToQuiz) return;
-    if (game.appState == AppState.quiz) {
-      _didNavToQuiz = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const QuizScreen()),
-        );
-      });
-    }
-  }
+  // ✅ REMOVED: _checkNavigation (AppRouter handles this)
 
   @override
   Widget build(BuildContext context) {
@@ -66,8 +43,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
         body: Center(child: CircularProgressIndicator()),
       );
     }
-
-    _checkNavigation(game);
 
     // Snackbar for players leaving
     if (lobby.players.length < _prevPlayerCount) {
@@ -91,7 +66,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     } catch (_) {}
 
     return Scaffold(
-      extendBodyBehindAppBar: true, // ✅ Fix 3: No black bar
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -101,7 +76,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
               child: IconButton(
-                icon: Icon(Icons.settings, color: Colors.white, size: 32), // ✅ Mobile friendly size
+                icon: const Icon(Icons.settings, color: Colors.white, size: 32),
                 onPressed: () => showModalBottomSheet(
                   context: context,
                   isScrollControlled: true,
@@ -121,15 +96,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
             fit: BoxFit.cover,
           ),
           
-          // Dark Overlay for readability
           Container(color: Colors.black.withOpacity(0.3)),
 
-          // Main Content
           SafeArea(
-            bottom: false, // We handle bottom padding for ChatSheet
+            bottom: false,
             child: Column(
               children: [
-                const SizedBox(height: 10), // Space from top
+                const SizedBox(height: 10),
 
                 // --- LOBBY CODE ---
                 GestureDetector(
@@ -155,7 +128,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         child: Text(
                           lobby.code,
                           style: const TextStyle(
-                            fontSize: 72, // ✅ Bigger
+                            fontSize: 72,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
                             letterSpacing: 4,
@@ -197,10 +170,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       ],
                       Text(
                         "${lobby.mode.toUpperCase()}  •  ${lobby.timer}s  •  ${lobby.difficulty ?? 'Mixed'}",
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white, 
                           fontWeight: FontWeight.bold, 
-                          fontSize: 16 // ✅ Legible size
+                          fontSize: 16 
                         ),
                       ),
                     ],
@@ -213,7 +186,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    constraints: const BoxConstraints(maxWidth: 600), // Max width for tablets/desktop
+                    constraints: const BoxConstraints(maxWidth: 600),
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: ListView.separated(
                       padding: EdgeInsets.zero,
@@ -226,7 +199,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
                         return Container(
                           decoration: BoxDecoration(
-                            // ✅ Fix 2: Less transparent background
                             color: Colors.black.withOpacity(0.7),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
@@ -238,13 +210,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
                           ),
                           child: ListTile(
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            leading: GameAvatar(path: p.avatar ?? "", radius: 30), // ✅ Bigger avatar
+                            leading: GameAvatar(path: p.avatar ?? "", radius: 30),
                             title: Text(
                               p.name + (p.name == lobby.host ? " (HOST)" : ""),
                               style: const TextStyle(
                                 color: Colors.white, 
                                 fontWeight: FontWeight.bold, 
-                                fontSize: 18 // ✅ Bigger text
+                                fontSize: 18
                               ),
                             ),
                             trailing: Icon(
@@ -259,14 +231,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   ),
                 ),
 
-                // --- START BUTTON (With padding to clear Chat) ---
-                // ✅ Fix 1: Added SafeArea bottom + padding
+                // --- START BUTTON ---
                 Container(
                   width: double.infinity,
                   constraints: const BoxConstraints(maxWidth: 500),
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 90), // Bottom 90px clears chat bar
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 90),
                   child: SizedBox(
-                    height: 60, // ✅ Mobile friendly button height
+                    height: 60,
                     child: isHost
                       ? ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -274,6 +245,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                             elevation: 8,
                           ),
+                          // Triggers AppRouter via game state change
                           onPressed: allReady ? () => game.startGame() : null,
                           child: Text(
                             allReady ? "START GAME" : "WAITING FOR PLAYERS ($readyCount/${lobby.players.length})",
@@ -298,7 +270,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             ),
           ),
 
-          // --- LEAVE BUTTON (Top Left) ---
+          // --- LEAVE BUTTON ---
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
@@ -307,16 +279,16 @@ class _LobbyScreenState extends State<LobbyScreen> {
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.9), // Solid red for visibility
+                  color: Colors.red.withOpacity(0.9),
                   shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))]
+                  boxShadow: [const BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))]
                 ),
                 child: const Icon(Icons.close, color: Colors.white, size: 28),
               ),
             ),
           ),
 
-          // --- CHAT SHEET (Bottom) ---
+          // --- CHAT SHEET ---
           Align(
             alignment: Alignment.bottomCenter,
             child: ChatSheet(),
@@ -326,30 +298,26 @@ class _LobbyScreenState extends State<LobbyScreen> {
     );
   }
 
-  void _confirmLeave(BuildContext context, GameProvider game) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text("Leave Game?", style: TextStyle(color: Colors.white)),
-        content: Text(
-          game.amIHost ? "As host, this will end the game for everyone." : "Are you sure you want to leave?",
-          style: const TextStyle(color: Colors.white70, fontSize: 16),
+void _confirmLeave(BuildContext context, GameProvider game) {
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text("Leave Game?"),
+      actions: [
+        TextButton(
+          child: const Text("Cancel"),
+          onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          TextButton(
-            child: const Text("Cancel", style: TextStyle(color: Colors.white54)),
-            onPressed: () => Navigator.pop(context),
-          ),
-          TextButton(
-            child: const Text("LEAVE", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-            onPressed: () {
-              game.leaveLobby();
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-    );
-  }
+        TextButton(
+          child: const Text("LEAVE"),
+          onPressed: () async {
+            Navigator.pop(context); // Close dialog
+            await game.leaveLobby(); // Server-side leave
+            game.setAppState(AppState.welcome); // ✅ Force UI back to Welcome
+          },
+        ),
+      ],
+    ),
+  );
+}
 }

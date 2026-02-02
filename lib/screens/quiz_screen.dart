@@ -6,6 +6,7 @@ import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
 import '../theme/app_theme.dart';
+
 import 'dart:math';
 
 class QuizScreen extends StatefulWidget {
@@ -40,11 +41,7 @@ class _QuizScreenState extends State<QuizScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final game = Provider.of<GameProvider>(context);
-
-    // NO NAVIGATION HERE.
-    // Root decides which screen is visible based on appState.
     if (game.appState != AppState.quiz) return;
-
     _processLobbyData(game);
   }
 
@@ -58,109 +55,77 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _initMedia(String? payload, String type, GameProvider game) {
-  _mediaStopTimer?.cancel();
+    _mediaStopTimer?.cancel();
+    if (!type.toLowerCase().contains("music") || payload == null || payload.trim().isEmpty) {
+      _ytController?.close();
+      _ytController = null;
+      if (!game.isMusicPlaying && game.isMusicEnabled) game.initMusic();
+      return;
+    }
+    game.stopMusic();
 
-  // Not music => tear down YT and resume background music (if enabled)
-  if (!type.toLowerCase().contains("music") || payload == null || payload.trim().isEmpty) {
-    _ytController?.close();
-    _ytController = null;
-    if (!game.isMusicPlaying && game.isMusicEnabled) game.initMusic();
-    return;
-  }
+    final raw = payload.trim();
+    String videoId = raw;
+    int startSec = 0;
+    int? endSec;
 
-  // Music question => stop background music while YT plays
-  game.stopMusic();
-
-  final raw = payload.trim();
-
-  // Payload formats supported:
-  //  1) "VIDEOID" (start at 0)
-  //  2) "VIDEOID|start-end"  (explicit segment)
-  //  3) "VIDEOID|min-max"    (RANGE: pick random start in [min..max], no explicit end)
-  String videoId = raw;
-  int startSec = 0;
-  int? endSec;
-
-  if (raw.contains('|')) {
-    final parts = raw.split('|');
-    videoId = parts[0].trim();
-
-    if (parts.length > 1) {
-      final rangePart = parts[1].trim();
-      if (rangePart.contains('-')) {
-        final ab = rangePart.split('-');
-        final a = int.tryParse(ab[0].trim());
-        final b = (ab.length > 1) ? int.tryParse(ab[1].trim()) : null;
-
-        if (a != null && b != null) {
-          // Interpret "a-b" as:
-          // - explicit (start-end) if end > start and values look like a segment
-          // - otherwise treat as a start range (min-max) and pick random start
-          //
-          // Your requirement: "aYUU1MybL9U|40-100" is a START RANGE.
-          // So we treat ALL "a-b" as start-range unless it's clearly an explicit segment
-          // (i.e., you later decide to send start-end like "65-83").
-          if (b > a && (b - a) <= 30) {
-            // short window => assume explicit segment start-end (legacy support)
-            startSec = a;
-            endSec = b;
-          } else {
-            // treat as start range min-max
-            final minS = a < b ? a : b;
-            final maxS = a < b ? b : a;
-            startSec = Random().nextInt((maxS - minS) + 1) + minS;
-            endSec = null; // range mode doesn't define end here
-          }
-        } else if (a != null) {
-          startSec = a;
+    if (raw.contains('|')) {
+      final parts = raw.split('|');
+      videoId = parts[0].trim();
+      if (parts.length > 1) {
+        final rangePart = parts[1].trim();
+        if (rangePart.contains('-')) {
+          final ab = rangePart.split('-');
+          final a = int.tryParse(ab[0].trim());
+          final b = (ab.length > 1) ? int.tryParse(ab[1].trim()) : null;
+          if (a != null && b != null) {
+            if (b > a && (b - a) <= 30) {
+              startSec = a;
+              endSec = b;
+            } else {
+              final minS = a < b ? a : b;
+              final maxS = a < b ? b : a;
+              startSec = Random().nextInt((maxS - minS) + 1) + minS;
+              endSec = null;
+            }
+          } else if (a != null) startSec = a;
+        } else {
+          final s = int.tryParse(rangePart);
+          if (s != null) startSec = s;
         }
-      } else {
-        // "VIDEOID|NN"
-        final s = int.tryParse(rangePart);
-        if (s != null) startSec = s;
       }
     }
+
+    if (_ytController != null) {
+      _ytController!.loadVideoById(videoId: videoId, startSeconds: startSec.toDouble());
+      _ytController!.playVideo();
+    } else {
+      _ytController = YoutubePlayerController(
+        params: const YoutubePlayerParams(
+          showControls: false,
+          showFullscreenButton: false,
+          loop: false,
+          mute: false,
+        ),
+      );
+      _ytController!.loadVideoById(videoId: videoId, startSeconds: startSec.toDouble());
+      _ytController!.playVideo();
+    }
+
+    final int questionSeconds = game.lobby?.timer ?? 30;
+    int stopAfterSeconds = questionSeconds;
+    if (endSec != null && endSec > startSec) {
+      final segLen = endSec - startSec;
+      stopAfterSeconds = (segLen < questionSeconds) ? questionSeconds : segLen;
+    }
+    _mediaStopTimer = Timer(Duration(seconds: stopAfterSeconds), () {
+      if (!mounted || _ytController == null) return;
+      _ytController!.pauseVideo();
+    });
   }
-
-  // Load / (re)create controller
-  if (_ytController != null) {
-    _ytController!.loadVideoById(videoId: videoId, startSeconds: startSec.toDouble());
-    _ytController!.playVideo();
-  } else {
-    _ytController = YoutubePlayerController(
-      params: const YoutubePlayerParams(
-        showControls: false,
-        showFullscreenButton: false,
-        loop: false,
-        mute: false,
-      ),
-    );
-    _ytController!.loadVideoById(videoId: videoId, startSeconds: startSec.toDouble());
-    _ytController!.playVideo();
-  }
-
-  // IMPORTANT FIX: do NOT stop before countdown ends.
-  // If server gave an explicit endSec, we still must not stop early.
-  // We clamp the stop time to at least the lobby timer duration.
-  final int questionSeconds = game.lobby?.timer ?? 30;
-
-  int stopAfterSeconds = questionSeconds;
-
-  if (endSec != null && endSec > startSec) {
-    final segLen = endSec - startSec;
-    // never stop earlier than the question timer
-    stopAfterSeconds = (segLen < questionSeconds) ? questionSeconds : segLen;
-  }
-
-  _mediaStopTimer = Timer(Duration(seconds: stopAfterSeconds), () {
-    if (!mounted || _ytController == null) return;
-    _ytController!.pauseVideo();
-  });
-}
 
   void _processLobbyData(GameProvider game, {bool force = false}) {
     final lobby = game.lobby;
-
     if (lobby == null || lobby.quizData == null || lobby.quizData!.isEmpty) {
       if (mounted && _questionText != "Synchronizing...") {
         setState(() => _questionText = "Synchronizing...");
@@ -176,7 +141,6 @@ class _QuizScreenState extends State<QuizScreen> {
 
       final int idx = (_internalIndex < 0 || _internalIndex >= lobby.quizData!.length) ? 0 : _internalIndex;
       final q = lobby.quizData![idx];
-
       final txt = q['Question'] ?? q['question'] ?? "No Question Text";
       final media = q['MediaPayload'] ?? q['mediaPayload'] ?? q['Image'] ?? q['image'];
       final type = q['Type'] ?? q['type'] ?? "general";
@@ -188,7 +152,6 @@ class _QuizScreenState extends State<QuizScreen> {
       if (game.currentStreak >= 3) _confettiController.play();
 
       _initMedia(media, type, game);
-
       startTimer();
 
       if (mounted) {
@@ -216,14 +179,22 @@ class _QuizScreenState extends State<QuizScreen> {
     });
   }
 
-  void _submitAnswer(String answer, BuildContext ctx) {
+  Future<void> _submitAnswer(String answer, BuildContext ctx) async {
     if (_hasAnswered) return;
     setState(() {
       _selectedAnswer = answer;
       _hasAnswered = true;
     });
+
     final game = Provider.of<GameProvider>(ctx, listen: false);
-    game.submitAnswer(answer, (game.lobby!.timer - _timeLeft).toDouble(), _internalIndex);
+    try {
+      await game.submitAnswer(answer, (game.lobby!.timer - _timeLeft).toDouble(), _internalIndex);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to submit: $e"), backgroundColor: Colors.red),
+      );
+    }
   }
 
   void _confirmLeave(BuildContext context, GameProvider game) {
@@ -238,8 +209,8 @@ class _QuizScreenState extends State<QuizScreen> {
           TextButton(
             child: const Text("LEAVE", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
             onPressed: () {
-              game.leaveLobby();
               Navigator.pop(context);
+              game.leaveLobby();
             },
           ),
         ],
@@ -250,15 +221,16 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
+    final lobby = game.lobby;
 
-    // If root hasn't switched yet or lobby not ready
-    if (game.lobby == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    if (lobby == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
- final int maxTime = game.lobby?.timer ?? 30;
-final double progress = maxTime > 0 ? (_timeLeft / maxTime).toDouble() : 0.0;
-
+    final int maxTime = lobby.timer;
+    final double progress = maxTime > 0 ? (_timeLeft / maxTime).toDouble() : 0.0;
+    
+    // ✅ NEW INFO LOGIC
+    final int currentQ = _internalIndex + 1;
+    final int totalQ = lobby.quizData?.length ?? 10; 
 
     if (_questionText == "Synchronizing...") {
       return const BaseScaffold(
@@ -276,18 +248,27 @@ final double progress = maxTime > 0 ? (_timeLeft / maxTime).toDouble() : 0.0;
           icon: const Icon(Icons.exit_to_app, color: Colors.redAccent),
           onPressed: () => _confirmLeave(context, game),
         ),
-        title: game.currentStreak > 1
-            ? Row(
+        // ✅ ADDED: Player Name + Question Count in AppBar
+        title: Column(
+          children: [
+            Text(game.myName, style: const TextStyle(fontSize: 14, color: Colors.white70)),
+            Text("Question $currentQ / $totalQ", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        centerTitle: true,
+        actions: [
+          if (game.currentStreak > 1)
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.local_fire_department, color: Colors.orange),
-                  Text(
-                    "${game.currentStreak}",
-                    style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 24),
-                  )
+                  Text("${game.currentStreak}", style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 20)),
                 ],
-              )
-            : null,
+              ),
+            )
+        ],
       ),
       body: Stack(
         children: [
@@ -339,21 +320,17 @@ final double progress = maxTime > 0 ? (_timeLeft / maxTime).toDouble() : 0.0;
                 Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
-                    children: _answers
-                        .map(
-                          (ans) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _selectedAnswer == ans ? game.themeColor : Colors.white.withValues(alpha: 0.1),
-                                minimumSize: const Size(double.infinity, 60),
-                              ),
-                              onPressed: _hasAnswered ? null : () => _submitAnswer(ans, context),
-                              child: Text(ans, style: const TextStyle(fontSize: 18)),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                    children: _answers.map((ans) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _selectedAnswer == ans ? game.themeColor : Colors.white.withValues(alpha: 0.1),
+                          minimumSize: const Size(double.infinity, 60),
+                        ),
+                        onPressed: _hasAnswered ? null : () => _submitAnswer(ans, context),
+                        child: Text(ans, style: const TextStyle(fontSize: 18)),
+                      ),
+                    )).toList(),
                   ),
                 ),
                 const SizedBox(height: 10),

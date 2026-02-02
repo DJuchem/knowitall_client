@@ -6,8 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
-import '../theme/app_theme.dart';
 
+import '../theme/app_theme.dart'; // ✅ Added Theme Import
 
 class CreateGameScreen extends StatefulWidget {
   const CreateGameScreen({super.key});
@@ -19,14 +19,12 @@ class CreateGameScreen extends StatefulWidget {
 class _CreateGameScreenState extends State<CreateGameScreen> {
   final _customCodeController = TextEditingController();
 
-  // Defaults
   String _selectedMode = "general-knowledge";
   String _difficulty = "mixed";
   String _selectedCategory = "";
   int _questionCount = 10;
   bool _isLoading = false;
 
-  // Categories
   bool _catsLoading = false;
   String? _catsError;
   Map<String, String> _categories = const {"Any Category": ""};
@@ -74,6 +72,7 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
   }
 
   Future<void> _fetchCategories() async {
+    if (!mounted) return;
     setState(() {
       _catsLoading = true;
       _catsError = null;
@@ -93,6 +92,7 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
         }
       }
 
+      if (!mounted) return;
       setState(() {
         _categories = map;
         if (!_categories.containsValue(_selectedCategory)) {
@@ -100,6 +100,7 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _catsError = "Category fetch failed";
         _categories = const {"Any Category": ""};
@@ -127,8 +128,9 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
         iconTheme: IconThemeData(color: textColor),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        // ✅ Close Button (X)
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.close),
           onPressed: () => game.setAppState(AppState.welcome),
         ),
       ),
@@ -224,7 +226,6 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                           setState(() => _isLoading = true);
                           await _saveSettings();
                           try {
-                            // Ensure 'game.myAvatar' exists in your GameProvider!
                             await game.createLobby(
                               game.myName,
                               game.myAvatar, 
