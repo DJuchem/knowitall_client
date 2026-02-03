@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KnowItAll TV</title>
+    <style>
+        body { margin: 0; padding: 0; background: #0F1221; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        #setup { display: flex; flex-direction: column; height: 100vh; justify-content: center; align-items: center; }
+        #game { display: none; height: 100vh; position: relative; }
+        
+        .code-box { background: rgba(255,255,255,0.1); padding: 20px 40px; border-radius: 20px; text-align: center; border: 2px solid rgba(255,255,255,0.2); }
+        .tv-code { font-size: 80px; font-weight: 900; letter-spacing: 10px; color: #00ffff; margin: 20px 0; }
+        
+        /* Lobby View */
+        #lobbyView { text-align: center; padding-top: 100px; display: none; }
+        .player-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; padding: 50px; }
+        .player-card { background: rgba(0,0,0,0.5); padding: 20px; border-radius: 15px; width: 150px; text-align: center; border: 2px solid transparent; }
+        .player-card.ready { border-color: #00ff00; }
+        .avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; background: #333; }
+        
+        /* Question View */
+        #questionView { display: none; height: 100%; flex-direction: column; justify-content: center; align-items: center; padding: 40px; text-align: center; }
+        .q-text { font-size: 48px; font-weight: bold; margin-bottom: 40px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .media-box { height: 300px; margin-bottom: 30px; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 80%; }
+        .answer-box { background: rgba(255,255,255,0.1); padding: 30px; font-size: 32px; border-radius: 15px; text-align: center; }
+        
+        /* Results View */
+        #resultsView { display: none; padding-top: 50px; text-align: center; }
+        .leaderboard { width: 60%; margin: 0 auto; background: rgba(0,0,0,0.4); border-radius: 20px; padding: 20px; }
+        .lb-row { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 28px; }
+        .lb-row:first-child { font-weight: bold; color: gold; font-size: 36px; }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="setup">
+        <div class="code-box">
+            <h2 style="margin:0; opacity:0.7;">CONNECT TO TV</h2>
+            <div class="tv-code" id="tvCodeDisplay">----</div>
+            <p style="opacity:0.5;">Enter this code on the Welcome Screen</p>
+        </div>
+    </div>
+
+    <div id="game">
+        <div id="lobbyView">
+            <h1 style="font-size: 60px;">JOIN GAME: <span id="lobbyCodeDisplay" style="color:#00ffff"></span></h1>
+            <div class="player-grid" id="playerGrid"></div>
+        </div>
+
+        <div id="questionView">
+            <div id="mediaContainer" class="media-box" style="display:none;"></div>
+            <div class="q-text" id="questionText"></div>
+            </div>
+
+        <div id="resultsView">
+            <h1 style="font-size: 50px; margin-bottom: 10px;">ROUND RESULTS</h1>
+            <h2 id="correctAnswerDisplay" style="color: #00ff00; margin-bottom: 40px;"></h2>
+            <div class="leaderboard" id="leaderboard"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script>
+        // 1. Generate Random Code
+        const tvCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+        document.getElementById('tvCodeDisplay').innerText = tvCode;
+
+        // 2. Connect SignalR
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/ws") // Adjust if needed
+            .withAutomaticReconnect()
+            .build();
+
+        async function start() {
+            try {
+                await connection.start();
+                console.log("SignalR Connected.");
+                await connection.invoke("RegisterTV", tvCode);
+            } catch (err) {
+                console.error(err);
+                setTimeout(start, 5000);
+            }
+        }
+
+        start();
+
+        // 3. Handle Events
+        function showView(viewId) {
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            ['lobbyView', 'questionView', 'resultsView'].forEach(id => {
+                document.getElementById(id).style.display = (id === viewId) ? 'flex' : 'none';
+                if(id === 'lobbyView' && viewId === 'lobbyView') document.getElementById(id).style.display = 'block';
+                if(id === 'resultsView' && viewId === 'resultsView') document.getElementById(id).style.display = 'block';
+            });
+        }
+
+        // LOBBY UPDATE
+        connection.on("lobby_update", (state) => {
+            if (state.started) return; // Ignore if game started (handled by other events)
+            
+            showView('lobbyView');
+            document.getElementById('lobbyCodeDisplay').innerText = state.code;
+            
+            const grid = document.getElementById('playerGrid');
+            grid.innerHTML = '';
+            
+            state.players.forEach(p => {
+                // Fix Asset Path for web
+                let avatar = p.avatar || "";
+                if(!avatar.startsWith("http") && !avatar.startsWith("assets/")) avatar = "assets/" + avatar;
+
+                const card = document.createElement('div');
+                card.className = `player-card ${p.ready ? 'ready' : ''}`;
+                card.innerHTML = `
+                    <img src="${avatar}" class="avatar" onerror="this.src='assets/avatars/avatar_0.png'">
+                    <div style="margin-top:10px; font-weight:bold;">${p.name}</div>
+                    <div style="font-size:12px; opacity:0.7;">${p.score} pts</div>
+                `;
+                grid.appendChild(card);
+            });
+        });
+
+        // NEW ROUND / GAME STARTED
+        const handleNewRound = (data) => {
+            showView('questionView');
+            const q = data.questionData || data.quizData[data.questionIndex];
+            
+            document.getElementById('questionText').innerText = q.Question;
+            
+            // Media Handling
+            const mediaBox = document.getElementById('mediaContainer');
+            mediaBox.innerHTML = '';
+            mediaBox.style.display = 'none';
+
+            if (q.Image && q.Image.startsWith("http")) {
+                mediaBox.style.display = 'block';
+                mediaBox.innerHTML = `<img src="${q.Image}" style="height:100%; width:auto;">`;
+            }
+        };
+
+        connection.on("game_started", handleNewRound);
+        connection.on("new_round", handleNewRound);
+
+        // RESULTS
+        connection.on("question_results", (data) => {
+            showView('resultsView');
+            document.getElementById('correctAnswerDisplay').innerText = "Correct: " + data.correctAnswer;
+            
+            const lb = document.getElementById('leaderboard');
+            lb.innerHTML = '';
+            
+            // Sort by score desc
+            const results = data.results.sort((a, b) => b.score - a.score);
+            
+            results.slice(0, 8).forEach((p, index) => {
+                const row = document.createElement('div');
+                row.className = 'lb-row';
+                row.innerHTML = `
+                    <div>${index + 1}. ${p.name}</div>
+                    <div>${p.score} pts ${p.correct ? '<span style="color:#00ff00; font-size:20px;">(+' + p.earned + ')</span>' : ''}</div>
+                `;
+                lb.appendChild(row);
+            });
+        });
+
+        connection.on("game_over", () => {
+            showView('resultsView');
+            document.getElementById('questionText').innerText = "GAME OVER";
+        });
+
+    </script>
+</body>
+</html>

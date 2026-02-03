@@ -1,9 +1,20 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 import '../providers/game_provider.dart';
 
-class ClientSettingsDialog extends StatelessWidget {
+class ClientSettingsDialog extends StatefulWidget {
   const ClientSettingsDialog({super.key});
+
+  @override
+  State<ClientSettingsDialog> createState() => _ClientSettingsDialogState();
+}
+
+class _ClientSettingsDialogState extends State<ClientSettingsDialog> {
+  // Use local state for dropdowns if you want them to be selectable 
+  // without immediately updating the provider (optional), 
+  // but here we interact directly with the game provider for global settings.
 
   @override
   Widget build(BuildContext context) {
@@ -11,15 +22,18 @@ class ClientSettingsDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    Widget sectionTitle(String t) => Text(
-          t,
-          style: TextStyle(
-            color: theme.colorScheme.primary,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-            fontSize: 14,
-          ),
-        );
+    Widget sectionTitle(String t) => Padding(
+      padding: const EdgeInsets.only(bottom: 8, top: 8),
+      child: Text(
+        t,
+        style: TextStyle(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+          fontSize: 14,
+        ),
+      ),
+    );
 
     BoxDecoration boxDeco() => BoxDecoration(
           color: theme.cardColor,
@@ -42,7 +56,7 @@ class ClientSettingsDialog extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("SETTINGS", style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                  Text("APP SETTINGS", style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
                   IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
@@ -51,8 +65,8 @@ class ClientSettingsDialog extends StatelessWidget {
               ),
               const Divider(height: 24),
               
+              // APPEARANCE
               sectionTitle("APPEARANCE"),
-              const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text("Dark Mode"),
@@ -61,7 +75,7 @@ class ClientSettingsDialog extends StatelessWidget {
                 onChanged: (val) => game.updateTheme(brightness: val ? Brightness.dark : Brightness.light),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               const Text("Wallpaper", style: TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 6),
               Container(
@@ -84,10 +98,10 @@ class ClientSettingsDialog extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
+              // AUDIO
               sectionTitle("AUDIO"),
-              const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text("Background Music"),

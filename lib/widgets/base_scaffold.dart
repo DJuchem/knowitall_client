@@ -1,94 +1,69 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
-import 'client_settings_dialog.dart';
 
 class BaseScaffold extends StatelessWidget {
   final Widget body;
-  final AppBar? appBar;
-  final Widget? floatingActionButton;
-  final bool extendBodyBehindAppBar;
   final bool showSettings;
+  final bool extendBodyBehindAppBar;
+  final PreferredSizeWidget? appBar;
+  final VoidCallback? onSettingsTap; // ✅ NEW: Callback for settings
 
   const BaseScaffold({
     super.key,
     required this.body,
-    this.appBar,
-    this.floatingActionButton,
+    this.showSettings = false,
     this.extendBodyBehindAppBar = false,
-    this.showSettings = true,
+    this.appBar,
+    this.onSettingsTap, // ✅ NEW
   });
-
-  String cleanPath(String path) {
-    if (path.startsWith("assets/") && path.indexOf("assets/", 1) > -1) {
-      return path.replaceFirst("assets/", "");
-    }
-    return path;
-  }
 
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final bgPath = game.wallpaper;
 
-    final AppBar? effectiveAppBar = appBar ??
-        (showSettings
-            ? AppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                automaticallyImplyLeading: false,
-                actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.settings,
-                        color: isDark ? Colors.white70 : Colors.black87,
-                        size: 30,
-                      ),
-                      onPressed: () => showDialog(
-                        context: context,
-                        builder: (_) => ClientSettingsDialog(), // ← FIXED
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            : null);
+    // Clean path logic duplicated here just for safety, though Provider usually handles it
+    String cleanBg = bgPath;
+    while (cleanBg.startsWith("assets/") || cleanBg.startsWith("/assets/")) {
+      cleanBg = cleanBg.replaceFirst("assets/", "").replaceFirst("/assets/", "");
+    }
 
     return Scaffold(
-      extendBodyBehindAppBar: extendBodyBehindAppBar,
-      appBar: effectiveAppBar,
-      floatingActionButton: floatingActionButton,
-      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: extendBodyBehindAppBar || appBar != null,
+      appBar: appBar ?? (showSettings
+          ? AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: IconButton(
+                    icon: const Icon(Icons.settings, color: Colors.white, size: 30),
+                    // ✅ FIX: Call the passed function
+                    onPressed: onSettingsTap, 
+                  ),
+                )
+              ],
+            )
+          : null),
       body: Stack(
         children: [
-          // Wallpaper
+          // Background
           Positioned.fill(
             child: Image.asset(
-              cleanPath(game.wallpaper),
+              "assets/$cleanBg",
               fit: BoxFit.cover,
-              alignment: Alignment.topCenter,
-              errorBuilder: (_, __, ___) =>
-                  const ColoredBox(color: Color(0xFF0F1221)),
+              errorBuilder: (_, __, ___) => Container(color: const Color(0xFF0F1221)),
             ),
           ),
-
-          // Tint
+          // Dark Overlay
           Positioned.fill(
-            child: Container(
-              color: isDark
-                  ? Colors.black.withOpacity(0.6)
-                  : Colors.white.withOpacity(0.85),
-            ),
+            child: Container(color: Colors.black.withOpacity(0.6)),
           ),
-
-          // Content (safe from AppBar)
+          // Content
           SafeArea(
-            top: !extendBodyBehindAppBar,
-            bottom: true,
+            top: !extendBodyBehindAppBar && appBar == null, // Handle safe area manually if no appbar
             child: body,
           ),
         ],
