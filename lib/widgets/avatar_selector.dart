@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/services.dart'; // Ensure this is imported
 
 class AvatarSelector extends StatefulWidget {
   final String initialAvatar;
@@ -26,60 +27,61 @@ class _AvatarSelectorState extends State<AvatarSelector> {
     _loadAvatars();
   }
 
-  // Helper to ensure we don't have redundant "assets/" prefixes
   String _normalizePath(String path) {
     String p = path;
-    while (p.startsWith("assets/")) {
-      p = p.replaceFirst("assets/", "");
+    while (p.startsWith("assets/") || p.startsWith("/assets/")) {
+      p = p.replaceFirst("assets/", "").replaceFirst("/assets/", "");
     }
-    // We return it WITHOUT "assets/" because Image.asset 
-    // adds it automatically in many contexts, or we add it once 
-    // consistently across the app.
     return p;
   }
 
   Future<void> _loadAvatars() async {
-    try {
-      final manifestContent = await rootBundle.loadString('AssetManifest.json');
-      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+  try {
+    // ✅ NEW WAY: Use the built-in AssetManifest class
+    final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+    
+    // Get all asset keys
+    final allAssets = manifest.listAssets();
 
-      // Clean the paths immediately upon loading
-      final paths = manifestMap.keys
-          .where((String key) => key.contains('avatars/') && key.toLowerCase().endsWith('.png'))
-          .map((path) => _normalizePath(path)) 
-          .toList();
-      
-      paths.sort(); 
+    final paths = allAssets
+        .where((String key) {
+          final k = key.toLowerCase();
+          return k.contains('avatars/') && 
+                 (k.endsWith('.png') || k.endsWith('.jpg') || k.endsWith('.webp'));
+        })
+        .map((path) => _normalizePath(path)) 
+        .toList();
+    
+    paths.sort(); 
 
-      if (mounted) {
-        setState(() {
-          _avatars = paths;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint("Error loading avatars: $e");
-      if (mounted) {
-        setState(() {
-          // Fallback: Store clean paths
-          _avatars = List.generate(10, (i) => "avatars/avatar_$i.png");
-          _isLoading = false;
-        });
-      }
+    if (mounted) {
+      setState(() {
+        _avatars = paths;
+        _isLoading = false;
+      });
+    }
+  } catch (e) {
+    debugPrint("Error loading avatars: $e");
+    if (mounted) {
+      setState(() {
+        _avatars = []; 
+        _isLoading = false;
+      });
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const SizedBox(
-        height: 100,
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()));
     }
 
     if (_avatars.isEmpty) {
-      return const Text("No avatars found", style: TextStyle(color: Colors.white54));
+      return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Text("No avatars found. Check AssetManifest.json", style: TextStyle(color: Colors.white70)),
+      );
     }
 
     return SizedBox(
@@ -90,41 +92,25 @@ class _AvatarSelectorState extends State<AvatarSelector> {
           crossAxisCount: 4, 
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 1,
         ),
         itemCount: _avatars.length,
         itemBuilder: (ctx, i) {
-          // Both 'path' and 'widget.initialAvatar' should now be clean (e.g. "avatars/avatar_0.png")
           final path = _avatars[i];
-          
-          // We normalize the initialAvatar just in case SharedPreferences has a dirty "assets/assets" string
           final isSelected = _normalizePath(path) == _normalizePath(widget.initialAvatar);
 
           return GestureDetector(
-            onTap: () => widget.onSelect("assets/$path"), // Pass with assets/ for the parent to save
+            onTap: () => widget.onSelect("assets/$path"),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? Colors.amber : Colors.transparent,
-                  width: isSelected ? 4 : 2,
-                ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: Colors.amber.withOpacity(0.5),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                        )
-                      ]
-                    : [],
+                border: Border.all(color: isSelected ? Colors.amber : Colors.transparent, width: 4),
               ),
               child: ClipOval(
                 child: Image.asset(
-                  "assets/$path", // Explicitly add exactly one "assets/"
+                  path, // Image.asset prepends 'assets/' on Web automatically
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.white),
+                  errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.white30),
                 ),
               ),
             ),

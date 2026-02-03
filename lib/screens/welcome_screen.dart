@@ -56,18 +56,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   /// Prevents "assets/assets/" by ensuring the path starts with exactly one "assets/"
 String cleanPath(String path) {
-  // If the path is null or empty, return a safe default
-  if (path.isEmpty) return "assets/avatars/avatar_0.png";
-
-  // 1. Remove "assets/" if it exists at the start (repeat if double-prefixed)
-  String normalized = path;
-  while (normalized.startsWith("assets/")) {
-    normalized = normalized.replaceFirst("assets/", "");
+  if (path.isEmpty) return "";
+  String p = path;
+  
+  // Strip ALL "assets/" prefixes so we have just "logo2.png"
+  while (p.startsWith("assets/") || p.startsWith("/assets/")) {
+    p = p.replaceFirst("assets/", "").replaceFirst("/assets/", "");
   }
-
-  // 2. Now we have "avatars/avatar_0.png" or just "logo2.png"
-  // 3. Add exactly one "assets/" back for Flutter to find it
-  return "assets/$normalized";
+  
+  // Return the path WITHOUT "assets/". 
+  // Flutter Web's Image.asset('logo2.png') will correctly fetch 'assets/logo2.png'.
+  return p;
 }
 
   bool _validateName(BuildContext context) {

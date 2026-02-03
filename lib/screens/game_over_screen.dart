@@ -8,7 +8,7 @@ import '../models/lobby_data.dart';
 import '../widgets/game_avatar.dart';
 import '../widgets/base_scaffold.dart';
 
-import '../theme/app_theme.dart'; // ✅ Added Theme Import
+import '../theme/app_theme.dart';
 
 class GameOverScreen extends StatefulWidget {
   const GameOverScreen({super.key});
@@ -23,7 +23,8 @@ class _GameOverScreenState extends State<GameOverScreen> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    // ✅ FIX 2: Reduced duration and disabled looping by default in build
+    _confettiController = ConfettiController(duration: const Duration(seconds: 2));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _confettiController.play();
     });
@@ -38,18 +39,21 @@ class _GameOverScreenState extends State<GameOverScreen> {
   Future<void> _safeAction(BuildContext context, Future<void> Function() action, {bool forceLobby = false}) async {
     try {
       await action();
+      // If action succeeds and we forced lobby, ensure we switch state
+      if (forceLobby && mounted) {
+        Provider.of<GameProvider>(context, listen: false).setAppState(AppState.lobby);
+      }
     } catch (e) {
       if (!mounted) return;
       
-      // If we specifically want to go to lobby (e.g. Host clicked "Back to Lobby"), 
-      // ignore connection errors and force the UI switch.
+      // ✅ FIX 4: If we specifically want to go to lobby, ignore errors and Force UI switch.
       if (forceLobby) {
         Provider.of<GameProvider>(context, listen: false).setAppState(AppState.lobby);
         return;
       }
 
-      if (e.toString().contains("Invocation canceled")) {
-         // For other actions, if connection drops, go to welcome
+      // If connection drops completely, fallback to welcome
+      if (e.toString().contains("Invocation canceled") || e.toString().contains("SocketException")) {
         Provider.of<GameProvider>(context, listen: false).setAppState(AppState.welcome);
         return;
       }
@@ -109,9 +113,10 @@ class _GameOverScreenState extends State<GameOverScreen> {
                     
                     const SizedBox(height: 20),
 
-                    // 2. Podium (Adjusted Sizes to fix RenderFlex Overflow)
+                    // 2. Podium 
+                    // ✅ FIX 1: Adjusted child heights inside _PodiumBar to prevent RenderFlex overflow
                     SizedBox(
-                      height: 340, // Reduced from 380 to fit safer
+                      height: 340, 
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -119,19 +124,19 @@ class _GameOverScreenState extends State<GameOverScreen> {
                           if (second != null) 
                             FadeInUp(
                               delay: const Duration(milliseconds: 200), 
-                              child: _PodiumBar(p: second, rank: 2, height: 110, color: Colors.grey)
+                              child: _PodiumBar(p: second, rank: 2, height: 100, color: Colors.grey)
                             ),
                           
                           if (winner != null) 
                             ZoomIn(
                               delay: const Duration(milliseconds: 400), 
-                              child: _PodiumBar(p: winner, rank: 1, height: 160, color: Colors.amber, crown: true)
+                              child: _PodiumBar(p: winner, rank: 1, height: 140, color: Colors.amber, crown: true)
                             ),
                           
                           if (third != null) 
                             FadeInUp(
                               delay: const Duration(milliseconds: 600), 
-                              child: _PodiumBar(p: third, rank: 3, height: 90, color: Colors.orange)
+                              child: _PodiumBar(p: third, rank: 3, height: 80, color: Colors.orange)
                             ),
                         ],
                       ),
@@ -199,8 +204,8 @@ class _GameOverScreenState extends State<GameOverScreen> {
                               ),
                               onPressed: () => _safeAction(context, () async {
                                 await game.resetToLobby();
-                                game.setAppState(AppState.lobby); 
-                              }, forceLobby: true), // ✅ Force Lobby State
+                                // Manual state set handled in _safeAction if forceLobby is true
+                              }, forceLobby: true), 
                             ),
                           ),
                         ],
@@ -219,6 +224,7 @@ class _GameOverScreenState extends State<GameOverScreen> {
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
                               onPressed: () {
+                                // Clients don't need to notify server to just switch UI to lobby
                                 game.setAppState(AppState.lobby);
                               },
                             ),
@@ -252,10 +258,10 @@ class _GameOverScreenState extends State<GameOverScreen> {
             child: ConfettiWidget(
               confettiController: _confettiController,
               blastDirectionality: BlastDirectionality.explosive,
-              shouldLoop: true,
+              shouldLoop: false, // ✅ FIX 2: Stop Looping
               colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple, Colors.amber],
-              emissionFrequency: 0.05,
-              numberOfParticles: 20,
+              emissionFrequency: 0.02, // ✅ FIX 2: Lower frequency
+              numberOfParticles: 10,  // ✅ FIX 2: Fewer particles
             ),
           ),
         ],
@@ -281,6 +287,9 @@ class _PodiumBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ FIX 1: Reduced avatar radii and font sizes to fit 340px height
+    final double avatarRadius = rank == 1 ? 35 : 25; 
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Column(
@@ -291,20 +300,24 @@ class _PodiumBar extends StatelessWidget {
                infinite: true,
                child: const Padding(
                  padding: EdgeInsets.only(bottom: 4),
-                 child: Text("👑", style: TextStyle(fontSize: 28)), // Reduced size
+                 child: Text("👑", style: TextStyle(fontSize: 24)),
                ),
              ),
 
-          GameAvatar(path: p.avatar ?? "", radius: rank == 1 ? 40 : 30), // Reduced sizes
+          GameAvatar(path: p.avatar ?? "", radius: avatarRadius),
           const SizedBox(height: 8),
           
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(8)),
-            child: Text(
-              p.name, 
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12), 
-              overflow: TextOverflow.ellipsis
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 80), // Prevent wide names pushing layout
+              child: Text(
+                p.name, 
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12), 
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
           
@@ -314,7 +327,7 @@ class _PodiumBar extends StatelessWidget {
           const SizedBox(height: 8),
           
           Container(
-            width: rank == 1 ? 100 : 75,
+            width: rank == 1 ? 90 : 70, // Slightly thinner bars
             height: height,
             decoration: BoxDecoration(
               gradient: LinearGradient(
