@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 
 class ClientSettingsDialog extends StatelessWidget {
+  const ClientSettingsDialog({super.key});
+
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
@@ -15,18 +17,20 @@ class ClientSettingsDialog extends StatelessWidget {
             color: theme.colorScheme.primary,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.2,
+            fontSize: 14,
           ),
         );
 
     BoxDecoration boxDeco() => BoxDecoration(
-          color: theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surface.withValues(alpha: 0.6),
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.25)),
+          border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
         );
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       backgroundColor: theme.colorScheme.surface,
+      elevation: 10,
       child: Container(
         padding: const EdgeInsets.all(24),
         constraints: const BoxConstraints(maxWidth: 450),
@@ -38,27 +42,30 @@ class ClientSettingsDialog extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("SETTINGS", style: theme.textTheme.titleLarge?.copyWith(fontSize: 24)),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                  Text("SETTINGS", style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ],
               ),
-              const Divider(),
-              const SizedBox(height: 10),
-
-              // APPEARANCE
+              const Divider(height: 24),
+              
               sectionTitle("APPEARANCE"),
+              const SizedBox(height: 8),
               SwitchListTile(
+                contentPadding: EdgeInsets.zero,
                 title: const Text("Dark Mode"),
-                secondary: Icon(isDark ? Icons.dark_mode : Icons.light_mode),
+                secondary: Icon(isDark ? Icons.dark_mode : Icons.light_mode, color: theme.colorScheme.secondary),
                 value: isDark,
                 onChanged: (val) => game.updateTheme(brightness: val ? Brightness.dark : Brightness.light),
               ),
 
-              const SizedBox(height: 10),
-              sectionTitle("WALLPAPER"),
+              const SizedBox(height: 12),
+              const Text("Wallpaper", style: TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: boxDeco(),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
@@ -66,8 +73,9 @@ class ClientSettingsDialog extends StatelessWidget {
                         ? game.wallpaper
                         : game.wallpaperOptions.values.first,
                     isExpanded: true,
+                    icon: const Icon(Icons.arrow_drop_down),
                     style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface),
-                    dropdownColor: theme.colorScheme.surface,
+                    dropdownColor: theme.cardColor,
                     items: game.wallpaperOptions.entries
                         .map((e) => DropdownMenuItem(value: e.value, child: Text(e.key)))
                         .toList(),
@@ -76,12 +84,14 @@ class ClientSettingsDialog extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-              // AUDIO
               sectionTitle("AUDIO"),
+              const SizedBox(height: 8),
               SwitchListTile(
+                contentPadding: EdgeInsets.zero,
                 title: const Text("Background Music"),
+                secondary: Icon(game.isMusicEnabled ? Icons.music_note : Icons.music_off, color: theme.colorScheme.secondary),
                 value: game.isMusicEnabled,
                 onChanged: (val) => game.toggleMusic(val),
               ),
@@ -89,7 +99,7 @@ class ClientSettingsDialog extends StatelessWidget {
               if (game.isMusicEnabled) ...[
                 const SizedBox(height: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: boxDeco(),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
@@ -98,7 +108,7 @@ class ClientSettingsDialog extends StatelessWidget {
                           : game.musicOptions.values.first,
                       isExpanded: true,
                       style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface),
-                      dropdownColor: theme.colorScheme.surface,
+                      dropdownColor: theme.cardColor,
                       items: game.musicOptions.entries
                           .map((e) => DropdownMenuItem(value: e.value, child: Text(e.key)))
                           .toList(),
