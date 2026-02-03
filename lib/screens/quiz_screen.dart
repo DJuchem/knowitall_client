@@ -55,15 +55,28 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _initMedia(String? payload, String type, GameProvider game) {
+    // 1. Cleanup: Always cancel the auto-stop timer from the previous question
     _mediaStopTimer?.cancel();
+    
+    // 2. Safety: Force pause any existing video immediately.
+    // This resets the internal state of the YouTube iframe, preventing "ghost audio"
+    // or state conflicts when loading the next video.
+    if (_ytController != null) {
+      try { _ytController!.pauseVideo(); } catch (_) {}
+    }
+
+    // 3. Validation: If this isn't a music question, just pause and exit.
+    // We do NOT close() the controller here. Keeping it alive (but paused)
+    // prevents the heavy "re-initialization" lag when a music question comes up later.
     if (!type.toLowerCase().contains("music") || payload == null || payload.trim().isEmpty) {
-      _ytController?.close();
-      _ytController = null;
       if (!game.isMusicPlaying && game.isMusicEnabled) game.initMusic();
       return;
     }
+    
+    // 4. Prep: Stop the app's background music so we can hear the video
     game.stopMusic();
 
+    // 5. Parsing: Logic to extract Video ID and Start/End times
     final raw = payload.trim();
     String videoId = raw;
     int startSec = 0;
@@ -96,10 +109,17 @@ class _QuizScreenState extends State<QuizScreen> {
       }
     }
 
+    // 6. Loading: The Critical Fix
     if (_ytController != null) {
+      // Load the new video
       _ytController!.loadVideoById(videoId: videoId, startSeconds: startSec.toDouble());
-      _ytController!.playVideo();
+      
+      // ✅ THE FIX: Add a tiny delay before playing.
+      // The IFrame API is asynchronous. If you call playVideo() immediately after load(),
+      // the player often ignores it because it hasn't finished the "load" command yet.
+      Future.delayed(const Duration(milliseconds: 100), () => _ytController!.playVideo());
     } else {
+      // Create controller if it doesn't exist (first time only)
       _ytController = YoutubePlayerController(
         params: const YoutubePlayerParams(
           showControls: false,
@@ -109,15 +129,17 @@ class _QuizScreenState extends State<QuizScreen> {
         ),
       );
       _ytController!.loadVideoById(videoId: videoId, startSeconds: startSec.toDouble());
-      _ytController!.playVideo();
+      // No delay needed on first creation as the widget build handles the initial load
     }
 
+    // 7. Auto-Stop Logic: Calculate when to silence the clip
     final int questionSeconds = game.lobby?.timer ?? 30;
     int stopAfterSeconds = questionSeconds;
     if (endSec != null && endSec > startSec) {
       final segLen = endSec - startSec;
       stopAfterSeconds = (segLen < questionSeconds) ? questionSeconds : segLen;
     }
+    
     _mediaStopTimer = Timer(Duration(seconds: stopAfterSeconds), () {
       if (!mounted || _ytController == null) return;
       _ytController!.pauseVideo();
@@ -197,20 +219,35 @@ class _QuizScreenState extends State<QuizScreen> {
     }
   }
 
-  void _confirmLeave(BuildContext context, GameProvider game) {
+ void _confirmLeave(BuildContext context, GameProvider game) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        title: const Text("Leave Game?"),
-        content: const Text("You will be removed from the lobby."),
+        title: Text(game.amIHost ? "End Game?" : "Leave Game?"),
+        content: Text(game.amIHost 
+            ? "This will end the game for everyone and return to the lobby." 
+            : "You will leave the game and return to the home screen."),
         actions: [
-          TextButton(child: const Text("Cancel"), onPressed: () => Navigator.pop(context)),
           TextButton(
-            child: const Text("LEAVE", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-            onPressed: () {
-              Navigator.pop(context);
-              game.leaveLobby();
+            child: const Text("Cancel"), 
+            onPressed: () => Navigator.pop(context)
+          ),
+          TextButton(
+            child: Text(
+              game.amIHost ? "END GAME" : "LEAVE", 
+              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)
+            ),
+            onPressed: () async {
+              Navigator.pop(context); // Close Dialog
+              
+              if (game.amIHost) {
+                // ✅ FIX: Host resets everyone to lobby
+                await game.resetToLobby(); 
+              } else {
+                // ✅ FIX: Client just leaves
+                await game.leaveLobby(); 
+              }
             },
           ),
         ],

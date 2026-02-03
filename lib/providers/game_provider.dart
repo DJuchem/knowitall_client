@@ -12,7 +12,7 @@ class GameConfig {
 
   GameConfig({
     this.appTitle = "KNOW IT ALL",
-    this.logoPath = "assets/images/logo2.png", // Adjusted to match your assets folder
+    this.logoPath = "assets/logo2.png",
     this.enabledModes = const ["general-knowledge", "calculations", "flags", "music"],
   });
 }
@@ -26,21 +26,24 @@ class GameProvider extends ChangeNotifier {
   final AudioPlayer _sfxPlayer = AudioPlayer();
   
   final GameConfig config = GameConfig();
+  Completer<void>? _lobbyCompleter;
 
   // --- STATE ---
   AppState _appState = AppState.welcome;
   LobbyData? _currentLobby;
   Map<String, dynamic>? _lastResults;
   String? _errorMessage;
-  String? _pendingTvCode; // For TV Linking
+  String? _pendingTvCode; 
 
   // --- USER DATA ---
   String _myName = "Player";
   String _myAvatar = "assets/avatars/avatar_0.png";
   int _currentStreak = 0;
-  int _unreadCount = 0;
+  
+  // ✅ FIX 5: Accurate Unread Count (Track index instead of incrementing)
+  int _lastChatReadIndex = 0; 
 
-  // --- SETTINGS & THEME ---
+  // --- SETTINGS ---
   Color _themeColor = const Color(0xFFE91E63);
   String _wallpaper = "assets/bg/cyberpunk.jpg";
   String _bgMusic = "assets/music/default.mp3";
@@ -50,7 +53,7 @@ class GameProvider extends ChangeNotifier {
   bool _isPlaying = false;
   double _volume = 0.5;
 
-  // --- OPTIONS MAPS ---
+  // --- OPTIONS ---
   final Map<String, String> musicOptions = {
     "Know It All": "assets/music/default.mp3",
     "Chill Lo-Fi": "assets/music/synth.mp3",
@@ -82,14 +85,20 @@ class GameProvider extends ChangeNotifier {
   bool get isMusicPlaying => _isPlaying;
   int get currentStreak => _currentStreak;
   Brightness get brightness => _brightness;
-  int get unreadCount => _unreadCount;
+  
+  // ✅ FIX 5: Calculate unread dynamically
+  int get unreadCount {
+    if (_currentLobby == null) return 0;
+    int total = _currentLobby!.chat.length;
+    return (total - _lastChatReadIndex).clamp(0, 99);
+  }
 
-  // --- CONSTRUCTOR ---
   GameProvider() {
     _loadUser();
   }
 
-  // --- USER PERSISTENCE ---
+  // --- METHODS ---
+
   Future<void> _loadUser() async {
     final prefs = await SharedPreferences.getInstance();
     _myName = prefs.getString('username') ?? "Player";
@@ -97,31 +106,33 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveUser(String name, String avatar) async {
+  void setPlayerInfo(String name, String avatar) {
     _myName = name;
     _myAvatar = avatar;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('username', name);
-    await prefs.setString('avatar', avatar);
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('username', name);
+      prefs.setString('avatar', avatar);
+    });
     notifyListeners();
   }
 
-  // ✅ FIX: Missing method called by WelcomeScreen
-  void setPlayerInfo(String name, String avatar) {
-    saveUser(name, avatar);
+  // ✅ FIX 5: Method to mark chat as read
+  void markChatAsRead() {
+    if (_currentLobby != null) {
+      _lastChatReadIndex = _currentLobby!.chat.length;
+      notifyListeners();
+    }
   }
 
-  // --- AUDIO SYSTEM ---
+  // --- AUDIO ---
   Future<void> initMusic() async {
     if (!_isMusicEnabled) return;
-    // Don't restart if already playing the correct track
     if (_isPlaying && _musicPlayer.state == PlayerState.playing) return;
 
     try {
       await _musicPlayer.setReleaseMode(ReleaseMode.loop);
       await _musicPlayer.setVolume(_volume);
-
-      // Clean path for Audioplayers (removes assets/ prefix if needed)
+      
       String playPath = _bgMusic;
       if (playPath.startsWith("assets/")) playPath = playPath.substring(7);
 
@@ -135,7 +146,6 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  // ✅ FIX: Missing method called by QuizScreen
   void stopMusic() {
     _musicPlayer.stop();
     _isPlaying = false;
@@ -144,18 +154,14 @@ class GameProvider extends ChangeNotifier {
 
   void toggleMusic(bool enable) {
     _isMusicEnabled = enable;
-    if (enable) {
-      initMusic();
-    } else {
-      stopMusic();
-    }
+    if (enable) initMusic(); else stopMusic();
   }
 
   void setMusicTrack(String track) {
     _bgMusic = track;
     if (_isMusicEnabled) {
-      stopMusic(); // Stop old
-      initMusic(); // Start new
+      stopMusic();
+      initMusic();
     }
     notifyListeners();
   }
@@ -176,7 +182,6 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  // --- THEME & STATE ---
   void updateTheme({Color? color, String? bg, Brightness? brightness}) {
     if (color != null) _themeColor = color;
     if (bg != null) _wallpaper = bg;
@@ -190,13 +195,7 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void resetUnreadCount() {
-    _unreadCount = 0;
-    notifyListeners();
-  }
-
   // --- TV LINKING ---
-  // ✅ FIX: Missing method called by WelcomeScreen
   Future<void> linkTv(String tvCode) async {
     _pendingTvCode = tvCode;
     notifyListeners();
@@ -205,16 +204,28 @@ class GameProvider extends ChangeNotifier {
   Future<void> _tryLinkTv(String lobbyCode) async {
     if (_pendingTvCode != null && _hubConnection != null) {
       try {
-        await _hubConnection!.invoke("LinkTV", args: [_pendingTvCode ?? "", lobbyCode]);
-        debugPrint("TV Linked: $_pendingTvCode -> $lobbyCode");
-        _pendingTvCode = null; // Clear after use
+        await _hubConnection!.invoke("LinkTV", args: <Object>[_pendingTvCode!, lobbyCode]);
+        _pendingTvCode = null; 
       } catch (e) {
         debugPrint("TV Link Failed: $e");
       }
     }
   }
 
-  // --- SIGNALR CONNECTION & EVENTS ---
+  // --- THEME SYNC ---
+  Future<void> syncTvTheme() async {
+    if (_hubConnection != null && _currentLobby != null) {
+      try {
+        await _hubConnection!.invoke("SyncTheme", args: <Object>[
+          _currentLobby!.code, 
+          _wallpaper, 
+          _bgMusic
+        ]);
+      } catch (_) {}
+    }
+  }
+
+  // --- CONNECTION ---
   Future<void> connect(String url) async {
     if (_hubConnection != null) return;
 
@@ -226,10 +237,10 @@ class GameProvider extends ChangeNotifier {
     _hubConnection!.on("game_created", _handleLobbyUpdate);
     _hubConnection!.on("game_joined", _handleLobbyUpdate);
     _hubConnection!.on("lobby_update", _handleLobbyUpdate);
-
+    
     _hubConnection!.on("game_started", (args) {
       if (args != null && args.isNotEmpty) {
-        _handleLobbyUpdate(args); // Update quiz data
+        _handleLobbyUpdate(args);
         _appState = AppState.quiz;
         _currentStreak = 0;
         notifyListeners();
@@ -239,9 +250,10 @@ class GameProvider extends ChangeNotifier {
     _hubConnection!.on("new_round", (args) {
       if (args != null && args.isNotEmpty) {
         final map = args[0] as Map<String, dynamic>;
-        // We can just re-parse the lobby or update index manually
-        // But re-parsing handles sync better
         _handleLobbyUpdate(args);
+        if (_currentLobby != null) {
+          _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
+        }
         _appState = AppState.quiz;
         notifyListeners();
       }
@@ -251,25 +263,6 @@ class GameProvider extends ChangeNotifier {
       if (args != null && args.isNotEmpty) {
         _lastResults = args[0] as Map<String, dynamic>;
         _appState = AppState.results;
-        
-        // Calculate Streak based on results
-        if (_lastResults!['results'] != null) {
-          final List resList = _lastResults!['results'] as List;
-          final myRes = resList.firstWhere(
-            (r) => r is Map && (r['name']?.toString() ?? '') == _myName,
-            orElse: () => null,
-          );
-          if (myRes != null) {
-            bool correct = myRes['correct'] == true;
-            if (correct) {
-              _currentStreak++;
-              playSfx(_currentStreak > 0 && _currentStreak % 3 == 0 ? "streak" : "correct");
-            } else {
-              _currentStreak = 0;
-              playSfx("wrong");
-            }
-          }
-        }
         notifyListeners();
       }
     });
@@ -283,7 +276,6 @@ class GameProvider extends ChangeNotifier {
     _hubConnection!.on("lobby_deleted", (_) {
       _appState = AppState.welcome;
       _currentLobby = null;
-      _errorMessage = "Host ended the session.";
       notifyListeners();
     });
 
@@ -296,24 +288,27 @@ class GameProvider extends ChangeNotifier {
     await _hubConnection!.start();
   }
 
-  // ✅ Helper to update lobby state
   void _handleLobbyUpdate(List<Object?>? args) {
     if (args != null && args.isNotEmpty) {
       final map = args[0] as Map<String, dynamic>;
-      // ✅ FIX: Always create new instance to avoid 'updateFromMap' issues
       final newLobby = LobbyData.fromJson(map);
       
-      // Preserve quiz data if new update doesn't have it but old one did
+      // Preserve quiz data
       if (_currentLobby?.quizData != null && (newLobby.quizData == null || newLobby.quizData!.isEmpty)) {
         newLobby.quizData = _currentLobby!.quizData;
       }
 
-      // Chat unread count
-      if (_currentLobby != null && newLobby.chat.length > _currentLobby!.chat.length) {
-        _unreadCount += (newLobby.chat.length - _currentLobby!.chat.length);
+      // If joining new lobby (code mismatch), reset chat read index
+      if (_currentLobby == null || _currentLobby!.code != newLobby.code) {
+        _lastChatReadIndex = newLobby.chat.length; 
       }
 
       _currentLobby = newLobby;
+      
+      if (_lobbyCompleter != null && !_lobbyCompleter!.isCompleted) {
+        _lobbyCompleter!.complete();
+      }
+      
       notifyListeners();
     }
   }
@@ -325,15 +320,15 @@ class GameProvider extends ChangeNotifier {
     _myName = name;
     initMusic();
     
-    // ✅ FIX: Use safe null-coalescing for List<Object>
-    await _hubConnection!.invoke("CreateGame", args: [
-      name, avatar, mode, qCount, cat, timer, diff, customCode
-    ]);
+    _lobbyCompleter = Completer<void>();
+    await _hubConnection!.invoke("CreateGame", args: <Object>[name, avatar, mode, qCount, cat, timer, diff, customCode]);
+    await _lobbyCompleter!.future.timeout(const Duration(seconds: 5), onTimeout: () => null);
 
-    await Future.delayed(const Duration(milliseconds: 500));
     if (_currentLobby != null) {
       _appState = AppState.lobby;
       await _tryLinkTv(_currentLobby!.code);
+      await syncTvTheme();
+      notifyListeners();
     }
   }
 
@@ -341,15 +336,21 @@ class GameProvider extends ChangeNotifier {
     if (_hubConnection == null) return;
     _myName = name;
     initMusic();
-    await _hubConnection!.invoke("JoinGame", args: [code, name, avatar, false]);
     
-    _appState = AppState.lobby;
-    await _tryLinkTv(code);
+    _lobbyCompleter = Completer<void>();
+    await _hubConnection!.invoke("JoinGame", args: <Object>[code, name, avatar, false]);
+    await _lobbyCompleter!.future.timeout(const Duration(seconds: 5), onTimeout: () => null);
+
+    if (_currentLobby != null) {
+      _appState = AppState.lobby;
+      await _tryLinkTv(code);
+      notifyListeners();
+    }
   }
 
   Future<void> leaveLobby() async {
     if (_hubConnection != null && _currentLobby != null) {
-      await _hubConnection!.invoke("LeaveLobby", args: [_currentLobby!.code]);
+      await _hubConnection!.invoke("LeaveLobby", args: <Object>[_currentLobby!.code]);
     }
     _appState = AppState.welcome;
     _currentLobby = null;
@@ -357,39 +358,39 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateSettings(String mode, int qCount, String category, int timer, String diff) async {
+  Future<void> updateSettings(String mode, int qCount, String cat, int timer, String diff) async {
     if (_currentLobby != null) {
-      await _hubConnection!.invoke("UpdateSettings", args: [_currentLobby!.code, mode, qCount, category, timer, diff]);
+      await _hubConnection!.invoke("UpdateSettings", args: <Object>[_currentLobby!.code, mode, qCount, cat, timer, diff]);
     }
   }
 
   Future<void> startGame() async {
-    if (_currentLobby != null) await _hubConnection!.invoke("StartGame", args: [_currentLobby!.code]);
+    if (_currentLobby != null) await _hubConnection!.invoke("StartGame", args: <Object>[_currentLobby!.code]);
   }
 
   Future<void> submitAnswer(String answer, double time, int qIndex) async {
     if (_currentLobby != null) {
-      await _hubConnection!.invoke("SubmitAnswer", args: [_currentLobby!.code, qIndex, answer, time]);
+      await _hubConnection!.invoke("SubmitAnswer", args: <Object>[_currentLobby!.code, qIndex, answer, time]);
     }
   }
 
   Future<void> nextQuestion() async {
-    if (_currentLobby != null) await _hubConnection!.invoke("NextQuestion", args: [_currentLobby!.code]);
+    if (_currentLobby != null) await _hubConnection!.invoke("NextQuestion", args: <Object>[_currentLobby!.code]);
   }
 
   Future<void> playAgain() async {
-    if (_currentLobby != null) await _hubConnection!.invoke("PlayAgain", args: [_currentLobby!.code]);
+    if (_currentLobby != null) await _hubConnection!.invoke("PlayAgain", args: <Object>[_currentLobby!.code]);
   }
 
   Future<void> resetToLobby() async {
-    if (_currentLobby != null) await _hubConnection!.invoke("ResetToLobby", args: [_currentLobby!.code]);
+    if (_currentLobby != null) await _hubConnection!.invoke("ResetToLobby", args: <Object>[_currentLobby!.code]);
   }
 
   Future<void> toggleReady(bool isReady) async {
-    if (_currentLobby != null) await _hubConnection!.invoke("ToggleReady", args: [_currentLobby!.code, isReady]);
+    if (_currentLobby != null) await _hubConnection!.invoke("ToggleReady", args: <Object>[_currentLobby!.code, isReady]);
   }
 
   Future<void> sendChat(String msg) async {
-    if (_currentLobby != null) await _hubConnection!.invoke("PostChat", args: [_currentLobby!.code, msg]);
+    if (_currentLobby != null) await _hubConnection!.invoke("PostChat", args: <Object>[_currentLobby!.code, msg]);
   }
 }

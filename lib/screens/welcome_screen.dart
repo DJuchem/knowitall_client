@@ -5,8 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/game_provider.dart';
 import '../widgets/avatar_selector.dart';
 import '../widgets/client_settings_dialog.dart';
-import '../widgets/base_scaffold.dart'; // ✅ Use shared background
-import '../theme/app_theme.dart'; // ✅ Use shared glass effect
+import '../widgets/base_scaffold.dart';
+import '../theme/app_theme.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:html' as html;
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -18,10 +20,24 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
-  final _tvCodeController = TextEditingController(); // ✅ For TV
+  final _tvCodeController = TextEditingController();
   
   String _selectedAvatar = "avatars/avatar_0.png";
-  final String _serverUrl = "http://localhost:5074/ws"; // Change to your IP for mobile
+
+  String get _serverUrl {
+    // 1. PRODUCTION (Docker / Release Build)
+    // Only use the browser URL if we are actually deployed
+    if (kReleaseMode && kIsWeb) {
+      final location = html.window.location;
+      final protocol = location.protocol.contains("https") ? "wss:" : "ws:";
+      return "$protocol//${location.host}/ws";
+    }
+    
+    // 2. DEVELOPMENT (Localhost Debugging)
+    // Force the address of your .NET server.
+    // Use 'localhost:5074' for Windows/Mac or '11111' if using Docker locally
+    return "http://localhost:5074/ws"; 
+  }
 
   @override
   void initState() {
@@ -91,9 +107,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.cyan),
             onPressed: () async {
               final code = _tvCodeController.text.trim();
-              final lobby = _codeController.text.trim(); // Optional: Link to specific lobby if typed
               if (code.isNotEmpty) {
-                await game.linkTv(code); // ✅ Call Provider
+                await game.linkTv(code);
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("TV Connected!"), backgroundColor: Colors.green));
@@ -114,6 +129,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
     return BaseScaffold(
       showSettings: true,
+      extendBodyBehindAppBar: true,
       onSettingsTap: () => showDialog(context: context, builder: (_) => const ClientSettingsDialog()),
       body: Center(
         child: SingleChildScrollView(
@@ -122,7 +138,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             constraints: const BoxConstraints(maxWidth: 480),
             child: Column(
               children: [
-                // 1. LOGO
                 FadeInDown(
                   child: Image.asset(
                     _cleanPath(game.config.logoPath),
@@ -134,7 +149,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 
                 const SizedBox(height: 32),
 
-                // 2. MAIN CARD
                 FadeInUp(
                   child: GlassContainer(
                     padding: const EdgeInsets.all(24),
@@ -166,7 +180,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
                         const SizedBox(height: 32),
 
-                        // CREATE GAME BUTTON
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: game.themeColor,
@@ -190,7 +203,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         const Divider(color: Colors.white24),
                         const SizedBox(height: 20),
 
-                        // JOIN GAME ROW
+                        // JOIN GAME ROW - WITH OVERFLOW FIX
                         Row(
                           children: [
                             Expanded(
@@ -208,27 +221,32 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Container(
-                              height: 56,
-                              width: 56,
-                              decoration: BoxDecoration(
-                                color: Colors.white10,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.white24),
-                              ),
-                              child: IconButton(
-                                icon: const Icon(Icons.arrow_forward, color: Colors.white),
-                                onPressed: () async {
-                                  if (!_validateInput(context)) return;
-                                  final code = _codeController.text.trim();
-                                  if (code.isEmpty) return;
-                                  
-                                  await _saveUserPrefs();
-                                  game.initMusic();
-                                  game.setPlayerInfo(_nameController.text.trim(), _cleanPath(_selectedAvatar));
-                                  await game.connect(_serverUrl);
-                                  await game.joinLobby(code, _nameController.text.trim(), _cleanPath(_selectedAvatar));
-                                },
+                            
+                            // ✅ FIX: Wrapped in Flexible to prevent overflow crashes
+                            Flexible(
+                              flex: 0, 
+                              child: Container(
+                                height: 56,
+                                width: 56,
+                                decoration: BoxDecoration(
+                                  color: Colors.white10,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white24),
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(Icons.arrow_forward, color: Colors.white),
+                                  onPressed: () async {
+                                    if (!_validateInput(context)) return;
+                                    final code = _codeController.text.trim();
+                                    if (code.isEmpty) return;
+                                    
+                                    await _saveUserPrefs();
+                                    game.initMusic();
+                                    game.setPlayerInfo(_nameController.text.trim(), _cleanPath(_selectedAvatar));
+                                    await game.connect(_serverUrl);
+                                    await game.joinLobby(code, _nameController.text.trim(), _cleanPath(_selectedAvatar));
+                                  },
+                                ),
                               ),
                             ),
                           ],
@@ -240,7 +258,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
                 const SizedBox(height: 24),
 
-                // 3. TV CONNECT
                 FadeInUp(
                   delay: const Duration(milliseconds: 200),
                   child: TextButton.icon(

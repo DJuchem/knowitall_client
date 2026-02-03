@@ -35,7 +35,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     final lobby = game.lobby;
     
     if (lobby == null) {
-      return const Scaffold(backgroundColor: Colors.black, body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(backgroundColor: Colors.black,resizeToAvoidBottomInset: true ,body: Center(child: CircularProgressIndicator()));
     }
 
     // Notify on player leave
@@ -53,7 +53,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
     bool iAmReady = false;
     try { iAmReady = lobby.players.firstWhere((p) => p.name == game.myName).isReady; } catch (_) {}
 
-    // ✅ FIX: PopScope to catch back button presses
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) {
@@ -66,6 +65,12 @@ class _LobbyScreenState extends State<LobbyScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
+          // ✅ FIX: Move "Leave" button here so it sits ON TOP of the layer stack
+          leading: IconButton(
+            icon: const Icon(Icons.meeting_room_rounded, color: Colors.redAccent, size: 32),
+            tooltip: "Leave Lobby",
+            onPressed: () => _confirmLeave(context, game),
+          ),
           actions: [
             if (isHost)
               Padding(
@@ -76,8 +81,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     context: context,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
-                    // ✅ FIX: Ensure this widget is imported and correct
-                    builder: (_) =>  LobbySettingsSheet(), 
+                    builder: (_) => const LobbySettingsSheet(), 
                   ),
                 ),
               )
@@ -155,7 +159,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
                             decoration: BoxDecoration(
                               color: Colors.black.withOpacity(0.7),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: isMe ? Colors.amber : (ready ? Colors.green.withOpacity(0.8) : Colors.white12), width: isMe ? 2 : 1),
+                              // ✅ FIX: Removed Yellow (Amber) -> Uses Theme Color (Cyan/Pink)
+                              border: Border.all(
+                                color: isMe ? game.themeColor : (ready ? Colors.green.withOpacity(0.8) : Colors.white12), 
+                                width: isMe ? 2 : 1
+                              ),
                             ),
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -192,18 +200,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
               ),
             ),
 
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 8,
-              left: 16,
-              child: GestureDetector(
-                onTap: () => _confirmLeave(context, game),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: Colors.red.withOpacity(0.9), shape: BoxShape.circle, boxShadow: [const BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))]),
-                  child: const Icon(Icons.close, color: Colors.white, size: 28),
-                ),
-              ),
-            ),
+            // ✅ FIX: Removed the Positioned "X" widget here because it was being blocked by the AppBar.
+            // The logic is now in the AppBar leading button.
 
             Align(alignment: Alignment.bottomCenter, child: ChatSheet())
           ],

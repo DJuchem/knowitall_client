@@ -1,178 +1,384 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KnowItAll TV</title>
-    <style>
-        body { margin: 0; padding: 0; background: #0F1221; color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-        #setup { display: flex; flex-direction: column; height: 100vh; justify-content: center; align-items: center; }
-        #game { display: none; height: 100vh; position: relative; }
-        
-        .code-box { background: rgba(255,255,255,0.1); padding: 20px 40px; border-radius: 20px; text-align: center; border: 2px solid rgba(255,255,255,0.2); }
-        .tv-code { font-size: 80px; font-weight: 900; letter-spacing: 10px; color: #00ffff; margin: 20px 0; }
-        
-        /* Lobby View */
-        #lobbyView { text-align: center; padding-top: 100px; display: none; }
-        .player-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; padding: 50px; }
-        .player-card { background: rgba(0,0,0,0.5); padding: 20px; border-radius: 15px; width: 150px; text-align: center; border: 2px solid transparent; }
-        .player-card.ready { border-color: #00ff00; }
-        .avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; background: #333; }
-        
-        /* Question View */
-        #questionView { display: none; height: 100%; flex-direction: column; justify-content: center; align-items: center; padding: 40px; text-align: center; }
-        .q-text { font-size: 48px; font-weight: bold; margin-bottom: 40px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .media-box { height: 300px; margin-bottom: 30px; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 80%; }
-        .answer-box { background: rgba(255,255,255,0.1); padding: 30px; font-size: 32px; border-radius: 15px; text-align: center; }
-        
-        /* Results View */
-        #resultsView { display: none; padding-top: 50px; text-align: center; }
-        .leaderboard { width: 60%; margin: 0 auto; background: rgba(0,0,0,0.4); border-radius: 20px; padding: 20px; }
-        .lb-row { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 28px; }
-        .lb-row:first-child { font-weight: bold; color: gold; font-size: 36px; }
-        
-        .hidden { display: none !important; }
-    </style>
+  <meta charset="utf-8" />
+  <title>KNOW IT ALL - SPECTATOR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg-dark: #0F1221;
+      --primary: #47C8FF; /* Cyan */
+      --secondary: #FF58CC; /* Pink */
+      --glass: rgba(20, 20, 35, 0.90);
+      --glass-border: rgba(255, 255, 255, 0.15);
+    }
+
+    /* --- BASE --- */
+    body {
+      margin: 0; padding: 0;
+      width: 100vw; height: 100vh;
+      background-color: var(--bg-dark);
+      background-image: url('assets/bg/cyberpunk.jpg');
+      background-size: cover; background-position: center;
+      color: white; font-family: 'Segoe UI', system-ui, sans-serif;
+      overflow: hidden; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      transition: background-image 1s ease-in-out;
+    }
+    body::before { content: ""; position: absolute; inset: 0; background: rgba(15, 18, 33, 0.85); backdrop-filter: blur(5px); z-index: -1; }
+
+    /* --- LOGO --- */
+    #appLogo { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); width: 220px; z-index: 100; animation: float 6s ease-in-out infinite; }
+    @keyframes float { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-15px); } }
+
+    /* --- PANELS --- */
+    .glass-panel { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 32px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); padding: 40px; text-align: center; }
+    #setup, #game, #lobbyView, #questionView, #resultsView, #gameOverView { width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; }
+    #setup { display: flex; }
+
+    /* --- SETUP --- */
+    .tv-code { font-size: 140px; font-weight: 900; color: white; text-shadow: 0 0 40px var(--primary); letter-spacing: 15px; margin: 20px 0; }
+
+    /* --- LOBBY --- */
+    #lobbyView { flex-direction: row; padding: 120px 60px 40px 60px; box-sizing: border-box; }
+    .lobby-left { flex: 3; display: flex; flex-direction: column; align-items: center; }
+    .lobby-header { font-size: 40px; font-weight: 800; color: white; margin-bottom: 30px; letter-spacing: 2px; }
+    .lobby-code { color: var(--primary); font-size: 50px; font-weight: 900; margin-left: 15px; }
+    .player-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; width: 100%; }
+    .player-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; width: 140px; display: flex; flex-direction: column; align-items: center; transition: all 0.3s; }
+    .player-card.ready { border-color: var(--secondary); background: rgba(255, 88, 204, 0.15); transform: scale(1.1); box-shadow: 0 0 25px rgba(255, 88, 204, 0.4); }
+    .avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.2); margin-bottom: 15px; background: #222; }
+
+    /* --- CHAT --- */
+    .chat-sidebar { flex: 1; min-width: 350px; max-width: 450px; background: rgba(0,0,0,0.4); border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); margin-left: 40px; padding: 20px; display: flex; flex-direction: column; height: 80%; align-self: center; }
+    .chat-title { text-align: center; font-weight: bold; color: var(--primary); margin-bottom: 15px; letter-spacing: 1px; }
+    #chatList { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .chat-msg { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; display: flex; gap: 10px; animation: slideInRight 0.3s ease-out; }
+    .chat-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    .chat-content { display: flex; flex-direction: column; }
+    .chat-author { font-size: 14px; color: var(--primary); font-weight: bold; }
+    .chat-text { font-size: 16px; color: white; }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* --- QUESTION --- */
+    .quiz-layout { display: flex; width: 90%; max-width: 1600px; height: 75%; margin-top: 100px; gap: 40px; }
+    .main-q-area { flex: 3; display: flex; flex-direction: column; align-items: center; }
+    .side-standings { flex: 1; background: rgba(0,0,0,0.4); border-radius: 24px; padding: 20px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); }
+    .q-text { font-size: 42px; font-weight: 800; line-height: 1.2; margin-bottom: 30px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); text-align: center; }
+    .media-frame { height: 300px; border-radius: 16px; overflow: hidden; margin-bottom: 30px; display: none; border: 1px solid rgba(255,255,255,0.2); }
+    .media-frame img { height: 100%; width: auto; object-fit: contain; }
+    .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+    .answer-box { background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 25px; font-size: 26px; font-weight: 600; text-align: center; }
+    .mini-rank { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .mini-rank img { width: 30px; height: 30px; border-radius: 50%; margin: 0 10px; }
+    .mini-rank .score { margin-left: auto; font-weight: bold; color: var(--primary); }
+
+    /* --- RESULTS --- */
+    .correct-header { font-size: 24px; opacity: 0.7; letter-spacing: 2px; margin-bottom: 10px; }
+    .correct-display { font-size: 48px; color: var(--secondary); font-weight: 900; margin-bottom: 40px; text-transform: uppercase; text-shadow: 0 0 30px rgba(255, 88, 204, 0.4); }
+    .lb-row { display: flex; align-items: center; padding: 15px 30px; margin-bottom: 12px; background: rgba(255,255,255,0.05); border-radius: 16px; width: 600px; animation: slideIn 0.5s ease forwards; }
+    .lb-row.winner { background: linear-gradient(90deg, rgba(71,200,255,0.2), rgba(255,88,204,0.2)); border: 1px solid rgba(255,255,255,0.3); transform: scale(1.05); }
+    .lb-row img { width: 50px; height: 50px; border-radius: 50%; margin: 0 20px; object-fit: cover; }
+    .change-badge { font-size: 18px; font-weight: bold; margin-left: auto; margin-right: 15px; }
+    @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
+
+    /* --- GAME OVER PODIUM (NEW) --- */
+    .podium-container { 
+        display: flex; align-items: flex-end; justify-content: center; gap: 40px; 
+        height: 500px; margin-top: 50px; width: 100%;
+    }
+    .podium-column {
+        display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+        position: relative; animation: riseUp 1s ease-out forwards;
+    }
+    .podium-block {
+        width: 160px; border-radius: 20px 20px 0 0;
+        background: linear-gradient(to top, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+        border: 1px solid rgba(255,255,255,0.2); border-bottom: none;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 60px; font-weight: 900; color: rgba(255,255,255,0.2);
+    }
+    
+    /* Ranks */
+    .rank-1 .podium-block { height: 350px; border-top: 4px solid gold; background: linear-gradient(to top, rgba(255,215,0,0.4), transparent); }
+    .rank-2 .podium-block { height: 250px; border-top: 4px solid silver; background: linear-gradient(to top, rgba(192,192,192,0.4), transparent); }
+    .rank-3 .podium-block { height: 180px; border-top: 4px solid #cd7f32; background: linear-gradient(to top, rgba(205,127,50,0.4), transparent); }
+
+    .podium-avatar { 
+        width: 120px; height: 120px; border-radius: 50%; object-fit: cover; 
+        border: 4px solid white; margin-bottom: 20px; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .podium-name { font-size: 24px; font-weight: bold; margin-bottom: 5px; text-shadow: 0 2px 5px black; }
+    .podium-score { font-size: 18px; opacity: 0.8; margin-bottom: 15px; }
+    
+    .crown { 
+        position: absolute; top: -80px; font-size: 60px; 
+        animation: bounce 2s infinite ease-in-out; 
+    }
+
+    @keyframes riseUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+  </style>
 </head>
+
 <body>
+  <img id="appLogo" src="assets/images/logo_text.png" onerror="this.style.display='none'">
 
-    <div id="setup">
-        <div class="code-box">
-            <h2 style="margin:0; opacity:0.7;">CONNECT TO TV</h2>
-            <div class="tv-code" id="tvCodeDisplay">----</div>
-            <p style="opacity:0.5;">Enter this code on the Welcome Screen</p>
-        </div>
+  <div id="setup">
+    <div class="glass-panel" style="padding: 60px 100px;">
+      <h2 style="color:white; opacity:0.6; font-weight:600; letter-spacing:4px;">CONNECT TO TV</h2>
+      <div id="tvCode" class="tv-code">----</div>
+      <div style="opacity: 0.5; font-size: 20px;">Enter this code on the host device</div>
+    </div>
+  </div>
+
+  <div id="game">
+    <div id="lobbyView">
+      <div class="lobby-left">
+        <div class="lobby-header">JOIN GAME <span id="lobbyCodeDisplay" class="lobby-code">----</span></div>
+        <div id="playerGrid" class="player-grid"></div>
+      </div>
+      <div class="chat-sidebar">
+        <div class="chat-title">LOBBY CHAT</div>
+        <div id="chatList"></div>
+      </div>
     </div>
 
-    <div id="game">
-        <div id="lobbyView">
-            <h1 style="font-size: 60px;">JOIN GAME: <span id="lobbyCodeDisplay" style="color:#00ffff"></span></h1>
-            <div class="player-grid" id="playerGrid"></div>
+    <div id="questionView">
+      <div class="quiz-layout">
+        <div class="main-q-area glass-panel">
+          <div id="mediaContainer" class="media-frame"></div>
+          <div id="questionText" class="q-text">Loading...</div>
+          <div id="answersContainer" class="answers-grid"></div>
         </div>
-
-        <div id="questionView">
-            <div id="mediaContainer" class="media-box" style="display:none;"></div>
-            <div class="q-text" id="questionText"></div>
-            </div>
-
-        <div id="resultsView">
-            <h1 style="font-size: 50px; margin-bottom: 10px;">ROUND RESULTS</h1>
-            <h2 id="correctAnswerDisplay" style="color: #00ff00; margin-bottom: 40px;"></h2>
-            <div class="leaderboard" id="leaderboard"></div>
+        <div class="side-standings">
+          <h4 style="margin:0 0 15px 0; text-align:center; color:var(--primary);">LIVE STANDINGS</h4>
+          <div id="miniStandingsList"></div>
         </div>
+      </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
-    <script>
-        // 1. Generate Random Code
-        const tvCode = Math.random().toString(36).substring(2, 6).toUpperCase();
-        document.getElementById('tvCodeDisplay').innerText = tvCode;
+    <div id="resultsView">
+      <div class="glass-panel" style="width: 60%; min-width: 700px;">
+        <div class="correct-header">CORRECT ANSWER</div>
+        <div id="correctAnswerDisplay" class="correct-display"></div>
+        <div id="leaderboard"></div>
+      </div>
+    </div>
 
-        // 2. Connect SignalR
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/ws") // Adjust if needed
-            .withAutomaticReconnect()
-            .build();
+    <div id="gameOverView">
+      <h1 style="font-size: 60px; font-weight: 900; letter-spacing: 5px; margin-bottom: 20px; text-shadow: 0 0 30px var(--primary);">GAME OVER</h1>
+      <div id="podium" class="podium-container"></div>
+    </div>
+  </div>
 
-        async function start() {
-            try {
-                await connection.start();
-                console.log("SignalR Connected.");
-                await connection.invoke("RegisterTV", tvCode);
-            } catch (err) {
-                console.error(err);
-                setTimeout(start, 5000);
-            }
+  <audio id="bgMusic" loop></audio>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+  <script>
+    const tvCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+    document.getElementById('tvCode').innerText = tvCode;
+    const connection = new signalR.HubConnectionBuilder().withUrl("/ws").withAutomaticReconnect().build();
+    let globalPlayers = [];
+
+    async function start() {
+        try {
+            await connection.start();
+            await connection.invoke("RegisterTV", tvCode);
+            document.body.addEventListener('click', () => {
+                const audio = document.getElementById('bgMusic');
+                audio.play().catch(() => {});
+            }, {once:true});
+        } catch (err) { setTimeout(start, 5000); }
+    }
+    start();
+
+    function showView(viewId) {
+        document.getElementById('setup').style.display = 'none';
+        document.getElementById('game').style.display = 'flex';
+        ['lobbyView', 'questionView', 'resultsView', 'gameOverView'].forEach(id => {
+            document.getElementById(id).style.display = (id === viewId) ? 'flex' : 'none';
+        });
+    }
+
+    function fixAvatar(path) {
+        if (!path) return "assets/avatars/avatar_0.png";
+        if (path.startsWith("http") || path.startsWith("data:")) return path;
+        let clean = path.replace(/^assets\//, "").replace(/^\//, "");
+        return `assets/${clean}`;
+    }
+
+    function shuffle(array) {
+        let c = array.length, r;
+        while (c != 0) { r = Math.floor(Math.random() * c); c--; [array[c], array[r]] = [array[r], array[c]]; }
+        return array;
+    }
+
+    connection.on("ThemeUpdate", (data) => {
+        if(data.wallpaper) {
+            let wp = data.wallpaper; if(!wp.startsWith("http")) wp = fixAvatar(wp);
+            document.body.style.backgroundImage = `url('${wp}')`;
         }
-
-        start();
-
-        // 3. Handle Events
-        function showView(viewId) {
-            document.getElementById('setup').style.display = 'none';
-            document.getElementById('game').style.display = 'block';
-            ['lobbyView', 'questionView', 'resultsView'].forEach(id => {
-                document.getElementById(id).style.display = (id === viewId) ? 'flex' : 'none';
-                if(id === 'lobbyView' && viewId === 'lobbyView') document.getElementById(id).style.display = 'block';
-                if(id === 'resultsView' && viewId === 'resultsView') document.getElementById(id).style.display = 'block';
-            });
+        if(data.music) {
+            const audio = document.getElementById('bgMusic');
+            let m = data.music; if(!m.startsWith("http")) m = fixAvatar(m);
+            if(audio.src !== m) { audio.src = m; audio.volume = 0.2; audio.play().catch(() => {}); }
         }
+    });
 
-        // LOBBY UPDATE
-        connection.on("lobby_update", (state) => {
-            if (state.started) return; // Ignore if game started (handled by other events)
-            
-            showView('lobbyView');
-            document.getElementById('lobbyCodeDisplay').innerText = state.code;
-            
-            const grid = document.getElementById('playerGrid');
-            grid.innerHTML = '';
-            
-            state.players.forEach(p => {
-                // Fix Asset Path for web
-                let avatar = p.avatar || "";
-                if(!avatar.startsWith("http") && !avatar.startsWith("assets/")) avatar = "assets/" + avatar;
+    connection.on("lobby_update", (state) => {
+        if (state.started) return; 
+        showView('lobbyView');
+        document.getElementById('lobbyCodeDisplay').innerText = state.code;
+        globalPlayers = state.players || [];
 
-                const card = document.createElement('div');
-                card.className = `player-card ${p.ready ? 'ready' : ''}`;
-                card.innerHTML = `
-                    <img src="${avatar}" class="avatar" onerror="this.src='assets/avatars/avatar_0.png'">
-                    <div style="margin-top:10px; font-weight:bold;">${p.name}</div>
-                    <div style="font-size:12px; opacity:0.7;">${p.score} pts</div>
-                `;
-                grid.appendChild(card);
+        const grid = document.getElementById('playerGrid');
+        grid.innerHTML = '';
+        state.players.forEach(p => {
+            const card = document.createElement('div');
+            card.className = `player-card ${p.isReady ? 'ready' : ''}`;
+            card.innerHTML = `<img src="${fixAvatar(p.avatar)}" class="avatar"><div class="player-name">${p.name}</div><div class="player-score">${p.score} pts</div>`;
+            grid.appendChild(card);
+        });
+
+        const chatList = document.getElementById('chatList');
+        chatList.innerHTML = '';
+        if (state.chat) {
+            state.chat.forEach(msg => {
+                const p = globalPlayers.find(pl => pl.name === msg.from) || { avatar: "" };
+                const div = document.createElement('div');
+                div.className = 'chat-msg';
+                div.innerHTML = `<img src="${fixAvatar(p.avatar)}" class="chat-avatar"><div class="chat-content"><span class="chat-author">${msg.from}</span><span class="chat-text">${msg.text}</span></div>`;
+                chatList.appendChild(div);
             });
+            chatList.scrollTop = chatList.scrollHeight;
+        }
+    });
+
+    const handleNewRound = (data) => {
+        showView('questionView');
+        let q = data.questionData || (data.quizData ? data.quizData[data.questionIndex || 0] : null);
+        
+        const players = (data.players && data.players.length > 0) ? data.players : globalPlayers;
+        globalPlayers = players;
+        const miniList = document.getElementById('miniStandingsList');
+        miniList.innerHTML = '';
+        const sorted = [...players].sort((a,b) => b.score - a.score);
+        sorted.reverse().forEach((p, i) => {
+             const row = document.createElement('div');
+             row.className = 'mini-rank';
+             row.innerHTML = `<span>#${i+1}</span><img src="${fixAvatar(p.avatar)}"><span>${p.name}</span><span class="score">${p.score}</span>`;
+             miniList.appendChild(row);
         });
 
-        // NEW ROUND / GAME STARTED
-        const handleNewRound = (data) => {
-            showView('questionView');
-            const q = data.questionData || data.quizData[data.questionIndex];
-            
-            document.getElementById('questionText').innerText = q.Question;
-            
-            // Media Handling
-            const mediaBox = document.getElementById('mediaContainer');
-            mediaBox.innerHTML = '';
-            mediaBox.style.display = 'none';
+        if (!q) return;
+        document.getElementById('questionText').innerText = q.Question || q.question;
+        const mediaBox = document.getElementById('mediaContainer');
+        const mediaUrl = q.MediaPayload || q.mediaPayload || q.Image || q.image;
+        if (mediaUrl && mediaUrl.startsWith("http")) { mediaBox.style.display = 'flex'; mediaBox.innerHTML = `<img src="${mediaUrl}">`; } else { mediaBox.style.display = 'none'; }
 
-            if (q.Image && q.Image.startsWith("http")) {
-                mediaBox.style.display = 'block';
-                mediaBox.innerHTML = `<img src="${q.Image}" style="height:100%; width:auto;">`;
-            }
-        };
-
-        connection.on("game_started", handleNewRound);
-        connection.on("new_round", handleNewRound);
-
-        // RESULTS
-        connection.on("question_results", (data) => {
-            showView('resultsView');
-            document.getElementById('correctAnswerDisplay').innerText = "Correct: " + data.correctAnswer;
-            
-            const lb = document.getElementById('leaderboard');
-            lb.innerHTML = '';
-            
-            // Sort by score desc
-            const results = data.results.sort((a, b) => b.score - a.score);
-            
-            results.slice(0, 8).forEach((p, index) => {
-                const row = document.createElement('div');
-                row.className = 'lb-row';
-                row.innerHTML = `
-                    <div>${index + 1}. ${p.name}</div>
-                    <div>${p.score} pts ${p.correct ? '<span style="color:#00ff00; font-size:20px;">(+' + p.earned + ')</span>' : ''}</div>
-                `;
-                lb.appendChild(row);
-            });
+        const container = document.getElementById('answersContainer');
+        container.innerHTML = '';
+        let answers = [];
+        const correct = q.CorrectAnswer || q.correctAnswer;
+        const incorrect = q.IncorrectAnswers || q.incorrectAnswers || [];
+        if (correct) answers.push(correct);
+        if (Array.isArray(incorrect)) answers.push(...incorrect);
+        shuffle(answers);
+        answers.forEach(ans => {
+            const div = document.createElement('div');
+            div.className = 'answer-box';
+            div.innerText = ans;
+            container.appendChild(div);
         });
+    };
+    connection.on("game_started", handleNewRound);
+    connection.on("new_round", handleNewRound);
 
-        connection.on("game_over", () => {
-            showView('resultsView');
-            document.getElementById('questionText').innerText = "GAME OVER";
+ // 4. RESULTS - FIXED AVATAR
+    connection.on("question_results", (data) => {
+        showView('resultsView');
+        document.getElementById('correctAnswerDisplay').innerText = data.correctAnswer;
+        
+        const lb = document.getElementById('leaderboard');
+        lb.innerHTML = '';
+        
+        const results = data.results.sort((a, b) => b.score - a.score);
+        // Sync global cache
+        globalPlayers = results; 
+
+        results.slice(0, 5).forEach((p, index) => {
+            const row = document.createElement('div');
+            row.className = `lb-row ${index === 0 ? 'winner' : ''}`;
+            row.style.animationDelay = `${index * 0.1}s`;
+            
+            const changeHtml = p.correct 
+                ? `<span style="color:#00ff00;">(+${p.earned})</span>` 
+                : `<span style="color:#ff3333;">(X)</span>`;
+
+            row.innerHTML = `
+                <div style="display:flex; align-items:center;">
+                    <span style="opacity:0.5; width:30px;">#${index + 1}</span>
+                    
+                    <img src="${fixAvatar(p.avatar)}" style="width:50px; height:50px; border-radius:50%; margin:0 15px; object-fit:cover; border:2px solid rgba(255,255,255,0.2);">
+                    
+                    <span style="font-size: 22px; font-weight:bold;">${p.name}</span>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <div class="change-badge" style="margin-right:15px; font-weight:bold;">${changeHtml}</div>
+                    <span style="font-weight:900; font-size:22px;">${p.score}</span>
+                </div>
+            `;
+            lb.appendChild(row);
         });
+    });
 
-    </script>
+    // --- GAME OVER PODIUM LOGIC ---
+    connection.on("game_over", () => {
+        showView('gameOverView');
+        const podium = document.getElementById('podium');
+        podium.innerHTML = '';
+        
+        // Sort players by score descending
+        const winners = [...globalPlayers].sort((a, b) => b.score - a.score).slice(0, 3);
+        
+        // Re-order for visual podium: 2nd (Left), 1st (Center), 3rd (Right)
+        const order = [winners[1], winners[0], winners[2]].filter(p => p !== undefined);
+        
+        order.forEach(p => {
+            // Find rank in original sorted list
+            const rank = winners.indexOf(p) + 1;
+            
+            const col = document.createElement('div');
+            col.className = `podium-column rank-${rank}`;
+            
+            // Crown for 1st
+            const crownHtml = rank === 1 ? '<div class="crown">👑</div>' : '';
+            
+            col.innerHTML = `
+                ${crownHtml}
+                <div class="podium-name">${p.name}</div>
+                <div class="podium-score">${p.score} pts</div>
+                <img src="${fixAvatar(p.avatar)}" class="podium-avatar">
+                <div class="podium-block">${rank}</div>
+            `;
+            podium.appendChild(col);
+        });
+    });
+
+    // Reset logic: Go back to 'Connect' screen (setup)
+    function resetToSetup() {
+        // Technically we are still connected to SignalR, but logic says "show code again"
+        showView('setup');
+        // Optional: reload to ensure clean slate?
+        // location.reload();
+    }
+
+    connection.on("game_reset", () => showView('lobbyView'));
+    connection.on("lobby_deleted", resetToSetup);
+
+  </script>
 </body>
 </html>
