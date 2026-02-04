@@ -33,8 +33,10 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
     "General Knowledge": "general-knowledge",
     "Math Calculations": "calculations",
     "Guess the Flag": "flags",
+    "Country Capitals": "capitals",
     "Music Quiz": "music",
     "Odd One Out": "odd_one_out",
+    "Fill In The Blank": "fill_in_the_blank",
     "True / False": "true_false",
     "Population": "population",
   };

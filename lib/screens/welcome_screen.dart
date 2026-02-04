@@ -24,21 +24,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   
   String _selectedAvatar = "avatars/avatar_0.png";
 
-  String get _serverUrl {
+String get _serverUrl {
     // 1. PRODUCTION (Docker / Release Build)
-    // Only use the browser URL if we are actually deployed
     if (kReleaseMode && kIsWeb) {
       final location = html.window.location;
-      final protocol = location.protocol.contains("https") ? "wss:" : "ws:";
-      return "$protocol//${location.host}/ws";
+      // ✅ FIX: Use 'http' or 'https'. SignalR will handle the upgrade to wss.
+      // location.protocol includes the colon (e.g., "https:")
+      return "${location.protocol}//${location.host}/ws";
     }
     
     // 2. DEVELOPMENT (Localhost Debugging)
-    // Force the address of your .NET server.
-    // Use 'localhost:5074' for Windows/Mac or '11111' if using Docker locally
     return "http://localhost:5074/ws"; 
   }
-
   @override
   void initState() {
     super.initState();
