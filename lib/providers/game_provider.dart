@@ -4,6 +4,7 @@ import 'package:signalr_netcore/signalr_client.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/lobby_data.dart';
+import '../theme/app_theme.dart';
 
 class GameConfig {
   String appTitle;
@@ -39,12 +40,10 @@ class GameProvider extends ChangeNotifier {
   String _myName = "Player";
   String _myAvatar = "assets/avatars/avatar_0.png";
   int _currentStreak = 0;
-  
-  // ✅ FIX 5: Accurate Unread Count (Track index instead of incrementing)
   int _lastChatReadIndex = 0; 
 
   // --- SETTINGS ---
-  Color _themeColor = const Color(0xFFE91E63);
+  String _colorScheme = "Cyberpunk"; // Default Scheme
   String _wallpaper = "assets/bg/cyberpunk.jpg";
   String _bgMusic = "assets/music/default.mp3";
   Brightness _brightness = Brightness.dark;
@@ -78,7 +77,10 @@ class GameProvider extends ChangeNotifier {
   String get myAvatar => _myAvatar;
   bool get amIHost => _currentLobby != null && _currentLobby!.host.trim().toLowerCase() == _myName.trim().toLowerCase();
 
-  Color get themeColor => _themeColor;
+  // Dynamic Theme Getters
+  String get currentScheme => _colorScheme;
+  Color get themeColor => AppTheme.schemes[_colorScheme]?.primary ?? const Color(0xFFFF58CC);
+  
   String get wallpaper => _wallpaper;
   String get currentMusic => _bgMusic;
   bool get isMusicEnabled => _isMusicEnabled;
@@ -86,7 +88,6 @@ class GameProvider extends ChangeNotifier {
   int get currentStreak => _currentStreak;
   Brightness get brightness => _brightness;
   
-  // ✅ FIX 5: Calculate unread dynamically
   int get unreadCount {
     if (_currentLobby == null) return 0;
     int total = _currentLobby!.chat.length;
@@ -103,6 +104,13 @@ class GameProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _myName = prefs.getString('username') ?? "Player";
     _myAvatar = prefs.getString('avatar') ?? "assets/avatars/avatar_0.png";
+    
+    // Load saved theme settings
+    if (prefs.containsKey('theme_scheme')) _colorScheme = prefs.getString('theme_scheme')!;
+    if (prefs.containsKey('theme_bright')) {
+      _brightness = prefs.getBool('theme_bright')! ? Brightness.dark : Brightness.light;
+    }
+    
     notifyListeners();
   }
 
@@ -116,7 +124,6 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ FIX 5: Method to mark chat as read
   void markChatAsRead() {
     if (_currentLobby != null) {
       _lastChatReadIndex = _currentLobby!.chat.length;
@@ -182,10 +189,16 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  void updateTheme({Color? color, String? bg, Brightness? brightness}) {
-    if (color != null) _themeColor = color;
+  void updateTheme({String? scheme, String? bg, Brightness? brightness}) {
+    if (scheme != null) _colorScheme = scheme;
     if (bg != null) _wallpaper = bg;
     if (brightness != null) _brightness = brightness;
+    
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('theme_scheme', _colorScheme);
+      prefs.setBool('theme_bright', _brightness == Brightness.dark);
+    });
+    
     notifyListeners();
   }
 
@@ -212,7 +225,6 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  // --- THEME SYNC ---
   Future<void> syncTvTheme() async {
     if (_hubConnection != null && _currentLobby != null) {
       try {
@@ -293,12 +305,10 @@ class GameProvider extends ChangeNotifier {
       final map = args[0] as Map<String, dynamic>;
       final newLobby = LobbyData.fromJson(map);
       
-      // Preserve quiz data
       if (_currentLobby?.quizData != null && (newLobby.quizData == null || newLobby.quizData!.isEmpty)) {
         newLobby.quizData = _currentLobby!.quizData;
       }
 
-      // If joining new lobby (code mismatch), reset chat read index
       if (_currentLobby == null || _currentLobby!.code != newLobby.code) {
         _lastChatReadIndex = newLobby.chat.length; 
       }

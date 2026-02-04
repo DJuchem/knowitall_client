@@ -4,7 +4,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/game_provider.dart';
 import '../widgets/avatar_selector.dart';
-import '../widgets/client_settings_dialog.dart';
+import '../widgets/client_settings_sheet.dart'; // ✅ CHANGED IMPORT
 import '../widgets/base_scaffold.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/foundation.dart';
@@ -21,21 +21,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
   final _tvCodeController = TextEditingController();
-  
   String _selectedAvatar = "avatars/avatar_0.png";
 
-String get _serverUrl {
-    // 1. PRODUCTION (Docker / Release Build)
+  String get _serverUrl {
     if (kReleaseMode && kIsWeb) {
       final location = html.window.location;
-      // ✅ FIX: Use 'http' or 'https'. SignalR will handle the upgrade to wss.
-      // location.protocol includes the colon (e.g., "https:")
       return "${location.protocol}//${location.host}/ws";
     }
-    
-    // 2. DEVELOPMENT (Localhost Debugging)
     return "http://localhost:5074/ws"; 
   }
+
   @override
   void initState() {
     super.initState();
@@ -59,61 +54,35 @@ String get _serverUrl {
 
   String _cleanPath(String path) {
     if (path.isEmpty) return "";
-    String p = path;
-    while (p.startsWith("assets/") || p.startsWith("/assets/")) {
-      p = p.replaceFirst("assets/", "").replaceFirst("/assets/", "");
-    }
-    return p;
+    return path.replaceAll("assets/", "").replaceAll("/assets/", "");
   }
 
   bool _validateInput(BuildContext context) {
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a Nickname!"), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: const Text("Please enter a Nickname!"), backgroundColor: Theme.of(context).colorScheme.error)
+      );
       return false;
     }
     return true;
   }
 
   void _showTvDialog(BuildContext context, GameProvider game) {
+    // ... (Keep existing TV dialog logic, it works fine)
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text("Connect to TV Spectator", style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text("Enter the 4-letter code displayed on your TV:", style: TextStyle(color: Colors.white70)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _tvCodeController,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.cyanAccent, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 4),
-              decoration: InputDecoration(
-                hintText: "CODE",
-                filled: true,
-                fillColor: Colors.black54,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
-          ],
-        ),
+        title: const Text("Connect TV"),
+        content: TextField(controller: _tvCodeController, decoration: const InputDecoration(hintText: "TV CODE")),
         actions: [
-          TextButton(child: const Text("CANCEL"), onPressed: () => Navigator.pop(context)),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCEL")),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.cyan),
-            onPressed: () async {
-              final code = _tvCodeController.text.trim();
-              if (code.isNotEmpty) {
-                await game.linkTv(code);
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("TV Connected!"), backgroundColor: Colors.green));
-                }
-              }
-            },
-            child: const Text("CONNECT TV", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-          ),
+             onPressed: () { 
+               game.linkTv(_tvCodeController.text); 
+               Navigator.pop(context); 
+             }, 
+             child: const Text("OK")
+          )
         ],
       ),
     );
@@ -124,149 +93,178 @@ String get _serverUrl {
     final game = Provider.of<GameProvider>(context);
     final theme = Theme.of(context);
 
+    // ✅ Replaced Dialog with BottomSheet
+    void openSettings() {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => const ClientSettingsSheet(),
+      );
+    }
+
     return BaseScaffold(
       showSettings: true,
       extendBodyBehindAppBar: true,
-      onSettingsTap: () => showDialog(context: context, builder: (_) => const ClientSettingsDialog()),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Column(
-              children: [
-                FadeInDown(
-                  child: Image.asset(
-                    _cleanPath(game.config.logoPath),
-                    height: 200,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(Icons.quiz, size: 100, color: Colors.white),
-                  ),
-                ),
-                
-                const SizedBox(height: 32),
+      onSettingsTap: openSettings, // ✅ CONNECTED
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final h = constraints.maxHeight;
+          
+          return SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500), 
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start, // ✅ Top Alignment
+                    children: [
+                      
+                      // 1. SPACER (Push content up slightly, but not too much)
+                      const SizedBox(height: 20),
 
-                FadeInUp(
-                  child: GlassContainer(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Text("YOUR PROFILE", style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                        const SizedBox(height: 12),
-                        
-                        TextField(
-                          controller: _nameController,
-                          style: theme.textTheme.bodyLarge?.copyWith(color: Colors.white),
-                          decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.person, color: game.themeColor),
-                            labelText: "NICKNAME",
-                            labelStyle: const TextStyle(color: Colors.white54),
-                            filled: true,
-                            fillColor: Colors.black26,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      // 2. LOGO (Bigger and Higher)
+                      Flexible(
+                        flex: 4, // Increased flex
+                        child: FadeInDown(
+                          child: Hero(
+                            tag: 'app_logo',
+                            child: Image.asset(
+                              _cleanPath(game.config.logoPath),
+                              fit: BoxFit.contain,
+                              // ✅ Increased size logic
+                              width: double.infinity, 
+                            ),
                           ),
                         ),
-                        
-                        const SizedBox(height: 20),
-                        
-                        AvatarSelector(
-                          initialAvatar: _cleanPath(_selectedAvatar),
-                          onSelect: (val) => setState(() => _selectedAvatar = _cleanPath(val)),
-                        ),
+                      ),
+                      
+                      const SizedBox(height: 20),
 
-                        const SizedBox(height: 32),
+                      // 3. MAIN CARD (Moved Up via Flex)
+                      Expanded(
+                        flex: 7, 
+                        child: FadeInUp(
+                          child: GlassContainer(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // NICKNAME
+                                TextField(
+                                  controller: _nameController,
+                                  style: TextStyle(color: theme.colorScheme.onSurface),
+                                  decoration: InputDecoration(
+                                    prefixIcon: const Icon(Icons.person),
+                                    labelText: "NICKNAME",
+                                  ),
+                                ),
+                                
+                                const SizedBox(height: 16),
+                                
+                                // AVATAR SELECTOR
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.onSurface.withOpacity(0.05),
+                                      borderRadius: BorderRadius.circular(16)
+                                    ),
+                                    child: AvatarSelector(
+                                      initialAvatar: _cleanPath(_selectedAvatar),
+                                      onSelect: (val) => setState(() => _selectedAvatar = _cleanPath(val)),
+                                    ),
+                                  ),
+                                ),
 
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: game.themeColor,
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            elevation: 8,
-                            shadowColor: game.themeColor.withOpacity(0.5),
+                                const SizedBox(height: 20),
+
+                                // CREATE BUTTON (Uses Theme Shape automatically)
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 60,
+                                  child: ElevatedButton(
+                                    onPressed: () async {
+                                      if (!_validateInput(context)) return;
+                                      await _saveUserPrefs();
+                                      game.initMusic();
+                                      game.setPlayerInfo(_nameController.text.trim(), _cleanPath(_selectedAvatar));
+                                      await game.connect(_serverUrl);
+                                      game.setAppState(AppState.create);
+                                    },
+                                    child: const Text("CREATE NEW GAME"),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          onPressed: () async {
-                            if (!_validateInput(context)) return;
-                            await _saveUserPrefs();
-                            game.initMusic();
-                            game.setPlayerInfo(_nameController.text.trim(), _cleanPath(_selectedAvatar));
-                            await game.connect(_serverUrl);
-                            game.setAppState(AppState.create);
-                          },
-                          child: const Text("CREATE NEW GAME", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1)),
                         ),
+                      ),
+                      
+                      const SizedBox(height: 20),
 
-                        const SizedBox(height: 20),
-                        const Divider(color: Colors.white24),
-                        const SizedBox(height: 20),
-
-                        // JOIN GAME ROW - WITH OVERFLOW FIX
-                        Row(
+                      // 4. JOIN & TV (Bottom)
+                      FadeInUp(
+                        delay: const Duration(milliseconds: 200),
+                        child: Column(
                           children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _codeController,
-                                style: const TextStyle(color: Colors.white, fontSize: 18, letterSpacing: 2, fontWeight: FontWeight.bold),
-                                decoration: InputDecoration(
-                                  labelText: "ENTER GAME CODE",
-                                  labelStyle: const TextStyle(color: Colors.white54, letterSpacing: 0, fontSize: 14),
-                                  filled: true,
-                                  fillColor: Colors.black26,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: SizedBox(
+                                    height: 60,
+                                    child: TextField(
+                                      controller: _codeController,
+                                      style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, letterSpacing: 3, fontSize: 20),
+                                      textAlign: TextAlign.center,
+                                      decoration: const InputDecoration(
+                                        hintText: "GAME CODE",
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 12),
+                                SizedBox(
+                                  height: 60,
+                                  width: 70,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: theme.colorScheme.secondary,
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                    onPressed: () async {
+                                      if (!_validateInput(context)) return;
+                                      final code = _codeController.text.trim();
+                                      if (code.isEmpty) return;
+                                      await _saveUserPrefs();
+                                      game.initMusic();
+                                      game.setPlayerInfo(_nameController.text.trim(), _cleanPath(_selectedAvatar));
+                                      await game.connect(_serverUrl);
+                                      await game.joinLobby(code, _nameController.text.trim(), _cleanPath(_selectedAvatar));
+                                    },
+                                    child: const Icon(Icons.arrow_forward, color: Colors.white, size: 30),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
                             
-                            // ✅ FIX: Wrapped in Flexible to prevent overflow crashes
-                            Flexible(
-                              flex: 0, 
-                              child: Container(
-                                height: 56,
-                                width: 56,
-                                decoration: BoxDecoration(
-                                  color: Colors.white10,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.white24),
-                                ),
-                                child: IconButton(
-                                  icon: const Icon(Icons.arrow_forward, color: Colors.white),
-                                  onPressed: () async {
-                                    if (!_validateInput(context)) return;
-                                    final code = _codeController.text.trim();
-                                    if (code.isEmpty) return;
-                                    
-                                    await _saveUserPrefs();
-                                    game.initMusic();
-                                    game.setPlayerInfo(_nameController.text.trim(), _cleanPath(_selectedAvatar));
-                                    await game.connect(_serverUrl);
-                                    await game.joinLobby(code, _nameController.text.trim(), _cleanPath(_selectedAvatar));
-                                  },
-                                ),
-                              ),
+                            TextButton.icon(
+                              onPressed: () => _showTvDialog(context, game),
+                              icon: Icon(Icons.tv, color: theme.colorScheme.secondary),
+                              label: Text("CONNECT TO TV", style: TextStyle(color: theme.colorScheme.secondary)),
                             ),
+                            const SizedBox(height: 10),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-
-                const SizedBox(height: 24),
-
-                FadeInUp(
-                  delay: const Duration(milliseconds: 200),
-                  child: TextButton.icon(
-                    onPressed: () => _showTvDialog(context, game),
-                    icon: const Icon(Icons.tv, color: Colors.cyanAccent),
-                    label: const Text("CONNECT TO TV", style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

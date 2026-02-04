@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/services.dart'; // Ensure this is imported
 
 class AvatarSelector extends StatefulWidget {
   final String initialAvatar;
@@ -36,87 +34,91 @@ class _AvatarSelectorState extends State<AvatarSelector> {
   }
 
   Future<void> _loadAvatars() async {
-  try {
-    // ✅ NEW WAY: Use the built-in AssetManifest class
-    final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-    
-    // Get all asset keys
-    final allAssets = manifest.listAssets();
+    try {
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      final allAssets = manifest.listAssets();
 
-    final paths = allAssets
-        .where((String key) {
-          final k = key.toLowerCase();
-          return k.contains('avatars/') && 
-                 (k.endsWith('.png') || k.endsWith('.jpg') || k.endsWith('.webp'));
-        })
-        .map((path) => _normalizePath(path)) 
-        .toList();
-    
-    paths.sort(); 
+      final paths = allAssets
+          .where((String key) {
+            final k = key.toLowerCase();
+            return k.contains('avatars/') && 
+                   (k.endsWith('.png') || k.endsWith('.jpg') || k.endsWith('.webp'));
+          })
+          .map((path) => _normalizePath(path)) 
+          .toList();
+      
+      paths.sort(); 
 
-    if (mounted) {
-      setState(() {
-        _avatars = paths;
-        _isLoading = false;
-      });
-    }
-  } catch (e) {
-    debugPrint("Error loading avatars: $e");
-    if (mounted) {
-      setState(() {
-        _avatars = []; 
-        _isLoading = false;
-      });
+      if (mounted) setState(() { _avatars = paths; _isLoading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _avatars = []; _isLoading = false; });
     }
   }
-}
+
+  void _uploadAvatar() {
+    // Placeholder for FilePicker logic
+    // In a real app: FilePicker.platform.pickFiles()...
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Upload functionality coming soon!"))
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()));
-    }
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
 
-    if (_avatars.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(20),
-        child: Text("No avatars found. Check AssetManifest.json", style: TextStyle(color: Colors.white70)),
-      );
-    }
-
-    return SizedBox(
-      height: 300, 
-      child: GridView.builder(
-        padding: const EdgeInsets.all(8),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4, 
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-        ),
-        itemCount: _avatars.length,
-        itemBuilder: (ctx, i) {
-          final path = _avatars[i];
-          final isSelected = _normalizePath(path) == _normalizePath(widget.initialAvatar);
-
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4, 
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      // Add +1 for the Upload Button
+      itemCount: _avatars.length + 1,
+      itemBuilder: (ctx, i) {
+        // --- UPLOAD BUTTON (Index 0) ---
+        if (i == 0) {
           return GestureDetector(
-            onTap: () => widget.onSelect("assets/$path"),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+            onTap: _uploadAvatar,
+            child: Container(
               decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
                 shape: BoxShape.circle,
-                border: Border.all(color: isSelected ? Colors.amber : Colors.transparent, width: 4),
+                border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
               ),
-              child: ClipOval(
-                child: Image.asset(
-                  path, // Image.asset prepends 'assets/' on Web automatically
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.white30),
-                ),
-              ),
+              child: Icon(Icons.camera_alt, color: Theme.of(context).colorScheme.primary),
             ),
           );
-        },
-      ),
+        }
+
+        // --- AVATAR LIST (Index 1+) ---
+        final path = _avatars[i - 1];
+        final cleanPath = _normalizePath(path);
+        final cleanInitial = _normalizePath(widget.initialAvatar);
+        final isSelected = cleanPath == cleanInitial;
+
+        return GestureDetector(
+          onTap: () => widget.onSelect("assets/$path"),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent, 
+                width: 4
+              ),
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                "assets/$path",
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Icon(Icons.person),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
