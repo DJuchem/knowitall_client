@@ -60,23 +60,25 @@ class _ChatSheetState extends State<ChatSheet> {
     game.sendChat(msg);
     _msgController.clear();
     setState(() => _showEmojiPicker = false);
-    _focusNode.requestFocus(); // Keep focus for rapid fire
+    _focusNode.requestFocus();
   }
 
-  // Helper to find player avatar
+  // ✅ Helper to find player avatar safely
   String _getAvatarForPlayer(GameProvider game, String playerName) {
     if (playerName == game.myName) return game.myAvatar;
     try {
       final p = game.lobby?.players.firstWhere((pl) => pl.name == playerName);
-      return p?.avatar ?? "assets/avatars/avatar_0.png";
+      return p?.avatar ?? "avatars/avatar_0.png";
     } catch (_) {
-      return "assets/avatars/avatar_0.png";
+      return "avatars/avatar_0.png";
     }
   }
 
+  // ✅ Robust Path Cleaner
   String _cleanPath(String path) {
-    if (path.isEmpty) return "";
+    if (path.isEmpty) return "avatars/avatar_0.png";
     String p = path;
+    // Strip all assets/ prefixes
     while (p.startsWith("assets/") || p.startsWith("/assets/")) {
       p = p.replaceFirst("assets/", "").replaceFirst("/assets/", "");
     }
@@ -88,7 +90,6 @@ class _ChatSheetState extends State<ChatSheet> {
     final game = Provider.of<GameProvider>(context);
     final chat = game.lobby?.chat ?? [];
 
-    // Auto-mark read if expanded
     if (_isExpanded && game.unreadCount > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) => game.markChatAsRead());
     }
@@ -102,15 +103,11 @@ class _ChatSheetState extends State<ChatSheet> {
     final myBubble = cs.primary.withOpacity(0.3);
     final otherBubble = isDark ? Colors.white10 : Colors.black.withOpacity(0.05);
 
-    // ✅ FIX: Safer Height Calculation
-    // Collapsed: 80px (Safe buffer for 60px header)
-    // Expanded: 50% of screen height
+    // ✅ FIX: Base height
     double targetH = 80; 
-    
     if (_isExpanded) {
-      targetH = screenSize.height * 0.5; // Use 50% of screen
-      if (_showEmojiPicker) targetH += 250; // Add emoji height
-      // Cap at 85% to prevent covering the app bar
+      targetH = screenSize.height * 0.5;
+      if (_showEmojiPicker) targetH += 250;
       if (targetH > screenSize.height * 0.85) targetH = screenSize.height * 0.85;
     }
 
@@ -131,13 +128,12 @@ class _ChatSheetState extends State<ChatSheet> {
         ],
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // Ensure it shrinks if content is small
         children: [
           // --- HEADER ---
           InkWell(
             onTap: () => _toggleExpanded(game),
             child: SizedBox(
-              height: 60, // ✅ Reduced height to prevent overflow in collapsed mode
+              height: 60,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
@@ -150,7 +146,6 @@ class _ChatSheetState extends State<ChatSheet> {
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                             color: cs.onSurface)),
-                    // Unread Badge
                     if (!_isExpanded && game.unreadCount > 0)
                       Container(
                         margin: const EdgeInsets.only(left: 10),
@@ -166,7 +161,6 @@ class _ChatSheetState extends State<ChatSheet> {
                                 fontWeight: FontWeight.bold)),
                       ),
                     const Spacer(),
-                    // Last Message Preview
                     if (!_isExpanded && chat.isNotEmpty)
                       Flexible(
                         child: Text(
@@ -184,157 +178,160 @@ class _ChatSheetState extends State<ChatSheet> {
           // --- EXPANDED CONTENT ---
           if (_isExpanded)
             Expanded(
-              child: Column(
-                children: [
-                  Divider(height: 1, color: cs.onSurface.withOpacity(0.1)),
+              // ✅ FIX: LayoutBuilder prevents crash if container is too small during animation
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxHeight < 100) return const SizedBox();
                   
-                  // MESSAGES LIST
-                  Expanded(
-                    child: ListView.builder(
-                      reverse: true,
-                      padding: const EdgeInsets.all(16),
-                      itemCount: chat.length,
-                      itemBuilder: (ctx, i) {
-                        final msg = chat[chat.length - 1 - i];
-                        final sender = msg.from;
-                        final text = msg.text;
-                        final isMe = sender == game.myName;
-                        final avatarPath = _getAvatarForPlayer(game, sender);
+                  return Column(
+                    children: [
+                      Divider(height: 1, color: cs.onSurface.withOpacity(0.1)),
+                      
+                      // MESSAGES
+                      Expanded(
+                        child: ListView.builder(
+                          reverse: true,
+                          padding: const EdgeInsets.all(16),
+                          itemCount: chat.length,
+                          itemBuilder: (ctx, i) {
+                            final msg = chat[chat.length - 1 - i];
+                            final isMe = msg.from == game.myName;
+                            final avatarPath = _getAvatarForPlayer(game, msg.from);
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Row(
-                            mainAxisAlignment: isMe
-                                ? MainAxisAlignment.end
-                                : MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              if (!isMe) ...[
-                                // ✅ FIX: Show Avatar Image
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: Colors.black26,
-                                  backgroundImage: AssetImage("assets/${_cleanPath(avatarPath)}"),
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                mainAxisAlignment: isMe
+                                    ? MainAxisAlignment.end
+                                    : MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  if (!isMe) ...[
+                                    CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor: Colors.black26,
+                                      backgroundImage: AssetImage("assets/${_cleanPath(avatarPath)}"),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: isMe ? myBubble : otherBubble,
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          if (!isMe)
+                                            Text(msg.from,
+                                                style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: cs.primary,
+                                                    fontWeight: FontWeight.bold)),
+                                          Text(msg.text,
+                                              style: TextStyle(
+                                                  fontSize: 16, color: cs.onSurface)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      
+                      // INPUT
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        color: cs.surface.withOpacity(0.5),
+                        child: Column(
+                          children: [
+                            if (_quickEmojis.isNotEmpty)
+                              SizedBox(
+                                height: 40,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: _quickEmojis.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: 15),
+                                  itemBuilder: (_, i) => GestureDetector(
+                                    onTap: () => _onEmojiPicked(_quickEmojis[i]),
+                                    child: Center(
+                                        child: Text(_quickEmojis[i],
+                                            style: const TextStyle(fontSize: 24))),
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                      _showEmojiPicker
+                                          ? Icons.keyboard
+                                          : Icons.emoji_emotions_outlined,
+                                      color: cs.onSurface.withOpacity(0.7)),
+                                  onPressed: () {
+                                    setState(() =>
+                                        _showEmojiPicker = !_showEmojiPicker);
+                                    if (_showEmojiPicker)
+                                      _focusNode.unfocus();
+                                    else
+                                      _focusNode.requestFocus();
+                                  },
+                                ),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _msgController,
+                                    focusNode: _focusNode,
+                                    style: TextStyle(color: cs.onSurface),
+                                    decoration: InputDecoration(
+                                      hintText: "Type a message...",
+                                      hintStyle: TextStyle(
+                                          color: cs.onSurface.withOpacity(0.4)),
+                                      filled: true,
+                                      fillColor: cs.onSurface.withOpacity(0.1),
+                                      contentPadding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(20),
+                                          borderSide: BorderSide.none),
+                                    ),
+                                    onSubmitted: (_) => _send(game),
+                                    onTap: () =>
+                                        setState(() => _showEmojiPicker = false),
+                                  ),
                                 ),
                                 const SizedBox(width: 8),
+                                IconButton(
+                                  icon: Icon(Icons.send, color: cs.secondary),
+                                  onPressed: () => _send(game),
+                                ),
                               ],
-                              Flexible(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: isMe ? myBubble : otherBubble,
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      if (!isMe)
-                                        Text(sender,
-                                            style: TextStyle(
-                                                fontSize: 10,
-                                                color: cs.primary,
-                                                fontWeight: FontWeight.bold)),
-                                      Text(text,
-                                          style: TextStyle(
-                                              fontSize: 16, color: cs.onSurface)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  
-                  // INPUT AREA
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    color: cs.surface.withOpacity(0.5),
-                    child: Column(
-                      children: [
-                        // Quick Emoji Bar
-                        SizedBox(
-                          height: 40,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _quickEmojis.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 15),
-                            itemBuilder: (_, i) => GestureDetector(
-                              onTap: () => _onEmojiPicked(_quickEmojis[i]),
-                              child: Center(
-                                  child: Text(_quickEmojis[i],
-                                      style: const TextStyle(fontSize: 24))),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        // Text Field Row
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                  _showEmojiPicker
-                                      ? Icons.keyboard
-                                      : Icons.emoji_emotions_outlined,
-                                  color: cs.onSurface.withOpacity(0.7)),
-                              onPressed: () {
-                                setState(() =>
-                                    _showEmojiPicker = !_showEmojiPicker);
-                                if (_showEmojiPicker)
-                                  _focusNode.unfocus();
-                                else
-                                  _focusNode.requestFocus();
-                              },
-                            ),
-                            Expanded(
-                              child: TextField(
-                                controller: _msgController,
-                                focusNode: _focusNode,
-                                style: TextStyle(color: cs.onSurface),
-                                decoration: InputDecoration(
-                                  hintText: "Type a message...",
-                                  hintStyle: TextStyle(
-                                      color: cs.onSurface.withOpacity(0.4)),
-                                  filled: true,
-                                  fillColor: cs.onSurface.withOpacity(0.1),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 12),
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                      borderSide: BorderSide.none),
-                                ),
-                                onSubmitted: (_) => _send(game),
-                                onTap: () =>
-                                    setState(() => _showEmojiPicker = false),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: Icon(Icons.send, color: cs.secondary),
-                              onPressed: () => _send(game),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                  
-                  // Full Emoji Picker
-                  if (_showEmojiPicker)
-                    SizedBox(
-                      height: 250,
-                      child: _FancyEmojiPicker(
-                        primary: cs.primary,
-                        isDark: isDark,
-                        recent: _recent,
-                        onPick: _onEmojiPicked,
                       ),
-                    ),
-                ],
+                      
+                      // EMOJI PICKER
+                      if (_showEmojiPicker)
+                        SizedBox(
+                          height: 250,
+                          child: _FancyEmojiPicker(
+                            primary: cs.primary,
+                            isDark: isDark,
+                            recent: _recent,
+                            onPick: _onEmojiPicked,
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
             ),
         ],

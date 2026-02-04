@@ -5,107 +5,73 @@
   <title>KNOW IT ALL - SPECTATOR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
   <style>
-    :root {
-      --bg-dark: #0F1221;
-      --primary: #47C8FF;
-      --secondary: #FF58CC;
-      --glass: rgba(20, 20, 35, 0.95);
-      --glass-border: rgba(255, 255, 255, 0.15);
-    }
-
-    body {
-      margin: 0; padding: 0;
-      width: 100vw; height: 100vh;
-      background-color: var(--bg-dark);
-      background-image: url('assets/bg/cyberpunk.jpg');
-      background-size: cover; background-position: center;
-      color: white; font-family: 'Segoe UI', system-ui, sans-serif;
-      overflow: hidden; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-    }
+    :root { --bg-dark: #0F1221; --primary: #47C8FF; --secondary: #FF58CC; --glass: rgba(20, 20, 35, 0.95); --glass-border: rgba(255, 255, 255, 0.15); }
+    body { margin: 0; padding: 0; width: 100vw; height: 100vh; background-color: var(--bg-dark); background-image: url('assets/bg/cyberpunk.jpg'); background-size: cover; background-position: center; color: white; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: background-image 0.5s ease-in-out; }
     body::before { content: ""; position: absolute; inset: 0; background: rgba(15, 18, 33, 0.85); backdrop-filter: blur(5px); z-index: -1; }
-
-    /* LOGO */
-    #appLogo { 
-        position: absolute; top: 30px; width: 300px; z-index: 100; 
-        filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
-    }
-
-    /* PANELS */
+    
+    #appLogo { position: absolute; top: 30px; width: 300px; z-index: 100; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
     .glass-panel { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 32px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); padding: 40px; text-align: center; }
     
-    /* VIEWS */
-    #setup, #game, #lobbyView, #questionView, #resultsView, #gameOverView { 
-        width: 100%; height: 100%; 
-        display: none; 
-        flex-direction: column; align-items: center; justify-content: center; 
-    }
-    
-    #setup { display: flex; }
+    #setup, #game, #lobbyView, #questionView, #resultsView, #gameOverView { width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; }
+    #setup { display: flex; } /* Initial View */
 
-    /* SETUP SCREEN - DUAL QR */
+    /* Setup & QR */
     .setup-container { display: flex; align-items: center; gap: 80px; margin-top: 60px; }
     .code-box { text-align: right; }
     .tv-code-label { font-size: 20px; color: var(--primary); letter-spacing: 4px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
     .tv-code { font-size: 120px; font-weight: 900; color: white; text-shadow: 0 0 40px var(--primary); letter-spacing: 10px; line-height: 1; }
     .tv-sub { font-size: 18px; opacity: 0.6; margin-top: 10px; }
-    
-    .qr-box { 
-        background: white; padding: 15px; border-radius: 20px; 
-        box-shadow: 0 0 40px rgba(71, 200, 255, 0.3);
-    }
+    .qr-box { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 0 40px rgba(71, 200, 255, 0.3); }
     .qr-box img { display: block; }
 
-    /* LOBBY */
+    /* Lobby */
     #lobbyView { flex-direction: row; padding: 100px 60px 40px 60px; box-sizing: border-box; align-items: stretch; }
     .lobby-left { flex: 3; display: flex; flex-direction: column; padding-right: 40px; }
     .lobby-header { font-size: 36px; font-weight: 800; color: white; margin-bottom: 30px; letter-spacing: 2px; text-align: left; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 20px; }
     .lobby-code { color: var(--primary); font-size: 48px; font-weight: 900; margin-left: 20px; }
-    
-    .player-grid { 
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); 
-        gap: 20px; width: 100%; align-content: start; overflow-y: auto;
-    }
-    .player-card { 
-        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
-        border-radius: 20px; padding: 15px; display: flex; flex-direction: column; align-items: center; 
-    }
+    .player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; width: 100%; align-content: start; overflow-y: auto; }
+    .player-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; }
     .player-card.ready { border-color: var(--secondary); background: rgba(255, 88, 204, 0.15); box-shadow: 0 0 15px rgba(255, 88, 204, 0.3); }
-    .avatar { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.2); margin-bottom: 10px; background: #222; }
-    .player-name { font-weight: bold; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+    .avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.2); margin-bottom: 10px; background: #222; }
+    .player-name { font-weight: bold; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 
-    /* CHAT */
-    .chat-sidebar { 
-        flex: 1; min-width: 350px; background: rgba(0,0,0,0.3); border-radius: 24px; 
-        border: 1px solid rgba(255,255,255,0.1); padding: 20px; 
-        display: flex; flex-direction: column; 
-    }
+    /* Chat */
+    .chat-sidebar { flex: 1; min-width: 350px; background: rgba(0,0,0,0.3); border-radius: 24px; border: 1px solid rgba(255,255,255,0.1); padding: 20px; display: flex; flex-direction: column; }
     .chat-title { text-align: center; font-weight: bold; color: var(--primary); margin-bottom: 15px; letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;}
     #chatList { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
     .chat-msg { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; display: flex; gap: 10px; align-items: center; font-size: 14px;}
     .chat-msg img { width: 30px; height: 30px; border-radius: 50%; }
     .chat-author { color: var(--primary); font-weight: bold; margin-right: 5px; }
 
-    /* QUESTION */
+    /* Game / Question */
     .quiz-layout { display: flex; width: 100%; height: 100%; padding: 100px 40px 40px 40px; box-sizing: border-box; gap: 40px; }
     .main-q-area { flex: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .side-standings { flex: 1; background: rgba(0,0,0,0.3); border-radius: 24px; padding: 20px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); }
+    .side-standings { flex: 1; background: rgba(0,0,0,0.3); border-radius: 24px; padding: 20px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); min-width: 250px; }
     .q-text { font-size: 36px; font-weight: 800; text-align: center; margin-bottom: 40px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
     .media-frame { height: 250px; margin-bottom: 20px; display: none; }
     .media-frame img { height: 100%; border-radius: 12px; }
     .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 90%; }
     .answer-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; font-size: 24px; font-weight: 600; text-align: center; }
     .mini-rank { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 14px; }
-    .mini-rank img { width: 25px; height: 25px; border-radius: 50%; margin: 0 10px; }
+    .mini-rank img { width: 30px; height: 30px; border-radius: 50%; margin: 0 10px; object-fit: cover; }
     .mini-rank .score { margin-left: auto; font-weight: bold; color: var(--primary); }
 
-    /* RESULTS */
-    .correct-display { font-size: 48px; color: var(--secondary); font-weight: 900; margin-bottom: 30px; }
-    .lb-row { display: flex; align-items: center; padding: 10px 20px; margin-bottom: 10px; background: rgba(255,255,255,0.05); border-radius: 12px; width: 600px; }
-    .lb-row.winner { background: linear-gradient(90deg, rgba(71,200,255,0.2), rgba(255,88,204,0.2)); border: 1px solid rgba(255,255,255,0.3); transform: scale(1.05); }
+    /* Results */
+    .correct-display { font-size: 48px; color: var(--secondary); font-weight: 900; margin-bottom: 30px; text-shadow: 0 0 20px rgba(255, 88, 204, 0.5); }
+    .lb-row { 
+        display: flex; align-items: center; padding: 15px 30px; margin-bottom: 12px; 
+        background: rgba(255,255,255,0.08); border-radius: 16px; 
+        width: 80%; /* Wider width */
+        max-width: 1000px;
+        margin: 0 auto 12px auto; /* Centered */
+        justify-content: space-between; 
+    }
+    .lb-row.winner { background: linear-gradient(90deg, rgba(71,200,255,0.2), rgba(255,88,204,0.2)); border: 1px solid rgba(255,255,255,0.3); transform: scale(1.02); }
+    .lb-row img { width: 50px; height: 50px; border-radius: 50%; margin: 0 20px; object-fit: cover; border: 2px solid rgba(255,255,255,0.2); }
 
-    /* GAME OVER */
+    /* Game Over */
     .podium-container { display: flex; align-items: flex-end; justify-content: center; gap: 20px; height: 400px; margin-top: 40px; }
     .podium-column { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
     .podium-block { width: 120px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; border-top-left-radius: 10px; border-top-right-radius: 10px; }
@@ -113,12 +79,11 @@
     .rank-2 .podium-block { height: 200px; background: linear-gradient(to top, rgba(192,192,192,0.5), transparent); border-top: 4px solid silver; }
     .rank-3 .podium-block { height: 150px; background: linear-gradient(to top, rgba(205,127,50,0.5), transparent); border-top: 4px solid #cd7f32; }
     .podium-avatar { width: 100px; height: 100px; border-radius: 50%; margin-bottom: 15px; border: 3px solid white; object-fit: cover; }
-
   </style>
 </head>
 
 <body>
-  <img id="appLogo" src="assets/logo2.png" onerror="this.style.display='none'">
+  <img id="appLogo" src="assets/images/logo_text.png" onerror="this.style.display='none'">
 
   <div id="setup">
     <div class="glass-panel" style="padding: 50px 80px;">
@@ -128,16 +93,8 @@
             <div id="tvCode" class="tv-code">----</div>
             <div class="tv-sub">Enter on your device</div>
         </div>
-        
-        <div class="qr-box" style="margin-left: 40px;">
-            <div id="qrcode-app"></div>
-            <div style="color:black; font-weight:bold; margin-top:5px; font-size:12px;">OPEN APP</div>
-        </div>
-
-        <div class="qr-box" style="margin-left: 20px;">
-            <div id="qrcode-tv"></div>
-            <div style="color:black; font-weight:bold; margin-top:5px; font-size:12px;">SCAN CODE</div>
-        </div>
+        <div class="qr-box" style="margin-left: 40px;"><div id="qrcode-app"></div><div style="color:black; font-weight:bold; margin-top:5px; font-size:12px;">OPEN APP</div></div>
+        <div class="qr-box" style="margin-left: 20px;"><div id="qrcode-tv"></div><div style="color:black; font-weight:bold; margin-top:5px; font-size:12px;">SCAN CODE</div></div>
       </div>
     </div>
   </div>
@@ -145,10 +102,7 @@
   <div id="game">
     <div id="lobbyView">
       <div class="lobby-left">
-        <div class="lobby-header">
-            GAME LOBBY <span style="opacity:0.5; font-size:24px; margin-left:10px;">CODE:</span> 
-            <span id="lobbyCodeDisplay" class="lobby-code">----</span>
-        </div>
+        <div class="lobby-header">GAME LOBBY <span style="opacity:0.5; font-size:24px; margin-left:10px;">CODE:</span> <span id="lobbyCodeDisplay" class="lobby-code">----</span></div>
         <div id="playerGrid" class="player-grid"></div>
       </div>
       <div class="chat-sidebar">
@@ -161,7 +115,8 @@
       <div class="quiz-layout">
         <div class="main-q-area">
           <div id="mediaContainer" class="media-frame"></div>
-          <div id="questionText" class="q-text">Loading Question...</div>
+          <div id="ytPlayer" style="position:absolute; width:1px; height:1px; opacity:0.01; pointer-events:none;"></div>
+          <div id="questionText" class="q-text">Loading...</div>
           <div id="answersContainer" class="answers-grid"></div>
         </div>
         <div class="side-standings">
@@ -172,7 +127,7 @@
     </div>
 
     <div id="resultsView">
-      <div class="glass-panel" style="width: 60%; min-width: 700px;">
+      <div class="glass-panel" style="width: 80%; max-width: 1000px;">
         <div class="correct-header">CORRECT ANSWER</div>
         <div id="correctAnswerDisplay" class="correct-display"></div>
         <div id="leaderboard"></div>
@@ -190,185 +145,237 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
   <script>
     let globalPlayers = [];
-    const tvCode = Math.random().toString(36).substring(2, 6).toUpperCase();
-    document.getElementById('tvCode').innerText = tvCode;
-    
-    // QR 1: OPEN APP (Static URL)
-    new QRCode(document.getElementById("qrcode-app"), {
-        text: "https://know-it-all.fun",
-        width: 140, height: 140,
-        colorDark : "#000000", colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.L
-    });
+    let ytPlayer = null;
+    let bgMusic = document.getElementById('bgMusic');
 
-    // QR 2: SCAN TV CODE (Raw String for App Scanner)
-    new QRCode(document.getElementById("qrcode-tv"), {
-        text: tvCode,
-        width: 140, height: 140,
-        colorDark : "#000000", colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
-    });
-
-    // ROBUST CONNECTION LOGIC
-    const hostname = window.location.hostname;
-    const isProduction = hostname.includes("know-it-all.fun");
-    
-    let serverUrl;
-    if (isProduction) {
-        const protocol = window.location.protocol === "https:" ? "https:" : "http:";
-        serverUrl = `${protocol}//${window.location.host}/ws`;
-    } else {
-        // Assume API is on 5074 for local testing even if HTML is on different port
-        serverUrl = "http://localhost:5074/ws";
-    }
-
-    const connection = new signalR.HubConnectionBuilder()
-        .withUrl(serverUrl, {
-            skipNegotiation: true, 
-            transport: signalR.HttpTransportType.WebSockets
-        }) 
-        .withAutomaticReconnect()
-        .build();
-
-    async function start() {
-        try {
-            await connection.start();
-            console.log("Connected to API at:", serverUrl);
-            await connection.invoke("RegisterTV", tvCode);
-            document.body.addEventListener('click', () => {
-                document.getElementById('bgMusic').play().catch(()=>{});
-            }, {once:true});
-        } catch (err) { 
-            console.error("Connection failed:", err);
-            setTimeout(start, 5000); 
-        }
-    }
-    start();
-
-    // VIEW SWITCHER
-    function showView(viewId) {
-        document.getElementById('setup').style.display = 'none';
-        document.getElementById('game').style.display = 'flex';
-        ['lobbyView', 'questionView', 'resultsView', 'gameOverView'].forEach(id => {
-            document.getElementById(id).style.display = (id === viewId) ? 'flex' : 'none';
+    function onYouTubeIframeAPIReady() {
+        ytPlayer = new YT.Player('ytPlayer', {
+            height: '200', width: '200',
+            playerVars: { 'playsinline': 1, 'controls': 0 }
         });
     }
 
+    const tvCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+    document.getElementById('tvCode').innerText = tvCode;
+    
+    new QRCode(document.getElementById("qrcode-app"), { text: "https://know-it-all.fun", width: 140, height: 140, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.L });
+    new QRCode(document.getElementById("qrcode-tv"), { text: tvCode, width: 140, height: 140, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
+
+    // Connection
+    const isProduction = window.location.hostname.includes("know-it-all.fun");
+    let serverUrl = isProduction ? `${window.location.protocol === "https:" ? "https:" : "http:"}//${window.location.host}/ws` : "http://localhost:5074/ws";
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl(serverUrl, { skipNegotiation: true, transport: signalR.HttpTransportType.WebSockets }) 
+        .withAutomaticReconnect().build();
+
+    async function start() {
+        try { 
+            await connection.start(); 
+            await connection.invoke("RegisterTV", tvCode); 
+            // Unlock audio on interaction
+            document.body.addEventListener('click', () => { 
+                if(bgMusic.src) bgMusic.play().catch(()=>{}); 
+            }, {once:true});
+        } catch (err) { setTimeout(start, 5000); }
+    }
+    start();
+
+    // VIEW LOGIC
+   function showView(viewId) {
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('game').style.display = 'flex';
+
+  ['lobbyView', 'questionView', 'resultsView', 'gameOverView'].forEach(id => {
+    document.getElementById(id).style.display = (id === viewId) ? 'flex' : 'none';
+  });
+
+  // If leaving question view, stop YouTube.
+  if (viewId !== 'questionView') {
+    if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+
+    // Only resume bg music if we're NOT in a music round.
+    if (bgMusic.src && !isMusicRound && bgMusic.paused) {
+      bgMusic.play().catch(()=>{});
+    }
+  } else {
+    // In question view, never auto play bg music
+    if (bgMusic) bgMusic.pause();
+  }
+}
+
+
+    // ✅ FIX: Stronger path cleaning to avoid double assets/
     function fixAvatar(path) {
         if (!path) return "assets/avatars/avatar_0.png";
         if (path.startsWith("http") || path.startsWith("data:")) return path;
-        let clean = path.replace(/^assets\//, "").replace(/^\//, "");
+        
+        // Remove ALL leading occurrences of assets/
+        let clean = path.replace(/^(assets\/)+/, "").replace(/^\//, "");
         return `assets/${clean}`;
     }
 
-    // --- SIGNALR EVENTS ---
+    // ✅ FIX: Robust fallback
+    window.handleAvatarError = function(img) {
+        img.onerror = null; 
+        if (img.src.includes('assets/avatars')) {
+            // Try removing one layer of assets/ if it failed
+            img.src = img.src.replace('assets/avatars', 'avatars');
+        } else {
+            img.src = 'assets/avatars/avatar_0.png';
+        }
+    }
+
+    // EVENTS
     connection.on("lobby_update", (state) => {
         if (state.started) return; 
         showView('lobbyView');
-        const codeEl = document.getElementById('lobbyCodeDisplay');
-        if (codeEl) codeEl.innerText = state.code || "ERR";
+        
+        // ✅ FIX: Check both casing styles to prevent "ERR"
+        
+        const validCode = state.lobbyCode || state.LobbyCode || state.code || state.Code || "ERR";
+        document.getElementById('lobbyCodeDisplay').innerText = validCode;
 
-        globalPlayers = state.players || [];
+        globalPlayers = state.players || state.Players || [];
         const grid = document.getElementById('playerGrid');
         grid.innerHTML = '';
         globalPlayers.forEach(p => {
             const card = document.createElement('div');
             card.className = `player-card ${p.isReady ? 'ready' : ''}`;
-            card.innerHTML = `<img src="${fixAvatar(p.avatar)}" class="avatar"><div class="player-name">${p.name}</div><div style="font-size:12px; opacity:0.7;">${p.score} pts</div>`;
+            card.innerHTML = `<img src="${fixAvatar(p.avatar)}" onerror="handleAvatarError(this)" class="avatar">
+                              <div class="player-name">${p.name}</div>
+                              <div style="font-size:12px; opacity:0.7;">${p.score} pts</div>`;
             grid.appendChild(card);
         });
-
+        
+        // Chat update logic...
         const chatList = document.getElementById('chatList');
         chatList.innerHTML = '';
-        if (state.chat) {
-            state.chat.forEach(msg => {
+        const chatData = state.chat || state.Chat;
+        if (chatData) {
+            chatData.forEach(msg => {
                 const p = globalPlayers.find(pl => pl.name === msg.from) || { avatar: "" };
                 const div = document.createElement('div');
                 div.className = 'chat-msg';
-                div.innerHTML = `<img src="${fixAvatar(p.avatar)}"><div><span class="chat-author">${msg.from}</span><span>${msg.text}</span></div>`;
+                div.innerHTML = `<img src="${fixAvatar(p.avatar)}" onerror="handleAvatarError(this)"><div><span class="chat-author">${msg.from}</span><span>${msg.text}</span></div>`;
                 chatList.appendChild(div);
             });
             chatList.scrollTop = chatList.scrollHeight;
         }
     });
 
-    const handleNewRound = (data) => {
-        showView('questionView');
-        let q = data.questionData || (data.quizData ? data.quizData[data.questionIndex || 0] : null);
-        
-        const players = (data.players && data.players.length > 0) ? data.players : globalPlayers;
-        globalPlayers = players;
-        const miniList = document.getElementById('miniStandingsList');
-        miniList.innerHTML = '';
-        const sorted = [...players].sort((a,b) => b.score - a.score);
-        sorted.slice(0, 8).forEach((p, i) => {
-             const row = document.createElement('div');
-             row.className = 'mini-rank';
-             row.innerHTML = `<span>#${i+1}</span><img src="${fixAvatar(p.avatar)}"><span class="player-name" style="width:80px;">${p.name}</span><span class="score">${p.score}</span>`;
-             miniList.appendChild(row);
-        });
+   let isMusicRound = false;
 
-        if (!q) return;
-        document.getElementById('questionText').innerText = q.Question || q.question || "Question";
-        const mediaBox = document.getElementById('mediaContainer');
-        const mediaUrl = q.MediaPayload || q.mediaPayload || q.Image || q.image;
-        if (mediaUrl && mediaUrl.startsWith("http")) { 
-            mediaBox.style.display = 'block'; mediaBox.innerHTML = `<img src="${mediaUrl}">`; 
-        } else { mediaBox.style.display = 'none'; }
+const handleNewRound = (data) => {
+  showView('questionView');
 
-        const container = document.getElementById('answersContainer');
-        container.innerHTML = '';
-        let answers = [];
-        const correct = q.CorrectAnswer || q.correctAnswer;
-        const incorrect = q.IncorrectAnswers || q.incorrectAnswers || [];
-        if (correct) answers.push(correct);
-        if (Array.isArray(incorrect)) answers.push(...incorrect);
-        for (let i = answers.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [answers[i], answers[j]] = [answers[j], answers[i]];
-        }
-        answers.forEach(ans => {
-            const div = document.createElement('div');
-            div.className = 'answer-box';
-            div.innerText = ans;
-            container.appendChild(div);
-        });
-    };
+  let q = data.questionData || data.QuestionData || (data.quizData ? data.quizData[data.questionIndex || 0] : null);
+
+  const players = data.players || data.Players || globalPlayers;
+  globalPlayers = players;
+
+  const miniList = document.getElementById('miniStandingsList');
+  miniList.innerHTML = '';
+  const sorted = [...players].sort((a,b) => b.score - a.score);
+  sorted.slice(0, 10).forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'mini-rank';
+    row.innerHTML = `<span style="opacity:0.5; width:20px;">#${i+1}</span><img src="${fixAvatar(p.avatar)}" onerror="handleAvatarError(this)"><span class="player-name" style="width:100px;">${p.name}</span><span class="score">${p.score}</span>`;
+    miniList.appendChild(row);
+  });
+
+  if (!q) return;
+
+  document.getElementById('questionText').innerText = q.Question || q.question || "Question";
+  const mediaBox = document.getElementById('mediaContainer');
+  const qType = (q.Type || q.type || "").toString().toLowerCase();
+  const mediaPayload = q.MediaPayload || q.mediaPayload;
+
+  // ✅ Track whether we're in a music round
+  isMusicRound = qType.includes("music");
+
+  // ✅ Always stop lobby bg music while in question view; especially critical for music rounds
+  if (bgMusic) {
+    bgMusic.pause();
+    // don't clear src, so we can resume later if needed
+  }
+
+  if (isMusicRound && mediaPayload && ytPlayer) {
+    mediaBox.style.display = 'none';
+
+    let parts = mediaPayload.split('|');
+    let videoId = parts[0];
+    let startSec = 0;
+    if (parts.length > 1) {
+      let range = parts[1].split('-');
+      startSec = parseInt(range[0]) || 0;
+    }
+
+    ytPlayer.setVolume(100);
+    ytPlayer.unMute();
+
+    ytPlayer.loadVideoById({ videoId: videoId, startSeconds: startSec });
+    ytPlayer.playVideo();
+  } else {
+    if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+    const mediaUrl = mediaPayload || q.Image || q.image;
+    if (mediaUrl && mediaUrl.startsWith("http")) {
+      mediaBox.style.display = 'block';
+      mediaBox.innerHTML = `<img src="${mediaUrl}">`;
+    } else {
+      mediaBox.style.display = 'none';
+    }
+  }
+
+  const container = document.getElementById('answersContainer');
+  container.innerHTML = '';
+  let answers = [];
+  const correct = q.CorrectAnswer || q.correctAnswer;
+  const incorrect = q.IncorrectAnswers || q.incorrectAnswers || [];
+  if (correct) answers.push(correct);
+  if (Array.isArray(incorrect)) answers.push(...incorrect);
+  for (let i = answers.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [answers[i], answers[j]] = [answers[j], answers[i]];
+  }
+  answers.forEach(ans => {
+    const div = document.createElement('div');
+    div.className = 'answer-box';
+    div.innerText = ans;
+    container.appendChild(div);
+  });
+};
+
     
     connection.on("game_started", handleNewRound);
     connection.on("new_round", handleNewRound);
 
-    
-connection.on("question_results", (data) => {
-    showView('resultsView');
-    document.getElementById('correctAnswerDisplay').innerText = data.correctAnswer;
-    
-    const lb = document.getElementById('leaderboard');
-    lb.innerHTML = '';
-    
-    const results = (data.results || []).sort((a, b) => b.score - a.score);
-    globalPlayers = results; 
+    connection.on("question_results", (data) => {
+        showView('resultsView');
+        document.getElementById('correctAnswerDisplay').innerText = data.correctAnswer || data.CorrectAnswer;
+        const lb = document.getElementById('leaderboard');
+        lb.innerHTML = '';
+        const results = (data.results || data.Results || []).sort((a, b) => b.score - a.score);
+        globalPlayers = results; 
+        results.slice(0, 8).forEach((p, index) => {
+            const row = document.createElement('div');
+            row.className = `lb-row ${index === 0 ? 'winner' : ''}`;
+            const statusIcon = p.correct 
+                ? `<span style="color:#00ff00; font-size:24px; margin-right:15px;">✔ +${p.earned}</span>` 
+                : `<span style="color:#ff3333; font-size:24px; margin-right:15px;">✘</span>`;
 
-    results.slice(0, 5).forEach((p, index) => {
-        const row = document.createElement('div');
-        row.className = `lb-row ${index === 0 ? 'winner' : ''}`;
-        
-        // ✅ CRITICAL: Ensure fixAvatar is called here to prevent 404
-        const avatarUrl = fixAvatar(p.avatar); 
-
-        row.innerHTML = `
-            <div style="display:flex; align-items:center;">
-                <span style="opacity:0.5; width:30px;">#${index + 1}</span>
-                <img src="${avatarUrl}" style="width:50px; height:50px; border-radius:50%; margin:0 15px; object-fit:cover; border:2px solid rgba(255,255,255,0.2);">
-                <span style="font-size: 22px; font-weight:bold;">${p.name}</span>
-            </div>
-            <div style="display:flex; align-items:center; margin-left:auto;">
-                <span style="font-weight:900; font-size:22px;">${p.score}</span>
-            </div>
-        `;
-        lb.appendChild(row);
+            row.innerHTML = `
+                <div style="display:flex; align-items:center;">
+                    <span style="opacity:0.5; width:30px; font-size:20px;">#${index + 1}</span>
+                    <img src="${fixAvatar(p.avatar)}" onerror="handleAvatarError(this)">
+                    <span style="font-size: 28px; font-weight:bold;">${p.name}</span>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    ${statusIcon}
+                    <span style="font-weight:900; font-size:32px;">${p.score}</span>
+                </div>`;
+            lb.appendChild(row);
+        });
     });
-});
 
     connection.on("game_over", () => {
         showView('gameOverView');
@@ -380,15 +387,42 @@ connection.on("question_results", (data) => {
             const rank = winners.indexOf(p) + 1;
             const col = document.createElement('div');
             col.className = `podium-column rank-${rank}`;
-            col.innerHTML = `<div style="font-weight:bold; font-size:20px; margin-bottom:5px;">${p.name}</div><img src="${fixAvatar(p.avatar)}" class="podium-avatar"><div class="podium-block">${rank}</div>`;
+            col.innerHTML = `<div style="font-weight:bold; font-size:20px; margin-bottom:5px;">${p.name}</div><img src="${fixAvatar(p.avatar)}" onerror="handleAvatarError(this)" class="podium-avatar"><div class="podium-block">${rank}</div>`;
             podium.appendChild(col);
         });
     });
 
-    connection.on("ThemeUpdate", (data) => {
-        if(data.wallpaper) document.body.style.backgroundImage = `url('${fixAvatar(data.wallpaper)}')`;
-    });
-    connection.on("lobby_deleted", () => showView('setup'));
+    // ✅ FIX: Listen for Theme Updates to set Music & Wallpaper
+ connection.on("ThemeUpdate", (data) => {
+  if (data.wallpaper) {
+    const bgPath = fixAvatar(data.wallpaper);
+    document.body.style.backgroundImage = `url('${bgPath}')`;
+  }
+
+  if (!data.music) return;
+
+  const newSrc = fixAvatar(data.music);
+
+  // Always update src if changed (so it is ready to resume later)
+  if (!bgMusic.src || bgMusic.src.indexOf(newSrc) === -1) {
+    bgMusic.src = newSrc;
+  }
+
+  // ✅ Critical rule:
+  // Never play lobby music while a music round is active (or while we're showing questionView).
+  const questionVisible = document.getElementById('questionView').style.display === 'flex';
+  if (isMusicRound || questionVisible) {
+    bgMusic.pause();
+    return;
+  }
+
+  // Otherwise, safe to play (lobby/results/gameover)
+  bgMusic.play().catch(() => console.log("Click page to enable audio"));
+});
+
+
+    
+    connection.on("lobby_deleted", () => { showView('setup'); document.getElementById('tvCode').innerText = "----"; });
     connection.on("game_reset", () => showView('lobbyView'));
   </script>
 </body>

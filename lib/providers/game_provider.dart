@@ -236,85 +236,128 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ HELPER METHOD RESTORED
-  Future<void> _tryLinkTv(String lobbyCode) async {
-    if (_pendingTvCode != null && _hubConnection != null) {
-      try {
-        await _hubConnection!.invoke("LinkTV", args: <Object>[_pendingTvCode!, lobbyCode]);
-        _pendingTvCode = null; 
-      } catch (e) {
-        debugPrint("TV Link Failed: $e");
-      }
-    }
-  }
+  
 
-  Future<void> syncTvTheme() async {
-    if (_hubConnection != null && _currentLobby != null) {
-      try {
-        await _hubConnection!.invoke("SyncTheme", args: <Object>[_currentLobby!.code, _wallpaper, _bgMusic]);
-      } catch (_) {}
-    }
+  // ✅ HELPER METHOD RESTORED
+Future<void> _tryLinkTv(String lobbyCode) async {
+  if (_pendingTvCode == null) return;
+  if (_hubConnection == null) return;
+  if (lobbyCode.trim().isEmpty) return;
+
+  try {
+    // Give the server a moment after CreateGame/JoinGame broadcasts
+    await Future.delayed(const Duration(milliseconds: 300));
+    await _hubConnection!.invoke("LinkTV", args: <Object>[_pendingTvCode!, lobbyCode]);
+    _pendingTvCode = null;
+  } catch (e) {
+    debugPrint("TV Link Failed: $e");
   }
+}
+
+
+ Future<void> syncTvTheme() async {
+  if (_hubConnection == null || _currentLobby == null) return;
+
+  try {
+    await _hubConnection!.invoke(
+      "SyncTheme",
+      args: <Object>[
+        _currentLobby!.code,
+        _wallpaper,
+        _bgMusic,
+        _isMusicEnabled, // ✅ host controls whether TV is allowed to play lobby music
+        _volume,
+      ],
+    );
+  } catch (_) {}
+}
+
 
   Future<void> connect(String url) async {
-    if (_hubConnection != null) return;
-    _hubConnection = HubConnectionBuilder().withUrl(url).withAutomaticReconnect().build();
-    
-    _hubConnection!.on("game_created", _handleLobbyUpdate);
-    _hubConnection!.on("game_joined", _handleLobbyUpdate);
-    _hubConnection!.on("lobby_update", _handleLobbyUpdate);
-    _hubConnection!.on("game_started", (args) {
-      if (args != null && args.isNotEmpty) {
-        _handleLobbyUpdate(args);
-        _appState = AppState.quiz;
-        _currentStreak = 0;
-        notifyListeners();
-      }
-    });
-    
-    _hubConnection!.on("new_round", (args) {
-      if (args != null && args.isNotEmpty) {
-        final map = args[0] as Map<String, dynamic>;
-        _handleLobbyUpdate(args);
-        if (_currentLobby != null) _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
-        _appState = AppState.quiz;
-        notifyListeners();
-      }
-    });
+  if (_hubConnection != null) return;
 
-    _hubConnection!.on("question_results", (args) {
-      if (args != null && args.isNotEmpty) {
-        _lastResults = args[0] as Map<String, dynamic>;
-        _handleStreakUpdate(_lastResults); // ✅ CALCULATE STREAK
-        _appState = AppState.results;
-        notifyListeners();
-      }
-    });
+  _hubConnection = HubConnectionBuilder()
+      .withUrl(url)
+      .withAutomaticReconnect()
+      .build();
 
-    _hubConnection!.on("game_over", (_) {
-      _appState = AppState.gameOver;
-      playSfx("gameover");
-      notifyListeners();
-    });
-    
-    _hubConnection!.on("lobby_deleted", (_) {
-      _appState = AppState.welcome;
-      _currentLobby = null;
-      notifyListeners();
-    });
-    
-    _hubConnection!.on("game_reset", (_) {
-      _appState = AppState.lobby;
-      _currentStreak = 0;
-      notifyListeners();
-    });
+  _hubConnection!.on("game_created", _handleLobbyUpdate);
+  _hubConnection!.on("game_joined", _handleLobbyUpdate);
+  _hubConnection!.on("lobby_update", _handleLobbyUpdate);
 
-    await _hubConnection!.start();
-    if (_pendingTvCode != null) {
-       await _hubConnection!.invoke("LinkTV", args: <Object>[_pendingTvCode!, ""]);
-       _pendingTvCode = null;
+  // ✅ IMPORTANT: Surface server errors to UI
+  _hubConnection!.on("error", (args) {
+    final msg = (args != null && args.isNotEmpty) ? args[0]?.toString() : "Unknown server error";
+    _errorMessage = msg;
+    notifyListeners();
+  });
+
+  _hubConnection!.on("tv_linked_success", (_) {
+    // Optional: clear prior error on success
+    if (_errorMessage != null) {
+      _errorMessage = null;
+      notifyListeners();
     }
-  }
+  });
+
+  _hubConnection!.on("game_started", (args) {
+    if (args != null && args.isNotEmpty) {
+      _handleLobbyUpdate(args);
+      _appState = AppState.quiz;
+      _currentStreak = 0;
+
+      // ✅ Stop lobby music when music quiz starts
+      if (_currentLobby?.mode?.toLowerCase() == "music") {
+        stopMusic();
+      }
+
+      notifyListeners();
+    }
+  });
+
+  _hubConnection!.on("new_round", (args) {
+    if (args != null && args.isNotEmpty) {
+      final map = args[0] as Map<String, dynamic>;
+      _handleLobbyUpdate(args);
+      if (_currentLobby != null) _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
+      _appState = AppState.quiz;
+      notifyListeners();
+    }
+  });
+
+  _hubConnection!.on("question_results", (args) {
+    if (args != null && args.isNotEmpty) {
+      _lastResults = args[0] as Map<String, dynamic>;
+      _handleStreakUpdate(_lastResults);
+      _appState = AppState.results;
+      notifyListeners();
+    }
+  });
+
+  _hubConnection!.on("game_over", (_) {
+    _appState = AppState.gameOver;
+    playSfx("gameover");
+    notifyListeners();
+  });
+
+  _hubConnection!.on("lobby_deleted", (_) {
+    _appState = AppState.welcome;
+    _currentLobby = null;
+    notifyListeners();
+  });
+
+  _hubConnection!.on("game_reset", (_) {
+    _appState = AppState.lobby;
+    _currentStreak = 0;
+    notifyListeners();
+  });
+
+  await _hubConnection!.start();
+
+  // ❌ Do NOT link TV here (no lobby yet). Linking happens after create/join.
+  // (Leaving this out fixes the silent TV-link failure cascade.)
+}
+
 
   // ✅ STREAK CALCULATION LOGIC RESTORED
   void _handleStreakUpdate(Map<String, dynamic>? results) {

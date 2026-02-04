@@ -103,87 +103,111 @@ class _AvatarSelectorState extends State<AvatarSelector> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_isLoading) return const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()));
-    
-    final theme = Theme.of(context);
-    final isCustom = widget.initialAvatar.startsWith("data:");
+Widget build(BuildContext context) {
+  if (_isLoading) {
+    return const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()));
+  }
 
-    return Column(
-      children: [
-        // ✅ FIX: Use Expanded instead of SizedBox(height: 300) to prevent overflow
-        Expanded(
-          child: GridView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.all(8),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4, 
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: _avatars.length,
-            itemBuilder: (ctx, i) {
-              final path = _avatars[i];
-              final isSelected = !isCustom && _normalizePath(path) == _normalizePath(widget.initialAvatar);
+  final theme = Theme.of(context);
+  final isCustom = widget.initialAvatar.startsWith("data:");
 
-              return GestureDetector(
+  const double avatarSize = 56; // ✅ fixed size (no scaling)
+  const double tileExtent = 76; // ✅ fixed tile size (includes padding/border)
+
+  return Column(
+    children: [
+      Expanded(
+        child: GridView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.all(8),
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: tileExtent, // ✅ prevents giant tiles on large screens
+            mainAxisExtent: tileExtent,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+          ),
+          itemCount: _avatars.length,
+          itemBuilder: (ctx, i) {
+            final path = _avatars[i];
+            final isSelected = !isCustom && _normalizePath(path) == _normalizePath(widget.initialAvatar);
+
+            return Center(
+              child: GestureDetector(
                 onTap: () => widget.onSelect("assets/$path"),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: isSelected ? theme.colorScheme.primary : Colors.transparent, width: 4),
-                    boxShadow: isSelected ? [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.5), blurRadius: 8)] : [],
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      "assets/$path",
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.white30),
+                child: SizedBox(
+                  width: avatarSize,
+                  height: avatarSize,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected ? theme.colorScheme.primary : Colors.transparent,
+                        width: 3,
+                      ),
+                      boxShadow: isSelected
+                          ? [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.5), blurRadius: 8)]
+                          : const [],
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        "assets/$path",
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.white30),
+                      ),
                     ),
                   ),
                 ),
-              );
-            },
-          ),
-        ),
-        
-        if (isCustom)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("Custom Avatar Selected", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                const SizedBox(width: 8),
-                Container(
-                  width: 30, height: 30,
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: theme.colorScheme.primary)),
-                  child: ClipOval(child: Image.memory(base64Decode(widget.initialAvatar.split(',')[1]), fit: BoxFit.cover)),
-                )
-              ],
-            ),
-          ),
-
-        // ✅ FILE PICKER BUTTON (Always visible at bottom)
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: SizedBox(
-            width: double.infinity,
-            height: 45,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.upload_file),
-              label: const Text("UPLOAD PHOTO"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.secondary,
-                foregroundColor: Colors.white,
-                elevation: 0,
               ),
-              onPressed: _uploadCustom,
-            ),
+            );
+          },
+        ),
+      ),
+
+      if (isCustom)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("Custom Avatar Selected", style: TextStyle(color: Colors.white70, fontSize: 12)),
+              const SizedBox(width: 8),
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: theme.colorScheme.primary),
+                ),
+                child: ClipOval(
+                  child: Image.memory(
+                    base64Decode(widget.initialAvatar.split(',')[1]),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              )
+            ],
           ),
         ),
-      ],
-    );
-  }
+
+      Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: SizedBox(
+          width: double.infinity,
+          height: 45,
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.upload_file),
+            label: const Text("UPLOAD PHOTO"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.secondary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
+            onPressed: _uploadCustom,
+          ),
+        ),
+      ),
+    ],
+  );
+}
 }

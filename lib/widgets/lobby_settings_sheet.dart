@@ -12,8 +12,8 @@ class LobbySettingsSheet extends StatefulWidget {
 class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
   // Local state to hold changes before saving
   late String _mode;
-  late int _questions;
-  late int _timer;
+  late double _questions; // Double for Slider
+  late double _timer;     // Double for Slider
   late String _difficulty;
 
   @override
@@ -22,9 +22,16 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
     final lobby = Provider.of<GameProvider>(context, listen: false).lobby;
     if (lobby != null) {
       _mode = lobby.mode;
-      _questions = lobby.quizData?.length ?? 10;
-      _timer = lobby.timer;
+      // ✅ FIX: Use quizData length or default to 10
+      _questions = (lobby.quizData?.length ?? 10).toDouble();
+      _timer = lobby.timer.toDouble();
       _difficulty = lobby.difficulty ?? "mixed";
+    } else {
+      // Fallbacks if lobby is null
+      _mode = "general-knowledge";
+      _questions = 10;
+      _timer = 20;
+      _difficulty = "mixed";
     }
   }
 
@@ -57,7 +64,7 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
             ],
           ),
           const Divider(),
-          Expanded(
+          Flexible(
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,18 +77,37 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
                     theme: theme,
                     onChange: (val) => setState(() => _mode = val ?? "general-knowledge"),
                   ),
-                   const SizedBox(height: 16),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // QUESTIONS SLIDER
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildLabel("QUESTIONS", theme),
+                      Text("${_questions.toInt()}", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 18)),
+                    ],
+                  ),
+                  Slider(
+                    value: _questions,
+                    min: 5, max: 50, divisions: 9,
+                    onChanged: (v) => setState(() => _questions = v),
+                  ),
+
+                  const SizedBox(height: 16),
+                  
+                  // TIMER SLIDER
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _buildLabel("TIMER (SEC)", theme),
-                      Text("$_timer", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 18)),
+                      Text("${_timer.toInt()}", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 18)),
                     ],
                   ),
                   Slider(
-                    value: _timer.toDouble(),
+                    value: _timer,
                     min: 10, max: 60, divisions: 10,
-                    onChanged: (v) => setState(() => _timer = v.toInt()),
+                    onChanged: (v) => setState(() => _timer = v),
                   ),
 
                   const SizedBox(height: 16),
@@ -94,12 +120,23 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
                   ),
                   
                   const SizedBox(height: 32),
-                  ElevatedButton(
-                    onPressed: () {
-                      game.updateSettings(_mode, _questions, "", _timer, _difficulty);
-                      Navigator.pop(context);
-                    },
-                    child: const Text("UPDATE SETTINGS"),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // ✅ FIX: Use correct GameProvider method signature
+                        game.updateSettings(
+                          _mode, 
+                          _questions.toInt(), 
+                          "", // Category (empty for mixed)
+                          _timer.toInt(), 
+                          _difficulty
+                        );
+                        Navigator.pop(context);
+                      },
+                      child: const Text("UPDATE SETTINGS", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
                   )
                 ],
               ),
@@ -116,8 +153,8 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
   );
 
   Widget _buildDropdown({required Map<String, String> items, required String value, required ThemeData theme, required ValueChanged<String?> onChange}) {
-     final selected = items.containsValue(value) ? value : items.values.first;
-     return Container(
+      final selected = items.containsValue(value) ? value : items.values.first;
+      return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: theme.inputDecorationTheme.fillColor,
