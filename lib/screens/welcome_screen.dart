@@ -28,13 +28,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   // ... (Keep existing _openCameraScanner and _showTvDialog methods) ...
   
   String get _serverUrl {
+    // 1. PRODUCTION (Docker / Release Build)
     if (kReleaseMode && kIsWeb) {
       final location = html.window.location;
+      // Use 'http' or 'https'. SignalR handles the upgrade to wss internally.
       return "${location.protocol}//${location.host}/ws";
     }
+    
+    // 2. DEVELOPMENT (Localhost Debugging)
+    // Update '5074' if your local port is different
     return "http://localhost:5074/ws"; 
   }
-
   @override
   void initState() {
     super.initState();

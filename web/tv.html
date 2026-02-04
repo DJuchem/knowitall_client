@@ -27,7 +27,7 @@
       overflow: hidden;
     }
 
-    /* ✅ Dedicated overlay (always visible) */
+    /* Dedicated overlay (always visible) */
     #bgOverlay {
       position: fixed;
       inset: 0;
@@ -48,7 +48,7 @@
       justify-content: center;
     }
 
-    /* ✅ Logo top-left (not centered) */
+    /* Logo top-left */
     #appLogo {
       position: absolute;
       top: 24px;
@@ -172,7 +172,7 @@
     }
     #chatList { flex:1; overflow-y:auto; display:flex; flex-direction: column; gap: 10px; }
     .chat-msg { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; display:flex; gap: 10px; align-items:center; font-size:14px; }
-    .chat-msg img { width: 30px; height: 30px; border-radius: 50%; }
+    .chat-msg img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
     .chat-author { color: var(--primary); font-weight: bold; margin-right: 5px; }
 
     /* Question */
@@ -217,7 +217,7 @@
 
     audio { display:none; }
 
-    /* Debug panel (if you kept it) */
+    /* Debug panel */
     #debugBox {
       position: fixed;
       left: 20px;
@@ -229,11 +229,10 @@
       border: 1px solid rgba(255,255,255,0.15);
       border-radius: 12px;
       z-index: 99;
-      display: flex;
+      display: none; /* OFF by default */
       flex-direction: column;
       overflow: hidden;
       backdrop-filter: blur(6px);
-      display: hidden;
     }
     #debugHeader {
       padding: 8px 10px;
@@ -312,8 +311,10 @@
           <div class="main-q-area">
             <div id="mediaContainer" class="media-frame"></div>
 
-            <!-- Hidden YouTube player (audio only) -->
-            <div id="ytPlayer" style="position:absolute; width:1px; height:1px; opacity:0.01; pointer-events:none;"></div>
+            <!-- YouTube player: NOT fully invisible (helps on some TVs/browsers) -->
+            <div id="ytWrap" style="position:absolute; left:-9999px; top:-9999px; width:320px; height:180px;">
+              <div id="ytPlayer"></div>
+            </div>
 
             <div id="questionText" class="q-text">Loading...</div>
             <div id="answersContainer" class="answers-grid"></div>
@@ -359,11 +360,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
   <script>
     // -------------------------
-    // Debug logger
+    // Debug (OFF by default; enable via ?debug=1)
     // -------------------------
+    const DEBUG_ENABLED = new URLSearchParams(window.location.search).get("debug") === "1";
+    const dbgBox = document.getElementById("debugBox");
     const dbgLogEl = document.getElementById("debugLog");
-    const dbgTitle = document.getElementById("dbgTitle");
     const debugLines = [];
+
+    if (DEBUG_ENABLED) dbgBox.style.display = "flex";
 
     function ts() {
       const d = new Date();
@@ -375,6 +379,7 @@
     }
 
     function log(msg) {
+      if (!DEBUG_ENABLED) return;
       const line = `${ts()} ${msg}`;
       debugLines.push(line);
       if (debugLines.length > 400) debugLines.shift();
@@ -383,11 +388,13 @@
       console.log(line);
     }
 
-    document.getElementById("dbgCopy").onclick = async () => {
-      try { await navigator.clipboard.writeText(debugLines.join("\n")); } catch {}
-    };
-    document.getElementById("dbgClear").onclick = () => { debugLines.length = 0; dbgLogEl.textContent = ""; };
-    document.getElementById("dbgHide").onclick = () => { document.getElementById("debugBox").style.display = "none"; };
+    if (DEBUG_ENABLED) {
+      document.getElementById("dbgCopy").onclick = async () => {
+        try { await navigator.clipboard.writeText(debugLines.join("\n")); } catch {}
+      };
+      document.getElementById("dbgClear").onclick = () => { debugLines.length = 0; dbgLogEl.textContent = ""; };
+      document.getElementById("dbgHide").onclick = () => { dbgBox.style.display = "none"; };
+    }
 
     // -------------------------
     // Globals
@@ -396,8 +403,8 @@
     let ytPlayer = null;
     let ytReady = false;
     let pendingMusicPayload = null;
-
     let isMusicRound = false;
+
     const bgMusic = document.getElementById('bgMusic');
 
     // -------------------------
@@ -405,10 +412,19 @@
     // -------------------------
     function onYouTubeIframeAPIReady() {
       log("YouTube API ready");
+
       ytPlayer = new YT.Player('ytPlayer', {
-        height: '1',
-        width: '1',
-        playerVars: { playsinline: 1, controls: 0, rel: 0, modestbranding: 1 },
+        height: '180',
+        width: '320',
+        playerVars: {
+          playsinline: 1,
+          autoplay: 1,
+          controls: 0,
+          rel: 0,
+          modestbranding: 1,
+          iv_load_policy: 3
+          // do NOT set mute:1
+        },
         events: {
           onReady: () => {
             ytReady = true;
@@ -418,6 +434,10 @@
               pendingMusicPayload = null;
               playMusicPayload(mp);
             }
+          },
+          onStateChange: (e) => {
+            // -1 unstarted, 0 ended, 1 playing, 2 paused, 3 buffering, 5 cued
+            log("YT state=" + (e && e.data));
           },
           onError: (e) => log("YouTube error: " + (e && e.data))
         }
@@ -449,9 +469,7 @@
     // Connection
     // -------------------------
     const isProduction = window.location.hostname.includes("know-it-all.fun");
-
-    // NOTE: adjust localhost ports to your actual dev setup.
-    let serverUrl = isProduction
+    const serverUrl = isProduction
       ? `${window.location.protocol === "https:" ? "https:" : "http:"}//${window.location.host}/ws`
       : "http://localhost:5074/ws";
 
@@ -471,22 +489,11 @@
         log(`Invoking RegisterTV(${tvCode})`);
         await connection.invoke("RegisterTV", tvCode);
         log("RegisterTV OK");
-
-        // Unlock audio on interaction
-        document.body.addEventListener('click', () => {
-          log("User interaction: audio unlock attempt");
-          if (bgMusic && bgMusic.src) bgMusic.play().catch(()=>{});
-          if (ytPlayer && ytReady) {
-            try { ytPlayer.unMute(); ytPlayer.setVolume(100); } catch {}
-          }
-        }, { once: true });
-
       } catch (err) {
         log("SignalR start/register failed: " + err);
         setTimeout(start, 3000);
       }
     }
-
     start();
 
     // -------------------------
@@ -502,15 +509,13 @@
 
       log(`VIEW -> ${viewId}`);
 
-      // If leaving question view, stop YT audio
+      // Leaving question view => stop YT
       if (viewId !== 'questionView') {
         try { if (ytPlayer && ytReady) ytPlayer.stopVideo(); } catch {}
-        // Resume bg music only if allowed and not in music round
         if (bgMusic && bgMusic.src && !isMusicRound) {
           bgMusic.play().catch(()=>{});
         }
       } else {
-        // never let lobby music play during question view
         if (bgMusic) bgMusic.pause();
       }
     }
@@ -522,22 +527,16 @@
     }
 
     // -------------------------
-    // Asset path helpers
+    // Asset helpers
     // -------------------------
     function fixAssetPath(path, fallback) {
       const fb = fallback || "assets/avatars/avatar_0.png";
       if (!path) return fb;
       if (path.startsWith("http") || path.startsWith("data:")) return path;
 
-      // Remove leading slashes
       let clean = path.replace(/^\//, "");
-
-      // Ensure starts with assets/
       if (!clean.startsWith("assets/")) clean = "assets/" + clean;
-
-      // Collapse accidental "assets/assets/"
       clean = clean.replace(/^assets\/assets\//, "assets/");
-
       return clean;
     }
 
@@ -547,72 +546,66 @@
     }
     window.handleAvatarError = handleAvatarError;
 
+    function normalizeName(n) {
+      return String(n || "").trim().toLowerCase();
+    }
+
     function avatarFor(playerName) {
-      if (!playerName) return "assets/avatars/avatar_0.png";
-      const p = globalPlayers.find(x => (x.name || x.Name) === playerName);
+      const key = normalizeName(playerName);
+      if (!key) return "assets/avatars/avatar_0.png";
+
+      const p = globalPlayers.find(x => normalizeName(x.name || x.Name) === key);
       const av = p ? (p.avatar || p.Avatar) : null;
       return fixAssetPath(av, "assets/avatars/avatar_0.png");
     }
 
     // -------------------------
-    // Music playback
+    // Music playback (YouTube)
     // -------------------------
-   function playMusicPayload(mediaPayload) {
-  if (!mediaPayload) return;
+    function forceAudiblePulse() {
+      if (!ytPlayer || !ytReady) return;
+      try { ytPlayer.unMute(); } catch {}
+      try { ytPlayer.setVolume(100); } catch {}
+      try { ytPlayer.playVideo(); } catch {}
+    }
 
-  if (!ytReady || !ytPlayer) {
-    pendingMusicPayload = mediaPayload;
-    log("YT not ready -> queued music payload");
-    return;
-  }
+    function playMusicPayload(mediaPayload) {
+      if (!mediaPayload) return;
 
-  let parts = String(mediaPayload).split('|');
-  let videoId = parts[0];
-  let startSec = 0;
-  if (parts.length > 1) {
-    let range = parts[1].split('-');
-    startSec = parseInt(range[0]) || 0;
-  }
+      if (!ytReady || !ytPlayer) {
+        pendingMusicPayload = mediaPayload;
+        log("YT not ready -> queued music payload");
+        return;
+      }
 
-  try {
-    // Hard reset
-    ytPlayer.stopVideo();
+      let parts = String(mediaPayload).split('|');
+      let videoId = parts[0];
+      let startSec = 0;
+      if (parts.length > 1) {
+        let range = parts[1].split('-');
+        startSec = parseInt(range[0]) || 0;
+      }
 
-    // Start playback
-    ytPlayer.loadVideoById({ videoId, startSeconds: startSec });
-    ytPlayer.playVideo();
-
-    // ✅ IMPORTANT: unmute AFTER play starts (works across more browsers)
-    const forceAudible = () => {
       try {
-        ytPlayer.unMute();
-        ytPlayer.setVolume(100);
-      } catch {}
-    };
+        // hard stop/reset
+        try { ytPlayer.stopVideo(); } catch {}
 
-    forceAudible();
-    setTimeout(forceAudible, 150);
-    setTimeout(forceAudible, 500);
-    setTimeout(forceAudible, 1200);
+        // load & play
+        ytPlayer.loadVideoById({ videoId, startSeconds: startSec });
+        ytPlayer.playVideo();
 
-    log(`YT play requested: ${videoId} @ ${startSec}s`);
+        // pulse unmute/volume several times (helps on some TV browsers)
+        forceAudiblePulse();
+        setTimeout(forceAudiblePulse, 150);
+        setTimeout(forceAudiblePulse, 500);
+        setTimeout(forceAudiblePulse, 1200);
+        setTimeout(forceAudiblePulse, 2500);
 
-  } catch (e) {
-    log("YT play failed: " + e);
-  }
-}
-
-
-
-    function dumpYT(tag) {
-  try {
-    if (!ytPlayer || !ytReady) { log(`${tag}: yt not ready`); return; }
-    log(`${tag}: state=${ytPlayer.getPlayerState?.()} muted=${ytPlayer.isMuted?.()} vol=${ytPlayer.getVolume?.()}`);
-  } catch (e) {
-    log(`${tag}: dumpYT error ${e}`);
-  }
-}
-
+        log(`YT play requested: ${videoId} @ ${startSec}s`);
+      } catch (e) {
+        log("YT play failed: " + e);
+      }
+    }
 
     // -------------------------
     // Hub events
@@ -649,25 +642,21 @@
       }
       bgMusic.volume = vol;
 
-      // ✅ never play during question view or music rounds
+      // never play during question view or music rounds
       const questionVisible = document.getElementById('questionView').style.display === 'flex';
       if (questionVisible || isMusicRound) {
         bgMusic.pause();
         return;
       }
 
-      bgMusic.play().catch(() => log("bgMusic blocked until click"));
+      bgMusic.play().catch(() => log("bgMusic blocked"));
     });
 
     connection.on("lobby_update", (state) => {
       log("EVENT: lobby_update");
-
       if (!state) return;
 
-      if (state.started) {
-        // lobby_update will still fire during game, but view is driven by new_round/game_started
-        return;
-      }
+      if (state.started) return;
 
       showOnly('lobbyView');
 
@@ -695,7 +684,6 @@
         grid.appendChild(card);
       });
 
-      // chat
       const chatList = document.getElementById('chatList');
       chatList.innerHTML = '';
       const chatData = state.chat || state.Chat || [];
@@ -730,7 +718,7 @@
         return;
       }
 
-      // update mini standings
+      // standings
       const players = data.players || data.Players || globalPlayers;
       if (players) globalPlayers = players;
 
@@ -751,7 +739,6 @@
         miniList.appendChild(row);
       });
 
-      // set question
       document.getElementById('questionText').innerText =
         q.Question || q.question || "Question";
 
@@ -763,13 +750,11 @@
 
       if (isMusicRound && mediaPayload) {
         mediaBox.style.display = 'none';
-        // ensure image cleared
         mediaBox.innerHTML = '';
 
-        // ✅ force YT playback every round
+        // Force YT playback every round
         playMusicPayload(mediaPayload);
       } else {
-        // stop youtube for non-music rounds
         try { if (ytPlayer && ytReady) ytPlayer.stopVideo(); } catch {}
 
         const mediaUrl = mediaPayload || q.Image || q.image || "";
@@ -793,7 +778,6 @@
       if (correct) answers.push(correct);
       if (Array.isArray(incorrect)) answers.push(...incorrect);
 
-      // shuffle
       for (let i = answers.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [answers[i], answers[j]] = [answers[j], answers[i]];
@@ -827,17 +811,14 @@
       const lb = document.getElementById('leaderboard');
       lb.innerHTML = '';
 
-      // sort results
       const results = (data.results || data.Results || []).slice()
         .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
-      // IMPORTANT:
-      // results payload from server currently has no avatar.
-      // ✅ resolve avatar by name from globalPlayers
+      // Resolve avatar by player name from last lobby_update
       results.slice(0, 8).forEach((p, index) => {
         const name = p.name || p.Name || "Player";
         const score = p.score ?? 0;
-        const correct = p.correct === true;
+        const isCorrect = p.correct === true;
         const earned = p.earned ?? 0;
 
         const av = avatarFor(name);
@@ -845,7 +826,7 @@
         const row = document.createElement('div');
         row.className = `lb-row ${index === 0 ? 'winner' : ''}`;
 
-        const statusIcon = correct
+        const statusIcon = isCorrect
           ? `<span style="color:#00ff00; font-size:24px; margin-right:15px;">✔ +${earned}</span>`
           : `<span style="color:#ff3333; font-size:24px; margin-right:15px;">✘</span>`;
 
@@ -863,7 +844,6 @@
         lb.appendChild(row);
       });
 
-      // during results: stop YT
       try { if (ytPlayer && ytReady) ytPlayer.stopVideo(); } catch {}
       isMusicRound = false;
     });

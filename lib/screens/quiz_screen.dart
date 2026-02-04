@@ -1,3 +1,4 @@
+// quiz_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +8,9 @@ import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
 import '../theme/app_theme.dart';
 import 'dart:math';
+// ✅ Added for origin detection
+import 'package:flutter/foundation.dart'; 
+import 'dart:html' as html;
 
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});
@@ -16,7 +20,6 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  // ✅ Changed to Double for smoothness
   double _timeLeft = 30.0; 
   Timer? _timer;
   Timer? _mediaStopTimer;
@@ -37,13 +40,18 @@ class _QuizScreenState extends State<QuizScreen> {
     _confettiController = ConfettiController(duration: const Duration(seconds: 2));
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final game = Provider.of<GameProvider>(context);
-    if (game.appState != AppState.quiz) return;
-    _processLobbyData(game);
-  }
+@override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  final game = Provider.of<GameProvider>(context);
+  if (game.appState != AppState.quiz) return;
+
+  // ✅ This allows the frame to finish building BEFORE 
+  // stopMusic() triggers a new rebuild notification.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (mounted) _processLobbyData(game);
+  });
+}
 
   @override
   void dispose() {
@@ -54,73 +62,90 @@ class _QuizScreenState extends State<QuizScreen> {
     super.dispose();
   }
 
-  // ... (Keep _initMedia unchanged) ...
-    void _initMedia(String? payload, String type, GameProvider game) {
-    _mediaStopTimer?.cancel();
-    if (_ytController != null) {
-      try { _ytController!.pauseVideo(); } catch (_) {}
-    }
-    if (!type.toLowerCase().contains("music") || payload == null || payload.trim().isEmpty) {
-      if (!game.isMusicPlaying && game.isMusicEnabled) game.initMusic();
-      return;
-    }
-    game.stopMusic();
-    final raw = payload.trim();
-    String videoId = raw;
-    int startSec = 0;
-    int? endSec;
+  void _initMedia(String? payload, String type, GameProvider game) {
+  _mediaStopTimer?.cancel();
 
-    if (raw.contains('|')) {
-      final parts = raw.split('|');
-      videoId = parts[0].trim();
-      if (parts.length > 1) {
-        final rangePart = parts[1].trim();
-        if (rangePart.contains('-')) {
-          final ab = rangePart.split('-');
-          final a = int.tryParse(ab[0].trim());
-          final b = (ab.length > 1) ? int.tryParse(ab[1].trim()) : null;
-          if (a != null && b != null) {
-            if (b > a && (b - a) <= 30) {
-              startSec = a;
-              endSec = b;
-            } else {
-              final minS = a < b ? a : b;
-              final maxS = a < b ? b : a;
-              startSec = Random().nextInt((maxS - minS) + 1) + minS;
-              endSec = null;
-            }
-          } else if (a != null) startSec = a;
-        } else {
-          final s = int.tryParse(rangePart);
-          if (s != null) startSec = s;
+  if (_ytController != null) {
+    try { _ytController!.pauseVideo(); } catch (_) {}
+  }
+
+  // non-music round => ensure lobby music can resume
+  if (!type.toLowerCase().contains("music") || payload == null || payload.trim().isEmpty) {
+    if (!game.isMusicPlaying && game.isMusicEnabled) {
+      game.initMusic(); // this one can notify, it's not called during build here anymore
+    }
+    return;
+  }
+
+  // MUSIC round => stop lobby bg music WITHOUT notifying provider during build-sensitive timing
+  game.stopMusic(notify: false);
+
+  final raw = payload.trim();
+  String videoId = raw;
+  int startSec = 0;
+  int? endSec;
+
+  if (raw.contains('|')) {
+    final parts = raw.split('|');
+    videoId = parts[0].trim();
+    if (parts.length > 1) {
+      final rangePart = parts[1].trim();
+      if (rangePart.contains('-')) {
+        final ab = rangePart.split('-');
+        final a = int.tryParse(ab[0].trim());
+        final b = (ab.length > 1) ? int.tryParse(ab[1].trim()) : null;
+        if (a != null && b != null) {
+          if (b > a && (b - a) <= 30) {
+            startSec = a;
+            endSec = b;
+          } else {
+            final minS = a < b ? a : b;
+            final maxS = a < b ? b : a;
+            startSec = Random().nextInt((maxS - minS) + 1) + minS;
+            endSec = null;
+          }
+        } else if (a != null) {
+          startSec = a;
         }
+      } else {
+        final s = int.tryParse(rangePart);
+        if (s != null) startSec = s;
       }
     }
-
-    if (_ytController != null) {
-      _ytController!.loadVideoById(videoId: videoId, startSeconds: startSec.toDouble());
-      Future.delayed(const Duration(milliseconds: 100), () => _ytController!.playVideo());
-    } else {
-      _ytController = YoutubePlayerController(
-        params: const YoutubePlayerParams(
-          showControls: false, showFullscreenButton: false, loop: false, mute: false,
-        ),
-      );
-      _ytController!.loadVideoById(videoId: videoId, startSeconds: startSec.toDouble());
-    }
-
-    final int questionSeconds = game.lobby?.timer ?? 30;
-    int stopAfterSeconds = questionSeconds;
-    if (endSec != null && endSec > startSec) {
-      final segLen = endSec - startSec;
-      stopAfterSeconds = (segLen < questionSeconds) ? questionSeconds : segLen;
-    }
-    
-    _mediaStopTimer = Timer(Duration(seconds: stopAfterSeconds), () {
-      if (!mounted || _ytController == null) return;
-      _ytController!.pauseVideo();
-    });
   }
+
+  final String currentOrigin = kIsWeb ? html.window.location.origin : "";
+
+  if (_ytController == null) {
+    _ytController = YoutubePlayerController(
+      params: YoutubePlayerParams(
+        showControls: false,
+        showFullscreenButton: false,
+        loop: false,
+        mute: false,
+        origin: currentOrigin,
+        enableCaption: false,
+      ),
+    );
+  }
+
+  _ytController!.loadVideoById(
+    videoId: videoId,
+    startSeconds: startSec.toDouble(),
+  );
+
+  final int questionSeconds = game.lobby?.timer ?? 30;
+  int stopAfterSeconds = questionSeconds;
+  if (endSec != null && endSec > startSec) {
+    final segLen = endSec - startSec;
+    stopAfterSeconds = (segLen < questionSeconds) ? questionSeconds : segLen;
+  }
+
+  _mediaStopTimer = Timer(Duration(seconds: stopAfterSeconds), () {
+    if (!mounted || _ytController == null) return;
+    _ytController!.pauseVideo();
+  });
+}
 
 
   void _processLobbyData(GameProvider game, {bool force = false}) {
@@ -134,7 +159,7 @@ class _QuizScreenState extends State<QuizScreen> {
       _internalIndex = lobby.currentQuestionIndex;
       _hasAnswered = false;
       _selectedAnswer = null;
-      _timeLeft = lobby.timer.toDouble(); // ✅ Reset to double
+      _timeLeft = lobby.timer.toDouble();
 
       final int idx = (_internalIndex < 0 || _internalIndex >= lobby.quizData!.length) ? 0 : _internalIndex;
       final q = lobby.quizData![idx];
@@ -163,7 +188,6 @@ class _QuizScreenState extends State<QuizScreen> {
 
   void startTimer() {
     _timer?.cancel();
-    // ✅ Tick every 0.1s for smoothness
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       if (!mounted) return;
       setState(() {
@@ -187,11 +211,13 @@ class _QuizScreenState extends State<QuizScreen> {
     final game = Provider.of<GameProvider>(ctx, listen: false);
     try {
       await game.submitAnswer(answer, (game.lobby!.timer - _timeLeft), _internalIndex);
-    } catch (_) {}
+    } catch (_) {
+      // ✅ If the connection is dropped, try to at least show it locally
+      debugPrint("Answer submission failed - Check WebSocket status.");
+    }
   }
 
-  // ... (_confirmLeave unchanged) ...
-    void _confirmLeave(BuildContext context, GameProvider game) {
+  void _confirmLeave(BuildContext context, GameProvider game) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -201,22 +227,13 @@ class _QuizScreenState extends State<QuizScreen> {
             ? "This will end the game for everyone and return to the lobby." 
             : "You will leave the game and return to the home screen."),
         actions: [
+          TextButton(child: const Text("Cancel"), onPressed: () => Navigator.pop(context)),
           TextButton(
-            child: const Text("Cancel"), 
-            onPressed: () => Navigator.pop(context)
-          ),
-          TextButton(
-            child: Text(
-              game.amIHost ? "END GAME" : "LEAVE", 
-              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)
-            ),
+            child: Text(game.amIHost ? "END GAME" : "LEAVE", style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
             onPressed: () async {
-              Navigator.pop(context); // Close Dialog
-              if (game.amIHost) {
-                await game.resetToLobby(); 
-              } else {
-                await game.leaveLobby(); 
-              }
+              Navigator.pop(context);
+              if (game.amIHost) { await game.resetToLobby(); } 
+              else { await game.leaveLobby(); }
             },
           ),
         ],
@@ -291,7 +308,6 @@ class _QuizScreenState extends State<QuizScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      // ✅ Display decimal time
                       Text("${_timeLeft.toStringAsFixed(1)}s", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
                     ],
                   ),
@@ -302,6 +318,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   child: Column(
                     children: [
                       if (_ytController != null) ...[
+                        // ✅ Hidden Youtube Player - Ensure it exists but is tiny
                         SizedBox(height: 1, width: 1, child: YoutubePlayer(controller: _ytController!)),
                         const Icon(Icons.music_note, size: 80, color: Colors.white),
                         const Text("Listen closely...", style: TextStyle(color: Colors.white70)),
@@ -336,7 +353,6 @@ class _QuizScreenState extends State<QuizScreen> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          // Use Theme for selected, transparent for unselected
                           backgroundColor: _selectedAnswer == ans ? theme.colorScheme.primary : theme.colorScheme.surface.withOpacity(0.6),
                           foregroundColor: _selectedAnswer == ans ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                           minimumSize: const Size(double.infinity, 60),
@@ -366,4 +382,4 @@ class _QuizScreenState extends State<QuizScreen> {
       ),
     );
   }
-}
+} 

@@ -10,27 +10,13 @@ class ClientSettingsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    Widget sectionTitle(String t) => Padding(
-      padding: const EdgeInsets.fromLTRB(4, 24, 4, 8),
-      child: Text(
-        t, 
-        style: TextStyle(
-          color: theme.colorScheme.primary, 
-          fontWeight: FontWeight.bold, 
-          letterSpacing: 1.2, 
-          fontSize: 12
-        )
-      ),
-    );
 
     return Container(
+      // Standardize height and padding to match LobbySettingsSheet
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 30)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -44,7 +30,6 @@ class ClientSettingsSheet extends StatelessWidget {
             ),
           ),
           
-          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -54,139 +39,81 @@ class ClientSettingsSheet extends StatelessWidget {
           ),
           const Divider(),
 
-          Expanded(
+          // Use Flexible + SingleChildScrollView to ensure it fits mobile screens
+          Flexible(
             child: SingleChildScrollView(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 16),
+                  _buildSectionLabel("VISUAL SCHEME", theme),
+                  _buildThemeSelector(game),
                   
-                  // --- 1. VISUAL STYLE (COLORS) ---
-                  sectionTitle("VISUAL STYLE (COLORS ONLY)"),
-                  SizedBox(
-                    height: 90,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: AppTheme.schemes.values.map((scheme) {
-                        final isSelected = game.currentScheme == scheme.name;
-                        return GestureDetector(
-                          onTap: () => game.updateTheme(scheme: scheme.name), // Only updates color scheme
-                          child: Container(
-                            width: 80, 
-                            margin: const EdgeInsets.only(right: 12),
-                            decoration: BoxDecoration(
-                              color: scheme.surface,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: isSelected ? scheme.primary : Colors.transparent, 
-                                width: 3
-                              ),
-                              boxShadow: isSelected ? [BoxShadow(color: scheme.primary.withOpacity(0.4), blurRadius: 8)] : [],
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                CircleAvatar(backgroundColor: scheme.primary, radius: 14),
-                                const SizedBox(height: 8),
-                                Text(
-                                  scheme.name, 
-                                  textAlign: TextAlign.center, 
-                                  style: TextStyle(
-                                    color: isDark ? Colors.white70 : Colors.black87, 
-                                    fontSize: 11, 
-                                    fontWeight: FontWeight.bold
-                                  )
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 12),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text("Dark Mode", style: TextStyle(fontWeight: FontWeight.bold)),
-                    secondary: Icon(isDark ? Icons.dark_mode : Icons.light_mode),
-                    value: isDark,
-                    activeColor: theme.colorScheme.primary,
-                    onChanged: (val) => game.updateTheme(brightness: val ? Brightness.dark : Brightness.light),
+                  const SizedBox(height: 24),
+                  _buildSectionLabel("BACKGROUND", theme),
+                  _buildDropdown(
+                    value: game.wallpaper,
+                    items: game.wallpaperOptions,
+                    onChanged: (v) => game.updateTheme(bg: v),
+                    theme: theme,
                   ),
 
-                  // --- 2. BACKGROUND (WALLPAPER) ---
-                  sectionTitle("BACKGROUND IMAGE"),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: game.wallpaperOptions.containsValue(game.wallpaper)
-                            ? game.wallpaper
-                            : game.wallpaperOptions.values.first,
-                        isExpanded: true,
-                        dropdownColor: theme.cardColor,
-                        icon: Icon(Icons.image, color: theme.colorScheme.primary),
-                        style: TextStyle(color: theme.textTheme.bodyMedium?.color),
-                        items: game.wallpaperOptions.entries
-                            .map((e) => DropdownMenuItem(value: e.value, child: Text(e.key)))
-                            .toList(),
-                        onChanged: (v) => game.updateTheme(bg: v), // Only updates wallpaper
-                      ),
-                    ),
-                  ),
-
-                  // --- 3. AUDIO (MUSIC) ---
-                  sectionTitle("AUDIO TRACK"),
+                  const SizedBox(height: 24),
+                  _buildSectionLabel("AUDIO", theme),
                   SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text("Background Music", style: TextStyle(fontWeight: FontWeight.bold)),
-                    secondary: Icon(game.isMusicEnabled ? Icons.music_note : Icons.music_off, color: theme.colorScheme.secondary),
+                    title: const Text("Background Music"),
                     value: game.isMusicEnabled,
-                    activeColor: theme.colorScheme.primary,
-                    onChanged: (val) => game.toggleMusic(val),
+                    onChanged: (v) => game.toggleMusic(v),
                   ),
-
-                  // Music Selector (Only shows if music is ON)
-                  if (game.isMusicEnabled) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: game.musicOptions.containsValue(game.currentMusic)
-                              ? game.currentMusic
-                              : game.musicOptions.values.first,
-                          isExpanded: true,
-                          dropdownColor: theme.cardColor,
-                          icon: Icon(Icons.library_music, color: theme.colorScheme.secondary),
-                          style: TextStyle(color: theme.textTheme.bodyMedium?.color),
-                          items: game.musicOptions.entries
-                              .map((e) => DropdownMenuItem(value: e.value, child: Text(e.key)))
-                              .toList(),
-                          onChanged: (v) {
-                            if (v != null) game.setMusicTrack(v); // Only updates music
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                  
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionLabel(String text, ThemeData theme) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(text, style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 12)),
+  );
+
+  // Helper for the visual theme cards
+  Widget _buildThemeSelector(GameProvider game) {
+    return SizedBox(
+      height: 100,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: AppTheme.schemes.values.map((s) => GestureDetector(
+          onTap: () => game.updateTheme(scheme: s.name),
+          child: Container(
+            width: 80,
+            margin: const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(
+              color: s.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: game.currentScheme == s.name ? s.primary : Colors.white10, width: 2),
+            ),
+            child: Icon(Icons.color_lens, color: s.primary),
+          ),
+        )).toList(),
+      ),
+    );
+  }
+
+  Widget _buildDropdown({required String value, required Map<String, String> items, required Function(String?) onChanged, required ThemeData theme}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: DropdownButton<String>(
+        value: items.containsValue(value) ? value : items.values.first,
+        isExpanded: true,
+        underline: const SizedBox(),
+        items: items.entries.map((e) => DropdownMenuItem(value: e.value, child: Text(e.key))).toList(),
+        onChanged: onChanged,
       ),
     );
   }

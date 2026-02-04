@@ -96,7 +96,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
           fit: StackFit.expand,
           children: [
             Image.asset(game.wallpaper, fit: BoxFit.cover),
-            Container(color: Colors.black.withOpacity(0.3)),
+            Container(color: Colors.black.withOpacity(0.7)),
 
             SafeArea(
               bottom: false,

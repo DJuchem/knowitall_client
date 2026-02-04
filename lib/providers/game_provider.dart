@@ -201,11 +201,16 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  void stopMusic() {
-    _musicPlayer.stop();
-    _isPlaying = false;
-    notifyListeners();
+ Future<void> stopMusic({bool notify = true}) async {
+  try {
+    await _musicPlayer.stop();
+  } catch (_) {
+    // ignore
   }
+  _isPlaying = false;
+  if (notify) notifyListeners();
+}
+
 
   void toggleMusic(bool enable) {
     _isMusicEnabled = enable;
@@ -333,115 +338,109 @@ class GameProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Future<void> connect(String url) async {
-    if (_hubConnection != null) return;
+  Future<void> connect(String url, {bool enableTvTrace = false}) async {
+  if (_hubConnection != null) return;
 
-    _hubConnection = HubConnectionBuilder().withUrl(url).withAutomaticReconnect().build();
+  _hubConnection = HubConnectionBuilder()
+      .withUrl(url)
+      .withAutomaticReconnect()
+      .build();
 
-    _hubConnection!.on("game_created", _handleLobbyUpdate);
-    _hubConnection!.on("game_joined", _handleLobbyUpdate);
-    _hubConnection!.on("lobby_update", _handleLobbyUpdate);
+  _hubConnection!.on("game_created", _handleLobbyUpdate);
+  _hubConnection!.on("game_joined", _handleLobbyUpdate);
+  _hubConnection!.on("lobby_update", _handleLobbyUpdate);
 
-    _hubConnection!.on("error", (args) {
-      final msg = (args != null && args.isNotEmpty) ? args[0]?.toString() : "Unknown server error";
-      _errorMessage = msg;
-      notifyListeners();
-    });
+  _hubConnection!.on("error", (args) {
+    final msg = (args != null && args.isNotEmpty) ? args[0]?.toString() : "Unknown server error";
+    _errorMessage = msg;
+    notifyListeners();
+  });
 
-    // pairing success signal
-    _hubConnection!.on("tv_paired_success", (_) {
-      // clear errors on success
-      _errorMessage = null;
-      notifyListeners();
-    });
+  _hubConnection!.on("tv_paired_success", (_) {
+    _errorMessage = null;
+    notifyListeners();
+  });
 
-    // optional diagnostic if you added it server-side
-    _hubConnection!.on("tv_trace", (args) {
-      final msg = (args != null && args.isNotEmpty) ? args[0]?.toString() : "";
-   _hubConnection!.on("tv_trace", (args) {
-  final String msg = (args != null && args.isNotEmpty && args[0] != null)
-      ? args[0].toString()
-      : "";
-
-  if (msg.trim().isNotEmpty) {
-    debugPrint("[tv_trace] $msg");
-  }
-});
-
-    });
-
-    _hubConnection!.on("tv_attach_success", (args) {
-      // server says TV attached to lobby; helpful for debugging
+  _hubConnection!.on("tv_attach_success", (args) {
+    if (enableTvTrace) {
       debugPrint("TV attached: $args");
-    });
-
-    _hubConnection!.on("game_started", (args) {
-      if (args != null && args.isNotEmpty) {
-        _handleLobbyUpdate(args);
-        _appState = AppState.quiz;
-        _currentStreak = 0;
-
-        // CRITICAL: if it is music quiz, stop lobby bg music (host + phone)
-        if (_currentLobby?.mode?.toLowerCase() == "music") {
-          stopMusic();
-        }
-
-        notifyListeners();
-      }
-    });
-
-    _hubConnection!.on("new_round", (args) {
-      if (args != null && args.isNotEmpty) {
-        final map = args[0] as Map<String, dynamic>;
-        _handleLobbyUpdate(args);
-        if (_currentLobby != null) _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
-        _appState = AppState.quiz;
-        notifyListeners();
-      }
-    });
-
-    _hubConnection!.on("question_results", (args) {
-      if (args != null && args.isNotEmpty) {
-        _lastResults = args[0] as Map<String, dynamic>;
-        _handleStreakUpdate(_lastResults);
-        _appState = AppState.results;
-        notifyListeners();
-      }
-    });
-
-    _hubConnection!.on("game_over", (_) {
-      _appState = AppState.gameOver;
-      playSfx("gameover");
-      notifyListeners();
-    });
-
-    _hubConnection!.on("lobby_deleted", (_) {
-      _appState = AppState.welcome;
-      _currentLobby = null;
-      _currentStreak = 0;
-
-      // pairing session ends when lobby is deleted (host left / lobby removed)
-      _hostKey = null;
-
-      notifyListeners();
-    });
-
-    _hubConnection!.on("game_reset", (_) {
-      _appState = AppState.lobby;
-      _currentStreak = 0;
-      notifyListeners();
-    });
-
-    await _hubConnection!.start();
-
-    // If user already entered TV code before connection completed, pair now.
-    if (_pendingTvCode != null && _pendingTvCode!.trim().isNotEmpty) {
-      if (_hostKey == null || _hostKey!.trim().isEmpty) {
-        _hostKey = _newHostKey();
-      }
-      await _pairTvNow();
     }
+  });
+
+  if (enableTvTrace) {
+    _hubConnection!.on("tv_trace", (args) {
+      final String msg = (args != null && args.isNotEmpty && args[0] != null)
+          ? args[0].toString()
+          : "";
+      if (msg.trim().isNotEmpty) {
+        debugPrint("[tv_trace] $msg");
+      }
+    });
   }
+
+  _hubConnection!.on("game_started", (args) {
+    if (args == null || args.isEmpty) return;
+
+    _handleLobbyUpdate(args);
+    _appState = AppState.quiz;
+    _currentStreak = 0;
+
+    // If it is music quiz, stop lobby bg music WITHOUT forcing a provider rebuild mid-build
+    if ((_currentLobby?.mode ?? "").toLowerCase() == "music") {
+      stopMusic(notify: false);
+    }
+
+    notifyListeners();
+  });
+
+  _hubConnection!.on("new_round", (args) {
+    if (args == null || args.isEmpty) return;
+    final map = args[0] as Map<String, dynamic>;
+    _handleLobbyUpdate(args);
+    if (_currentLobby != null) _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
+    _appState = AppState.quiz;
+    notifyListeners();
+  });
+
+  _hubConnection!.on("question_results", (args) {
+    if (args == null || args.isEmpty) return;
+    _lastResults = args[0] as Map<String, dynamic>;
+    _handleStreakUpdate(_lastResults);
+    _appState = AppState.results;
+    notifyListeners();
+  });
+
+  _hubConnection!.on("game_over", (_) {
+    _appState = AppState.gameOver;
+    playSfx("gameover");
+    notifyListeners();
+  });
+
+  _hubConnection!.on("lobby_deleted", (_) {
+    _appState = AppState.welcome;
+    _currentLobby = null;
+    _currentStreak = 0;
+    _hostKey = null;
+    notifyListeners();
+  });
+
+  _hubConnection!.on("game_reset", (_) {
+    _appState = AppState.lobby;
+    _currentStreak = 0;
+    notifyListeners();
+  });
+
+  await _hubConnection!.start();
+
+  // If user already entered TV code before connection completed, pair now.
+  if (_pendingTvCode != null && _pendingTvCode!.trim().isNotEmpty) {
+    if (_hostKey == null || _hostKey!.trim().isEmpty) {
+      _hostKey = _newHostKey();
+    }
+    await _pairTvNow();
+  }
+}
+
 
   // ✅ STREAK CALCULATION LOGIC RESTORED
   void _handleStreakUpdate(Map<String, dynamic>? results) {
