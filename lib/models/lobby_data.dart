@@ -12,6 +12,8 @@ class LobbyData {
   String? difficulty;
   int currentQuestionIndex; 
   List<dynamic>? quizData;
+  final String? category;
+
 
   LobbyData({
     required this.code,
@@ -25,6 +27,8 @@ class LobbyData {
     this.difficulty,
     required this.currentQuestionIndex,
     this.quizData,
+    this.category,
+    
   });
 
   factory LobbyData.fromJson(Map<String, dynamic> json) {
@@ -44,6 +48,7 @@ class LobbyData {
       difficulty: json['difficulty'],
       currentQuestionIndex: json['questionIndex'] ?? 0, 
       quizData: json['quizData'],
+      category: json['category']?.toString(),
     );
   }
 }

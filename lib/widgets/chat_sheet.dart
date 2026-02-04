@@ -99,6 +99,7 @@ class _ChatSheetState extends State<ChatSheet> {
     final isDark = theme.brightness == Brightness.dark;
     final screenSize = MediaQuery.of(context).size;
 
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final sheetBg = cs.surface.withOpacity(isDark ? 0.95 : 1.0);
     final myBubble = cs.primary.withOpacity(0.3);
     final otherBubble = isDark ? Colors.white10 : Colors.black.withOpacity(0.05);
@@ -115,7 +116,7 @@ class _ChatSheetState extends State<ChatSheet> {
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOutBack,
       height: targetH,
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      margin: EdgeInsets.fromLTRB(12, 0, 12, 12 + bottomInset),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         color: sheetBg,

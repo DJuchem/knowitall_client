@@ -27,14 +27,17 @@ class _ResultsScreenState extends State<ResultsScreen> {
     final game = Provider.of<GameProvider>(context);
     final lobby = game.lobby;
     final results = game.lastResults;
-    final theme = Theme.of(context); // ✅ Active Theme
+    final theme = Theme.of(context);
 
     if (lobby == null || results == null) return const BaseScaffold(body: Center(child: CircularProgressIndicator()));
 
     final correctAnswer = results['correctAnswer']?.toString() ?? "Unknown";
     final List playerResults = (results['results'] ?? []) as List;
-
     playerResults.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+
+    // Dynamic Density
+    final int playerCount = playerResults.length;
+    final bool isCompact = playerCount > 8;
 
     final totalQs = lobby.quizData?.length ?? 0;
     final isLast = totalQs > 0 ? lobby.currentQuestionIndex >= totalQs - 1 : false;
@@ -75,7 +78,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   child: GlassContainer(
                     child: ListView.separated(
                       padding: const EdgeInsets.symmetric(vertical: 6),
-                      itemCount: playerResults.length,
+                      itemCount: playerCount,
                       separatorBuilder: (_, __) => Divider(height: 1, color: theme.colorScheme.onSurface.withOpacity(0.1)),
                       itemBuilder: (ctx, i) {
                         final p = playerResults[i];
@@ -87,17 +90,34 @@ class _ResultsScreenState extends State<ResultsScreen> {
                         final double timeTaken = (p['time'] is num) ? (p['time'] as num).toDouble() : 0.0;
 
                         return ListTile(
+                          // Native Flutter compression
+                          visualDensity: isCompact ? VisualDensity.compact : VisualDensity.standard,
+                          dense: isCompact,
                           leading: CircleAvatar(
+                            radius: isCompact ? 16 : 20,
                             backgroundColor: (isCorrect ? Colors.green : Colors.red).withOpacity(0.25),
-                            child: Icon(isCorrect ? Icons.check : Icons.close, color: isCorrect ? Colors.greenAccent : Colors.redAccent),
+                            child: Icon(
+                              isCorrect ? Icons.check : Icons.close, 
+                              color: isCorrect ? Colors.greenAccent : Colors.redAccent,
+                              size: isCompact ? 18 : 24,
+                            ),
                           ),
-                          title: Text(name, style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                          title: Text(
+                            name, 
+                            style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: isCompact ? 14 : 16)
+                          ),
                           subtitle: Text(
-                            // ✅ Fixed time format
                             "Chose: $chosen ${isCorrect ? '(+$earned)' : ''}  •  ${timeTaken.toStringAsFixed(1)}s", 
-                            style: TextStyle(color: isCorrect ? Colors.green : theme.colorScheme.onSurface.withOpacity(0.5), fontStyle: FontStyle.italic),
+                            style: TextStyle(
+                              fontSize: isCompact ? 11 : 13,
+                              color: isCorrect ? Colors.green : theme.colorScheme.onSurface.withOpacity(0.5), 
+                              fontStyle: FontStyle.italic
+                            ),
                           ),
-                          trailing: Text("$score", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w900, fontSize: 18)),
+                          trailing: Text(
+                            "$score", 
+                            style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w900, fontSize: isCompact ? 16 : 18)
+                          ),
                         );
                       },
                     ),
