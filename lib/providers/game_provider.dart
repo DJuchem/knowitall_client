@@ -25,7 +25,6 @@ class GameProvider extends ChangeNotifier {
   HubConnection? _hubConnection;
   final AudioPlayer _musicPlayer = AudioPlayer();
   final AudioPlayer _sfxPlayer = AudioPlayer();
-  
   final GameConfig config = GameConfig();
   Completer<void>? _lobbyCompleter;
 
@@ -36,35 +35,58 @@ class GameProvider extends ChangeNotifier {
   String? _errorMessage;
   String? _pendingTvCode; 
 
-  // --- USER DATA ---
   String _myName = "Player";
   String _myAvatar = "assets/avatars/avatar_0.png";
   int _currentStreak = 0;
   int _lastChatReadIndex = 0; 
 
-  // --- SETTINGS ---
-  String _colorScheme = "Cyberpunk"; // Default Scheme
-  String _wallpaper = "assets/bg/cyberpunk.jpg";
+  // --- INDEPENDENT SETTINGS ---
+  String _colorScheme = "Default"; 
+  String _wallpaper = "assets/bg/background_default.png";
   String _bgMusic = "assets/music/default.mp3";
   Brightness _brightness = Brightness.dark;
   
-  bool _isMusicEnabled = true;
+  bool _isMusicEnabled = false; // Off by default
   bool _isPlaying = false;
   double _volume = 0.5;
 
-  // --- OPTIONS ---
-  final Map<String, String> musicOptions = {
-    "Know It All": "assets/music/default.mp3",
-    "Chill Lo-Fi": "assets/music/synth.mp3",
-    "Cyberpunk": "assets/music/dubstep.mp3",
-    "Hentai": "assets/music/dreams.mp3",
+  // --- CENTRALIZED DATA ---
+  final Map<String, String> gameModes = const {
+    "General Knowledge": "general-knowledge",
+    "Math Calculations": "calculations",
+    "Guess the Flag": "flags",
+    "Country Capitals": "capitals",
+    "Music Quiz": "music",
+    "Odd One Out": "odd_one_out",
+    "Fill In The Blank": "fill_in_the_blank",
+    "True / False": "true_false",
+    "Population": "population",
   };
 
+  // ✅ DECOUPLED MUSIC LIST
+  final Map<String, String> musicOptions = {
+    "KnowItAll": "assets/music/background-music.mp3",
+    "Chill Lo-Fi": "assets/music/synth.mp3",
+    "High Energy (Dubstep)": "assets/music/dubstep.mp3",
+    "Dreamy Atmosphere": "assets/music/dreams.mp3",
+    "Retro Terminal": "assets/music/terminal.mp3",
+    "Deep Space": "assets/music/nebula.mp3",
+    "Nature Sounds": "assets/music/forest_ambient.mp3",
+    "Classical Focus": "assets/music/RondoAllegro.mp3",
+  };
+
+  // ✅ DECOUPLED WALLPAPER LIST
   final Map<String, String> wallpaperOptions = {
-    "Know It All": "assets/bg/background_default.png",
-    "Cyberpunk": "assets/bg/cyberpunk.jpg",
-    "Hentai": "assets/bg/hentai6.jpg",
-    "Chill Lo-Fi": "assets/bg/synth.jpg",
+    "Default": "assets/bg/background_default.webp",
+    "Neon City": "assets/bg/cyberpunk.jpg",
+    "Digital Rain": "assets/bg/matrix_rain.jpg",
+    "Deep Galaxy": "assets/bg/galaxy.jpg",
+    "Volcanic": "assets/bg/magma.jpg",
+    "Mystic Forest": "assets/bg/forest.jpg",
+    "Underwater": "assets/bg/underwater.jpg",
+    "Ancient Castle": "assets/bg/castle.jpg",
+    "Anime Style": "assets/bg/hentai6.jpg",
+    "Synthwave Sun": "assets/bg/synth.jpg",
   };
 
   // --- GETTERS ---
@@ -77,9 +99,9 @@ class GameProvider extends ChangeNotifier {
   String get myAvatar => _myAvatar;
   bool get amIHost => _currentLobby != null && _currentLobby!.host.trim().toLowerCase() == _myName.trim().toLowerCase();
 
-  // Dynamic Theme Getters
+  // Theme getters
   String get currentScheme => _colorScheme;
-  Color get themeColor => AppTheme.schemes[_colorScheme]?.primary ?? const Color(0xFFFF58CC);
+  Color get themeColor => AppTheme.schemes[_colorScheme]?.primary ?? const Color(0xFFE91E63);
   
   String get wallpaper => _wallpaper;
   String get currentMusic => _bgMusic;
@@ -99,18 +121,19 @@ class GameProvider extends ChangeNotifier {
   }
 
   // --- METHODS ---
-
   Future<void> _loadUser() async {
     final prefs = await SharedPreferences.getInstance();
     _myName = prefs.getString('username') ?? "Player";
     _myAvatar = prefs.getString('avatar') ?? "assets/avatars/avatar_0.png";
     
-    // Load saved theme settings
+    // Load decoupled settings
     if (prefs.containsKey('theme_scheme')) _colorScheme = prefs.getString('theme_scheme')!;
+    if (prefs.containsKey('theme_wallpaper')) _wallpaper = prefs.getString('theme_wallpaper')!;
+    if (prefs.containsKey('theme_music')) _bgMusic = prefs.getString('theme_music')!;
+    
     if (prefs.containsKey('theme_bright')) {
       _brightness = prefs.getBool('theme_bright')! ? Brightness.dark : Brightness.light;
     }
-    
     notifyListeners();
   }
 
@@ -135,14 +158,11 @@ class GameProvider extends ChangeNotifier {
   Future<void> initMusic() async {
     if (!_isMusicEnabled) return;
     if (_isPlaying && _musicPlayer.state == PlayerState.playing) return;
-
     try {
       await _musicPlayer.setReleaseMode(ReleaseMode.loop);
       await _musicPlayer.setVolume(_volume);
-      
       String playPath = _bgMusic;
       if (playPath.startsWith("assets/")) playPath = playPath.substring(7);
-
       await _musicPlayer.play(AssetSource(playPath));
       _isPlaying = true;
       notifyListeners();
@@ -166,6 +186,9 @@ class GameProvider extends ChangeNotifier {
 
   void setMusicTrack(String track) {
     _bgMusic = track;
+    // Save preference
+    SharedPreferences.getInstance().then((prefs) => prefs.setString('theme_music', track));
+    
     if (_isMusicEnabled) {
       stopMusic();
       initMusic();
@@ -174,21 +197,22 @@ class GameProvider extends ChangeNotifier {
   }
 
   Future<void> playSfx(String type) async {
-    String file = "";
-    switch (type) {
-      case "correct": file = "audio/correct.mp3"; break;
-      case "wrong": file = "audio/wrong.mp3"; break;
-      case "streak": file = "audio/streak.mp3"; break;
-      case "gameover": file = "audio/gameover.mp3"; break;
-    }
-    if (file.isNotEmpty) {
-      try {
+    try {
+      String file = "";
+      switch (type) {
+        case "correct": file = "audio/correct.mp3"; break;
+        case "wrong": file = "audio/wrong.mp3"; break;
+        case "streak": file = "audio/streak.mp3"; break;
+        case "gameover": file = "audio/gameover.mp3"; break;
+      }
+      if (file.isNotEmpty) {
         await _sfxPlayer.stop();
         await _sfxPlayer.play(AssetSource(file), mode: PlayerMode.lowLatency);
-      } catch (_) {}
-    }
+      }
+    } catch (_) {}
   }
 
+  // ✅ UPDATED: Decoupled update method
   void updateTheme({String? scheme, String? bg, Brightness? brightness}) {
     if (scheme != null) _colorScheme = scheme;
     if (bg != null) _wallpaper = bg;
@@ -196,9 +220,12 @@ class GameProvider extends ChangeNotifier {
     
     SharedPreferences.getInstance().then((prefs) {
       prefs.setString('theme_scheme', _colorScheme);
+      prefs.setString('theme_wallpaper', _wallpaper);
       prefs.setBool('theme_bright', _brightness == Brightness.dark);
     });
     
+    // Sync to TV if connected
+    if (_currentLobby != null) syncTvTheme();
     notifyListeners();
   }
 
@@ -208,12 +235,12 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- TV LINKING ---
   Future<void> linkTv(String tvCode) async {
     _pendingTvCode = tvCode;
     notifyListeners();
   }
 
+  // ✅ RESTORED MISSING METHOD
   Future<void> _tryLinkTv(String lobbyCode) async {
     if (_pendingTvCode != null && _hubConnection != null) {
       try {
@@ -228,28 +255,19 @@ class GameProvider extends ChangeNotifier {
   Future<void> syncTvTheme() async {
     if (_hubConnection != null && _currentLobby != null) {
       try {
-        await _hubConnection!.invoke("SyncTheme", args: <Object>[
-          _currentLobby!.code, 
-          _wallpaper, 
-          _bgMusic
-        ]);
+        await _hubConnection!.invoke("SyncTheme", args: <Object>[_currentLobby!.code, _wallpaper, _bgMusic]);
       } catch (_) {}
     }
   }
 
-  // --- CONNECTION ---
   Future<void> connect(String url) async {
     if (_hubConnection != null) return;
-
-    _hubConnection = HubConnectionBuilder()
-        .withUrl(url)
-        .withAutomaticReconnect()
-        .build();
-
+    _hubConnection = HubConnectionBuilder().withUrl(url).withAutomaticReconnect().build();
+    // ... (SignalR handlers same as previous) ...
+    
     _hubConnection!.on("game_created", _handleLobbyUpdate);
     _hubConnection!.on("game_joined", _handleLobbyUpdate);
     _hubConnection!.on("lobby_update", _handleLobbyUpdate);
-    
     _hubConnection!.on("game_started", (args) {
       if (args != null && args.isNotEmpty) {
         _handleLobbyUpdate(args);
@@ -258,19 +276,15 @@ class GameProvider extends ChangeNotifier {
         notifyListeners();
       }
     });
-
     _hubConnection!.on("new_round", (args) {
       if (args != null && args.isNotEmpty) {
         final map = args[0] as Map<String, dynamic>;
         _handleLobbyUpdate(args);
-        if (_currentLobby != null) {
-          _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
-        }
+        if (_currentLobby != null) _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
         _appState = AppState.quiz;
         notifyListeners();
       }
     });
-
     _hubConnection!.on("question_results", (args) {
       if (args != null && args.isNotEmpty) {
         _lastResults = args[0] as Map<String, dynamic>;
@@ -278,19 +292,16 @@ class GameProvider extends ChangeNotifier {
         notifyListeners();
       }
     });
-
     _hubConnection!.on("game_over", (_) {
       _appState = AppState.gameOver;
       playSfx("gameover");
       notifyListeners();
     });
-
     _hubConnection!.on("lobby_deleted", (_) {
       _appState = AppState.welcome;
       _currentLobby = null;
       notifyListeners();
     });
-
     _hubConnection!.on("game_reset", (_) {
       _appState = AppState.lobby;
       _currentStreak = 0;
@@ -298,42 +309,35 @@ class GameProvider extends ChangeNotifier {
     });
 
     await _hubConnection!.start();
+    if (_pendingTvCode != null) {
+       await _hubConnection!.invoke("LinkTV", args: <Object>[_pendingTvCode!, ""]);
+       _pendingTvCode = null;
+    }
   }
 
   void _handleLobbyUpdate(List<Object?>? args) {
     if (args != null && args.isNotEmpty) {
       final map = args[0] as Map<String, dynamic>;
       final newLobby = LobbyData.fromJson(map);
-      
       if (_currentLobby?.quizData != null && (newLobby.quizData == null || newLobby.quizData!.isEmpty)) {
         newLobby.quizData = _currentLobby!.quizData;
       }
-
       if (_currentLobby == null || _currentLobby!.code != newLobby.code) {
         _lastChatReadIndex = newLobby.chat.length; 
       }
-
       _currentLobby = newLobby;
-      
-      if (_lobbyCompleter != null && !_lobbyCompleter!.isCompleted) {
-        _lobbyCompleter!.complete();
-      }
-      
+      if (_lobbyCompleter != null && !_lobbyCompleter!.isCompleted) _lobbyCompleter!.complete();
       notifyListeners();
     }
   }
-
-  // --- ACTIONS ---
 
   Future<void> createLobby(String name, String avatar, String mode, int qCount, String cat, int timer, String diff, String customCode) async {
     if (_hubConnection == null) return;
     _myName = name;
     initMusic();
-    
     _lobbyCompleter = Completer<void>();
     await _hubConnection!.invoke("CreateGame", args: <Object>[name, avatar, mode, qCount, cat, timer, diff, customCode]);
     await _lobbyCompleter!.future.timeout(const Duration(seconds: 5), onTimeout: () => null);
-
     if (_currentLobby != null) {
       _appState = AppState.lobby;
       await _tryLinkTv(_currentLobby!.code);
@@ -346,11 +350,9 @@ class GameProvider extends ChangeNotifier {
     if (_hubConnection == null) return;
     _myName = name;
     initMusic();
-    
     _lobbyCompleter = Completer<void>();
     await _hubConnection!.invoke("JoinGame", args: <Object>[code, name, avatar, false]);
     await _lobbyCompleter!.future.timeout(const Duration(seconds: 5), onTimeout: () => null);
-
     if (_currentLobby != null) {
       _appState = AppState.lobby;
       await _tryLinkTv(code);
@@ -379,9 +381,7 @@ class GameProvider extends ChangeNotifier {
   }
 
   Future<void> submitAnswer(String answer, double time, int qIndex) async {
-    if (_currentLobby != null) {
-      await _hubConnection!.invoke("SubmitAnswer", args: <Object>[_currentLobby!.code, qIndex, answer, time]);
-    }
+    if (_currentLobby != null) await _hubConnection!.invoke("SubmitAnswer", args: <Object>[_currentLobby!.code, qIndex, answer, time]);
   }
 
   Future<void> nextQuestion() async {

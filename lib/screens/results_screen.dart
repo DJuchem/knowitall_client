@@ -22,33 +22,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
     });
   }
 
-  String _readAny(Map? q, List<String> keys) {
-    if (q == null) return "";
-    for (final k in keys) {
-      final v = q[k];
-      if (v != null && v.toString().trim().isNotEmpty) return v.toString().trim();
-    }
-    return "";
-  }
-
-  String _buildTrackLine(Map? q) {
-    // ... (Existing logic for music track line) ...
-    return ""; // Simplified for brevity, use your existing logic here
-  }
-
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
     final lobby = game.lobby;
     final results = game.lastResults;
-    final theme = Theme.of(context);
+    final theme = Theme.of(context); // ✅ Active Theme
 
     if (lobby == null || results == null) return const BaseScaffold(body: Center(child: CircularProgressIndicator()));
 
-    final quizData = lobby.quizData;
-    final qIdx = lobby.currentQuestionIndex;
-    final currentQ = (quizData != null && qIdx >= 0 && qIdx < quizData.length) ? quizData[qIdx] : null;
-    final type = (currentQ?['Type'] ?? '').toString().toLowerCase();
     final correctAnswer = results['correctAnswer']?.toString() ?? "Unknown";
     final List playerResults = (results['results'] ?? []) as List;
 
@@ -70,28 +52,31 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   offset: _in ? Offset.zero : const Offset(0, -0.04),
                   duration: const Duration(milliseconds: 180),
                   curve: Curves.easeOut,
-                  child: Text("ROUND COMPLETE", style: theme.textTheme.titleLarge?.copyWith(letterSpacing: 2, color: Colors.white, fontWeight: FontWeight.w800)),
+                  child: Text(
+                    "ROUND COMPLETE", 
+                    style: theme.textTheme.titleLarge?.copyWith(letterSpacing: 2, fontWeight: FontWeight.w800)
+                  ),
                 ),
                 const SizedBox(height: 12),
                 GlassContainer(
                     padding: const EdgeInsets.all(18),
                     child: Column(
                       children: [
-                        const Text("The correct answer was:", style: TextStyle(color: Colors.white54)),
+                        Text("The correct answer was:", style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7))),
                         const SizedBox(height: 8),
-                        Text(correctAnswer, textAlign: TextAlign.center, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.amber)),
+                        Text(correctAnswer, textAlign: TextAlign.center, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: theme.colorScheme.primary)),
                       ],
                     ),
                   ),
                 const SizedBox(height: 10),
-                const Text("Leaderboard", style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+                Text("Leaderboard", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Expanded(
                   child: GlassContainer(
                     child: ListView.separated(
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       itemCount: playerResults.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1, color: Colors.white10),
+                      separatorBuilder: (_, __) => Divider(height: 1, color: theme.colorScheme.onSurface.withOpacity(0.1)),
                       itemBuilder: (ctx, i) {
                         final p = playerResults[i];
                         final bool isCorrect = p['correct'] == true;
@@ -99,7 +84,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
                         final String chosen = p['chosenAnswer']?.toString() ?? "No Answer";
                         final int score = p['score'] ?? 0;
                         final int earned = p['earned'] ?? 0;
-                        // ✅ Read Time from backend
                         final double timeTaken = (p['time'] is num) ? (p['time'] as num).toDouble() : 0.0;
 
                         return ListTile(
@@ -107,12 +91,13 @@ class _ResultsScreenState extends State<ResultsScreen> {
                             backgroundColor: (isCorrect ? Colors.green : Colors.red).withOpacity(0.25),
                             child: Icon(isCorrect ? Icons.check : Icons.close, color: isCorrect ? Colors.greenAccent : Colors.redAccent),
                           ),
-                          title: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          title: Text(name, style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
                           subtitle: Text(
-                            "Chose: $chosen ${isCorrect ? '(+$earned)' : ''}  •  ${timeTaken}s", // ✅ Show Time
-                            style: TextStyle(color: isCorrect ? Colors.greenAccent : Colors.white54, fontStyle: FontStyle.italic),
+                            // ✅ Fixed time format
+                            "Chose: $chosen ${isCorrect ? '(+$earned)' : ''}  •  ${timeTaken.toStringAsFixed(1)}s", 
+                            style: TextStyle(color: isCorrect ? Colors.green : theme.colorScheme.onSurface.withOpacity(0.5), fontStyle: FontStyle.italic),
                           ),
-                          trailing: Text("$score", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18)),
+                          trailing: Text("$score", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.w900, fontSize: 18)),
                         );
                       },
                     ),
@@ -123,14 +108,17 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(backgroundColor: isLast ? Colors.redAccent : Colors.green, padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16)),
-                      icon: Icon(isLast ? Icons.flag : Icons.arrow_forward, color: Colors.white),
-                      label: Text(isLast ? "FINISH GAME" : "NEXT QUESTION", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isLast ? Colors.redAccent : theme.colorScheme.primary, 
+                        foregroundColor: isLast ? Colors.white : theme.colorScheme.onPrimary
+                      ),
+                      icon: Icon(isLast ? Icons.flag : Icons.arrow_forward),
+                      label: Text(isLast ? "FINISH GAME" : "NEXT QUESTION"),
                       onPressed: () => game.nextQuestion(),
                     ),
                   )
                 else
-                  const Padding(padding: EdgeInsets.only(top: 6), child: Text("Waiting for host…", style: TextStyle(color: Colors.white54))),
+                  Padding(padding: const EdgeInsets.only(top: 6), child: Text("Waiting for host…", style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)))),
               ],
             ),
           ),

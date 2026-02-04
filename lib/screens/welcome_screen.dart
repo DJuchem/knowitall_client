@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:knowitall_client/widgets/client_settings_sheet.dart';
 import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/game_provider.dart';
 import '../widgets/avatar_selector.dart';
-import '../widgets/client_settings_sheet.dart'; // ✅ CHANGED IMPORT
+
 import '../widgets/base_scaffold.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/foundation.dart';
@@ -21,6 +22,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
   final _tvCodeController = TextEditingController();
+  
   String _selectedAvatar = "avatars/avatar_0.png";
 
   String get _serverUrl {
@@ -54,35 +56,87 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   String _cleanPath(String path) {
     if (path.isEmpty) return "";
-    return path.replaceAll("assets/", "").replaceAll("/assets/", "");
+    String p = path;
+    while (p.startsWith("assets/") || p.startsWith("/assets/")) {
+      p = p.replaceFirst("assets/", "").replaceFirst("/assets/", "");
+    }
+    return p;
   }
 
   bool _validateInput(BuildContext context) {
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text("Please enter a Nickname!"), backgroundColor: Theme.of(context).colorScheme.error)
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text("Please enter a Nickname!"), backgroundColor: Theme.of(context).colorScheme.error));
       return false;
     }
     return true;
   }
 
   void _showTvDialog(BuildContext context, GameProvider game) {
-    // ... (Keep existing TV dialog logic, it works fine)
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Connect TV"),
-        content: TextField(controller: _tvCodeController, decoration: const InputDecoration(hintText: "TV CODE")),
+        backgroundColor: theme.colorScheme.surface,
+        title: Center(child: Text("CONNECT TO TV", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold))),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // LOGO
+            Image.asset(
+               _cleanPath(game.config.logoPath), 
+               height: 60, 
+               errorBuilder: (_,__,___) => const Icon(Icons.tv, size: 50)
+            ),
+            const SizedBox(height: 20),
+            
+            // QR CODE PLACEHOLDER (or Asset)
+            Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: theme.colorScheme.primary, width: 4),
+              ),
+              child: const Center(
+                child: Icon(Icons.qr_code_2, size: 100, color: Colors.black),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text("Scan to Connect", style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5), fontSize: 10)),
+            
+            const SizedBox(height: 20),
+            Text("OR ENTER CODE", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            
+            TextField(
+              controller: _tvCodeController,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: theme.colorScheme.secondary, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 8),
+              decoration: InputDecoration(
+                hintText: "ABCD",
+                fillColor: theme.colorScheme.onSurface.withOpacity(0.05),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCEL")),
+          TextButton(child: const Text("CANCEL"), onPressed: () => Navigator.pop(context)),
           ElevatedButton(
-             onPressed: () { 
-               game.linkTv(_tvCodeController.text); 
-               Navigator.pop(context); 
-             }, 
-             child: const Text("OK")
-          )
+            onPressed: () async {
+              final code = _tvCodeController.text.trim();
+              if (code.isNotEmpty) {
+                await game.linkTv(code);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text("TV Connected!"), backgroundColor: theme.colorScheme.secondary));
+                }
+              }
+            },
+            child: const Text("CONNECT"),
+          ),
         ],
       ),
     );
@@ -106,11 +160,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     return BaseScaffold(
       showSettings: true,
       extendBodyBehindAppBar: true,
-      onSettingsTap: openSettings, // ✅ CONNECTED
+      onSettingsTap: openSettings, 
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final h = constraints.maxHeight;
-          
           return SafeArea(
             child: Center(
               child: ConstrainedBox(
@@ -118,22 +170,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start, // ✅ Top Alignment
+                    mainAxisAlignment: MainAxisAlignment.start, 
                     children: [
                       
-                      // 1. SPACER (Push content up slightly, but not too much)
-                      const SizedBox(height: 20),
+                      // 1. TOP SPACER
+                      const Spacer(flex: 1),
 
-                      // 2. LOGO (Bigger and Higher)
+                      // 2. LOGO 
                       Flexible(
-                        flex: 4, // Increased flex
+                        flex: 6, 
                         child: FadeInDown(
                           child: Hero(
                             tag: 'app_logo',
                             child: Image.asset(
                               _cleanPath(game.config.logoPath),
                               fit: BoxFit.contain,
-                              // ✅ Increased size logic
                               width: double.infinity, 
                             ),
                           ),
@@ -142,9 +193,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       
                       const SizedBox(height: 20),
 
-                      // 3. MAIN CARD (Moved Up via Flex)
+                      // 3. MAIN CARD
                       Expanded(
-                        flex: 7, 
+                        flex: 10, 
                         child: FadeInUp(
                           child: GlassContainer(
                             padding: const EdgeInsets.all(24),
@@ -155,8 +206,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                 TextField(
                                   controller: _nameController,
                                   style: TextStyle(color: theme.colorScheme.onSurface),
-                                  decoration: InputDecoration(
-                                    prefixIcon: const Icon(Icons.person),
+                                  decoration: const InputDecoration(
+                                    prefixIcon: Icon(Icons.person),
                                     labelText: "NICKNAME",
                                   ),
                                 ),
@@ -179,7 +230,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
                                 const SizedBox(height: 20),
 
-                                // CREATE BUTTON (Uses Theme Shape automatically)
+                                // CREATE BUTTON
                                 SizedBox(
                                   width: double.infinity,
                                   height: 60,
@@ -254,10 +305,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               icon: Icon(Icons.tv, color: theme.colorScheme.secondary),
                               label: Text("CONNECT TO TV", style: TextStyle(color: theme.colorScheme.secondary)),
                             ),
-                            const SizedBox(height: 10),
                           ],
                         ),
                       ),
+                      
+                      // 5. BOTTOM SPACER (Push content up)
+                      const Spacer(flex: 2),
                     ],
                   ),
                 ),

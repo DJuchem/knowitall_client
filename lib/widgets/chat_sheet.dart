@@ -2,8 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
-import '../widgets/game_avatar.dart'; // Needed for avatars in chat
-import 'package:animate_do/animate_do.dart';
 
 class ChatSheet extends StatefulWidget {
   const ChatSheet({super.key});
@@ -51,7 +49,6 @@ class _ChatSheetState extends State<ChatSheet> {
       _isExpanded = !_isExpanded;
       if (!_isExpanded) _showEmojiPicker = false;
     });
-    // ✅ FIX 5: Mark read when expanded
     if (_isExpanded) game.markChatAsRead();
   }
 
@@ -69,7 +66,6 @@ class _ChatSheetState extends State<ChatSheet> {
     final game = Provider.of<GameProvider>(context);
     final chat = game.lobby?.chat ?? [];
     
-    // Auto-mark read if already open and new msg comes
     if (_isExpanded && game.unreadCount > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) => game.markChatAsRead());
     }
@@ -78,16 +74,14 @@ class _ChatSheetState extends State<ChatSheet> {
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-  final sheetBg = cs.surface.withOpacity(isDark ? 0.95 : 1.0); // ✅ Increased opacity
-final myBubble = cs.primary.withOpacity(0.3); // ✅ More visible bubbles
+    final sheetBg = cs.surface.withOpacity(isDark ? 0.95 : 1.0); 
+    final myBubble = cs.primary.withOpacity(0.3);
     final otherBubble = Colors.white.withOpacity(0.1);
 
-    // ✅ FIX 4: Simplified Height Logic for Emoji Picker
     double targetH = 70;
     if (_isExpanded) {
       targetH = 500; 
       if (_showEmojiPicker) targetH += 250; 
-      // Clamp to screen height
       final screenH = MediaQuery.of(context).size.height;
       if (targetH > screenH * 0.85) targetH = screenH * 0.85;
     }
@@ -142,11 +136,10 @@ final myBubble = cs.primary.withOpacity(0.3); // ✅ More visible bubbles
                   // MESSAGES
                   Expanded(
                     child: ListView.builder(
-                      reverse: true, // Show newest at bottom (requires reversing list in builder)
+                      reverse: true,
                       padding: const EdgeInsets.all(16),
                       itemCount: chat.length,
                       itemBuilder: (ctx, i) {
-                        // Access via reversed index
                         final msg = chat[chat.length - 1 - i];
                         final isMe = msg.from == game.myName;
                         
@@ -157,8 +150,6 @@ final myBubble = cs.primary.withOpacity(0.3); // ✅ More visible bubbles
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               if (!isMe) ...[
-                                // You might need to look up avatar from player list here if 'msg' doesn't have it
-                                // For now, simple icon or initial
                                 CircleAvatar(radius: 14, backgroundColor: Colors.white10, child: Text(msg.from[0], style: const TextStyle(fontSize: 10, color: Colors.white))),
                                 const SizedBox(width: 8),
                               ],
@@ -173,7 +164,7 @@ final myBubble = cs.primary.withOpacity(0.3); // ✅ More visible bubbles
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       if (!isMe) Text(msg.from, style: TextStyle(fontSize: 10, color: cs.primary, fontWeight: FontWeight.bold)),
-                                      Text(msg.text, style: const TextStyle(fontSize: 16, color: Colors.white)),
+                                      Text(msg.text, style: TextStyle(fontSize: 16, color: cs.onSurface)),
                                     ],
                                   ),
                                 ),
@@ -218,12 +209,12 @@ final myBubble = cs.primary.withOpacity(0.3); // ✅ More visible bubbles
                               child: TextField(
                                 controller: _msgController,
                                 focusNode: _focusNode,
-                                style: const TextStyle(color: Colors.white),
+                                style: TextStyle(color: cs.onSurface),
                                 decoration: InputDecoration(
                                   hintText: "Type a message...",
-                                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
+                                  hintStyle: TextStyle(color: cs.onSurface.withOpacity(0.4)),
                                   filled: true,
-                                  fillColor: Colors.white.withOpacity(0.1),
+                                  fillColor: cs.onSurface.withOpacity(0.1),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
                                 ),
@@ -233,7 +224,7 @@ final myBubble = cs.primary.withOpacity(0.3); // ✅ More visible bubbles
                             ),
                             const SizedBox(width: 8),
                             IconButton(
-                              icon: const Icon(Icons.send, color: Colors.cyanAccent),
+                              icon: Icon(Icons.send, color: cs.secondary),
                               onPressed: () => _send(game),
                             ),
                           ],
@@ -242,7 +233,7 @@ final myBubble = cs.primary.withOpacity(0.3); // ✅ More visible bubbles
                     ),
                   ),
 
-                  // EMOJI PICKER CONTAINER
+                  // EMOJI PICKER
                   if (_showEmojiPicker)
                     SizedBox(
                       height: 250,
@@ -272,8 +263,7 @@ class _FancyEmojiPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Simple Grid of Emojis
-    final emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","☹️","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖","😺","😸","😹","😻","😼","😽","🙀","😿","😾","🙈","🙉","🙊","👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏"];
+    final emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","☹️","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖","😺","😸","😹","😻","😼","😼","😽","🙀","😿","😾","🙈","🙉","🙊","👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏"];
     return GridView.builder(
       padding: const EdgeInsets.all(10),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 8, crossAxisSpacing: 5, mainAxisSpacing: 5),

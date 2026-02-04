@@ -6,119 +6,131 @@ class AppColorScheme {
   final Color primary;
   final Color secondary;
   final Color surface;
-  final Color background;
   final Color onBackground;
   final OutlinedBorder buttonShape;
   final InputBorder inputShape;
+  final ShapeBorder cardShape;
 
   const AppColorScheme({
     required this.name,
     required this.primary,
     required this.secondary,
     required this.surface,
-    required this.background,
     required this.onBackground,
     required this.buttonShape,
     required this.inputShape,
+    required this.cardShape,
   });
 }
 
 class AppTheme {
-  // --- DEFINED THEMES ---
   static final Map<String, AppColorScheme> schemes = {
+    "Default": AppColorScheme(
+      name: "Default",
+      primary: const Color(0xFFE91E63), 
+      secondary: const Color(0xFF2196F3), 
+      surface: const Color(0xFF1E1E2C),
+      onBackground: Colors.white,
+      buttonShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      inputShape: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      cardShape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    ),
     "Cyberpunk": AppColorScheme(
       name: "Cyberpunk",
-      primary: const Color(0xFFFF00FF), // Neon Pink
-      secondary: const Color(0xFF00FFFF), // Cyan
+      primary: const Color(0xFFFF00FF), 
+      secondary: const Color(0xFF00FFFF),
       surface: const Color(0xFF1E1E2C),
-      background: const Color(0xFF050510),
       onBackground: Colors.white,
       buttonShape: const BeveledRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
       inputShape: const CutCornerBorder(borderSide: BorderSide.none, borderRadius: BorderRadius.all(Radius.circular(10))),
-    ),
-    "Inferno": AppColorScheme( // 🔥 NEW COOLER THEME
-      name: "Inferno",
-      primary: const Color(0xFFFF3D00), // Magma Red
-      secondary: const Color(0xFFFF9100), // Ember Orange
-      surface: const Color(0xFF2D0C0C), // Dark Red/Brown
-      background: const Color(0xFF140505), // Charred Black
-      onBackground: const Color(0xFFFFE0B2),
-      // Aggressive sharp angles
-      buttonShape: const BeveledRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(15), bottomRight: Radius.circular(15))),
-      inputShape: const OutlineInputBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(15), bottomRight: Radius.circular(15)), borderSide: BorderSide.none),
-    ),
-    "Galactic": AppColorScheme( // 🌌 NEW COOLER THEME
-      name: "Galactic",
-      primary: const Color(0xFF7C4DFF), // Nebula Purple
-      secondary: const Color(0xFF00E5FF), // Starlight Blue
-      surface: const Color(0xFF151529), 
-      background: const Color(0xFF080812), // Deep Space
-      onBackground: const Color(0xFFE8EAF6),
-      // Smooth, futuristic pill shapes
-      buttonShape: const StadiumBorder(),
-      inputShape: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+      cardShape: const BeveledRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
     ),
     "Matrix": AppColorScheme(
       name: "Matrix",
       primary: const Color(0xFF00FF41),
       secondary: const Color(0xFF008F11),
       surface: const Color(0xFF111111),
-      background: const Color(0xFF000000),
       onBackground: const Color(0xFFE0FFE0),
-      buttonShape: const BeveledRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4))),
-      inputShape: OutlineInputBorder(borderRadius: BorderRadius.circular(0), borderSide: const BorderSide(color: Color(0xFF00FF41))),
+      buttonShape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(2))),
+      inputShape: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(2)), borderSide: BorderSide(color: Color(0xFF00FF41))),
+      cardShape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(4))),
+    ),
+    "Galactic": AppColorScheme(
+      name: "Galactic",
+      primary: const Color(0xFF7C4DFF),
+      secondary: const Color(0xFF00E5FF),
+      surface: const Color(0xFF151529),
+      onBackground: const Color(0xFFE8EAF6),
+      buttonShape: const StadiumBorder(),
+      inputShape: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+      cardShape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+    ),
+    "Inferno": AppColorScheme(
+      name: "Inferno",
+      primary: const Color(0xFFFF3D00),
+      secondary: const Color(0xFFFF9100),
+      surface: const Color(0xFF2D0C0C),
+      onBackground: const Color(0xFFFFE0B2),
+      buttonShape: const BeveledRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(15), bottomRight: Radius.circular(15))),
+      inputShape: const OutlineInputBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(15), bottomRight: Radius.circular(15)), borderSide: BorderSide.none),
+      cardShape: const BeveledRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
     ),
     "Nature": AppColorScheme(
       name: "Nature",
       primary: const Color(0xFF66BB6A),
       secondary: const Color(0xFF8D6E63),
       surface: const Color(0xFF1B3A25),
-      background: const Color(0xFF0C1C11),
       onBackground: const Color(0xFFE8F5E9),
       buttonShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
       inputShape: OutlineInputBorder(borderRadius: BorderRadius.circular(25), borderSide: BorderSide.none),
+      cardShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
     ),
     "Ocean": AppColorScheme(
       name: "Ocean",
       primary: const Color(0xFF00E5FF),
       secondary: const Color(0xFF2979FF),
       surface: const Color(0xFF102A43),
-      background: const Color(0xFF081221),
       onBackground: const Color(0xFFE3F2FD),
       buttonShape: ContinuousRectangleBorder(borderRadius: BorderRadius.circular(40)),
       inputShape: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      cardShape: ContinuousRectangleBorder(borderRadius: BorderRadius.circular(40)),
     ),
     "Royal": AppColorScheme(
       name: "Royal",
       primary: const Color(0xFFFFD700),
       secondary: const Color(0xFF7B1FA2),
       surface: const Color(0xFF2A0F35),
-      background: const Color(0xFF15041D),
       onBackground: const Color(0xFFF3E5F5),
       buttonShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       inputShape: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      cardShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
   };
 
   static ThemeData getTheme(String schemeName, Brightness brightness) {
-    final scheme = schemes[schemeName] ?? schemes["Cyberpunk"]!;
+    final scheme = schemes[schemeName] ?? schemes["Default"]!;
     final isDark = brightness == Brightness.dark;
 
-    final bgColor = isDark ? scheme.background : const Color(0xFFF2F5F8);
-    final surfaceColor = isDark ? scheme.surface : Colors.white;
-    final textColor = isDark ? scheme.onBackground : Colors.black87;
+    // Independent background fallback (Wallpaper is handled by BaseScaffold)
+    final bgColor = isDark ? const Color(0xFF121212) : const Color(0xFFF0F2F5); 
+    final surfaceColor = isDark ? scheme.surface : const Color(0xFFFFFFFF);
+    final textColor = isDark ? scheme.onBackground : Colors.black;
+    final hintColor = isDark ? scheme.onBackground.withOpacity(0.5) : Colors.black54;
+
+    final primaryColor = scheme.primary; 
 
     return ThemeData(
       brightness: brightness,
       scaffoldBackgroundColor: bgColor,
-      primaryColor: scheme.primary,
+      primaryColor: primaryColor,
+      cardColor: surfaceColor,
       
       colorScheme: ColorScheme(
         brightness: brightness,
-        primary: scheme.primary,
+        primary: primaryColor,
         onPrimary: isDark ? Colors.black : Colors.white,
         secondary: scheme.secondary,
-        onSecondary: isDark ? Colors.black : Colors.white,
+        onSecondary: Colors.white,
         error: Colors.redAccent,
         onError: Colors.white,
         surface: surfaceColor,
@@ -127,37 +139,52 @@ class AppTheme {
 
       fontFamily: 'Roboto',
       
-      textTheme: TextTheme(
-        bodyMedium: TextStyle(fontSize: 16, height: 1.4, color: textColor),
-        bodyLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: textColor),
-        titleLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: textColor),
-        labelLarge: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: surfaceColor,
+        shape: scheme.cardShape,
+        modalBackgroundColor: surfaceColor,
       ),
+
+      dialogBackgroundColor: surfaceColor,
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
         border: scheme.inputShape, 
-        enabledBorder: scheme.inputShape.copyWith(borderSide: BorderSide(color: textColor.withOpacity(0.1))),
-        focusedBorder: scheme.inputShape.copyWith(borderSide: BorderSide(color: scheme.primary, width: 2)),
+        enabledBorder: scheme.inputShape.copyWith(borderSide: BorderSide(color: textColor.withOpacity(0.2))),
+        focusedBorder: scheme.inputShape.copyWith(borderSide: BorderSide(color: primaryColor, width: 2)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        hintStyle: TextStyle(color: textColor.withOpacity(0.5), fontSize: 16),
-        prefixIconColor: scheme.primary,
+        hintStyle: TextStyle(color: hintColor),
+        labelStyle: TextStyle(color: textColor),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: scheme.primary,
+          backgroundColor: primaryColor,
           foregroundColor: isDark ? Colors.black : Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
           textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1),
           shape: scheme.buttonShape,
-          elevation: 6,
-          shadowColor: scheme.primary.withOpacity(0.5),
+          elevation: isDark ? 6 : 2,
         ),
       ),
+      
+      sliderTheme: SliderThemeData(
+        activeTrackColor: primaryColor,
+        inactiveTrackColor: textColor.withOpacity(0.2),
+        thumbColor: primaryColor,
+        overlayColor: primaryColor.withOpacity(0.2),
+      ),
 
-      iconTheme: IconThemeData(color: scheme.primary),
+      iconTheme: IconThemeData(color: primaryColor),
+      
+      textTheme: TextTheme(
+        bodyMedium: TextStyle(color: textColor),
+        bodyLarge: TextStyle(color: textColor),
+        titleLarge: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+        titleMedium: TextStyle(color: textColor),
+        labelLarge: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+      ).apply(bodyColor: textColor, displayColor: textColor),
     );
   }
 }
@@ -190,10 +217,10 @@ class GlassContainer extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24), 
         border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
-        color: theme.colorScheme.surface.withOpacity(0.7), 
+        color: theme.colorScheme.surface.withOpacity(isDark ? 0.7 : 0.9), 
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2), 
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), 
             blurRadius: 20, 
             spreadRadius: 2, 
             offset: const Offset(0, 8)

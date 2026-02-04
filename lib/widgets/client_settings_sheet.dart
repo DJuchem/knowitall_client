@@ -12,17 +12,16 @@ class ClientSettingsSheet extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // Helper for section titles
     Widget sectionTitle(String t) => Padding(
       padding: const EdgeInsets.fromLTRB(4, 24, 4, 8),
       child: Text(
-        t,
+        t, 
         style: TextStyle(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.2,
-          fontSize: 12,
-        ),
+          color: theme.colorScheme.primary, 
+          fontWeight: FontWeight.bold, 
+          letterSpacing: 1.2, 
+          fontSize: 12
+        )
       ),
     );
 
@@ -31,7 +30,7 @@ class ClientSettingsSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 50)],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 30)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -40,24 +39,17 @@ class ClientSettingsSheet extends StatelessWidget {
           // Drag Handle
           Center(
             child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
+              width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(2)),
             ),
           ),
-
+          
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("SETTINGS", style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
-              ),
+              Text("APP SETTINGS", style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
             ],
           ),
           const Divider(),
@@ -67,10 +59,9 @@ class ClientSettingsSheet extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // VISUALS
-                  sectionTitle("VISUAL STYLE"),
                   
-                  // Horizontal Theme Selector
+                  // --- 1. VISUAL STYLE (COLORS) ---
+                  sectionTitle("VISUAL STYLE (COLORS ONLY)"),
                   SizedBox(
                     height: 90,
                     child: ListView(
@@ -78,20 +69,18 @@ class ClientSettingsSheet extends StatelessWidget {
                       children: AppTheme.schemes.values.map((scheme) {
                         final isSelected = game.currentScheme == scheme.name;
                         return GestureDetector(
-                          onTap: () => game.updateTheme(scheme: scheme.name),
+                          onTap: () => game.updateTheme(scheme: scheme.name), // Only updates color scheme
                           child: Container(
-                            width: 80,
+                            width: 80, 
                             margin: const EdgeInsets.only(right: 12),
                             decoration: BoxDecoration(
                               color: scheme.surface,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: isSelected ? scheme.primary : Colors.transparent,
-                                width: 3,
+                                color: isSelected ? scheme.primary : Colors.transparent, 
+                                width: 3
                               ),
-                              boxShadow: isSelected
-                                  ? [BoxShadow(color: scheme.primary.withOpacity(0.4), blurRadius: 8)]
-                                  : [],
+                              boxShadow: isSelected ? [BoxShadow(color: scheme.primary.withOpacity(0.4), blurRadius: 8)] : [],
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -99,13 +88,13 @@ class ClientSettingsSheet extends StatelessWidget {
                                 CircleAvatar(backgroundColor: scheme.primary, radius: 14),
                                 const SizedBox(height: 8),
                                 Text(
-                                  scheme.name,
-                                  textAlign: TextAlign.center,
+                                  scheme.name, 
+                                  textAlign: TextAlign.center, 
                                   style: TextStyle(
-                                    color: isDark ? Colors.white70 : Colors.black87,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                    color: isDark ? Colors.white70 : Colors.black87, 
+                                    fontSize: 11, 
+                                    fontWeight: FontWeight.bold
+                                  )
                                 ),
                               ],
                             ),
@@ -114,9 +103,8 @@ class ClientSettingsSheet extends StatelessWidget {
                       }).toList(),
                     ),
                   ),
-
-                  const SizedBox(height: 16),
-
+                  
+                  const SizedBox(height: 12),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text("Dark Mode", style: TextStyle(fontWeight: FontWeight.bold)),
@@ -126,13 +114,14 @@ class ClientSettingsSheet extends StatelessWidget {
                     onChanged: (val) => game.updateTheme(brightness: val ? Brightness.dark : Brightness.light),
                   ),
 
-                  // WALLPAPER
-                  sectionTitle("WALLPAPER"),
+                  // --- 2. BACKGROUND (WALLPAPER) ---
+                  sectionTitle("BACKGROUND IMAGE"),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.black26 : Colors.grey[200],
+                      color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
@@ -141,17 +130,18 @@ class ClientSettingsSheet extends StatelessWidget {
                             : game.wallpaperOptions.values.first,
                         isExpanded: true,
                         dropdownColor: theme.cardColor,
-                        icon: const Icon(Icons.image),
+                        icon: Icon(Icons.image, color: theme.colorScheme.primary),
+                        style: TextStyle(color: theme.textTheme.bodyMedium?.color),
                         items: game.wallpaperOptions.entries
                             .map((e) => DropdownMenuItem(value: e.value, child: Text(e.key)))
                             .toList(),
-                        onChanged: (v) => game.updateTheme(bg: v),
+                        onChanged: (v) => game.updateTheme(bg: v), // Only updates wallpaper
                       ),
                     ),
                   ),
 
-                  // AUDIO
-                  sectionTitle("AUDIO"),
+                  // --- 3. AUDIO (MUSIC) ---
+                  sectionTitle("AUDIO TRACK"),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text("Background Music", style: TextStyle(fontWeight: FontWeight.bold)),
@@ -161,13 +151,15 @@ class ClientSettingsSheet extends StatelessWidget {
                     onChanged: (val) => game.toggleMusic(val),
                   ),
 
+                  // Music Selector (Only shows if music is ON)
                   if (game.isMusicEnabled) ...[
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.black26 : Colors.grey[200],
+                        color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
@@ -176,16 +168,20 @@ class ClientSettingsSheet extends StatelessWidget {
                               : game.musicOptions.values.first,
                           isExpanded: true,
                           dropdownColor: theme.cardColor,
+                          icon: Icon(Icons.library_music, color: theme.colorScheme.secondary),
+                          style: TextStyle(color: theme.textTheme.bodyMedium?.color),
                           items: game.musicOptions.entries
                               .map((e) => DropdownMenuItem(value: e.value, child: Text(e.key)))
                               .toList(),
                           onChanged: (v) {
-                            if (v != null) game.setMusicTrack(v);
+                            if (v != null) game.setMusicTrack(v); // Only updates music
                           },
                         ),
                       ),
                     ),
                   ],
+                  
+                  const SizedBox(height: 20),
                 ],
               ),
             ),

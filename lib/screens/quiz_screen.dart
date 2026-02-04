@@ -6,7 +6,6 @@ import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
 import '../theme/app_theme.dart';
-
 import 'dart:math';
 
 class QuizScreen extends StatefulWidget {
@@ -17,7 +16,8 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  int _timeLeft = 30;
+  // ✅ Changed to Double for smoothness
+  double _timeLeft = 30.0; 
   Timer? _timer;
   Timer? _mediaStopTimer;
   int _internalIndex = -1;
@@ -54,29 +54,17 @@ class _QuizScreenState extends State<QuizScreen> {
     super.dispose();
   }
 
-  void _initMedia(String? payload, String type, GameProvider game) {
-    // 1. Cleanup: Always cancel the auto-stop timer from the previous question
+  // ... (Keep _initMedia unchanged) ...
+    void _initMedia(String? payload, String type, GameProvider game) {
     _mediaStopTimer?.cancel();
-    
-    // 2. Safety: Force pause any existing video immediately.
-    // This resets the internal state of the YouTube iframe, preventing "ghost audio"
-    // or state conflicts when loading the next video.
     if (_ytController != null) {
       try { _ytController!.pauseVideo(); } catch (_) {}
     }
-
-    // 3. Validation: If this isn't a music question, just pause and exit.
-    // We do NOT close() the controller here. Keeping it alive (but paused)
-    // prevents the heavy "re-initialization" lag when a music question comes up later.
     if (!type.toLowerCase().contains("music") || payload == null || payload.trim().isEmpty) {
       if (!game.isMusicPlaying && game.isMusicEnabled) game.initMusic();
       return;
     }
-    
-    // 4. Prep: Stop the app's background music so we can hear the video
     game.stopMusic();
-
-    // 5. Parsing: Logic to extract Video ID and Start/End times
     final raw = payload.trim();
     String videoId = raw;
     int startSec = 0;
@@ -109,30 +97,18 @@ class _QuizScreenState extends State<QuizScreen> {
       }
     }
 
-    // 6. Loading: The Critical Fix
     if (_ytController != null) {
-      // Load the new video
       _ytController!.loadVideoById(videoId: videoId, startSeconds: startSec.toDouble());
-      
-      // ✅ THE FIX: Add a tiny delay before playing.
-      // The IFrame API is asynchronous. If you call playVideo() immediately after load(),
-      // the player often ignores it because it hasn't finished the "load" command yet.
       Future.delayed(const Duration(milliseconds: 100), () => _ytController!.playVideo());
     } else {
-      // Create controller if it doesn't exist (first time only)
       _ytController = YoutubePlayerController(
         params: const YoutubePlayerParams(
-          showControls: false,
-          showFullscreenButton: false,
-          loop: false,
-          mute: false,
+          showControls: false, showFullscreenButton: false, loop: false, mute: false,
         ),
       );
       _ytController!.loadVideoById(videoId: videoId, startSeconds: startSec.toDouble());
-      // No delay needed on first creation as the widget build handles the initial load
     }
 
-    // 7. Auto-Stop Logic: Calculate when to silence the clip
     final int questionSeconds = game.lobby?.timer ?? 30;
     int stopAfterSeconds = questionSeconds;
     if (endSec != null && endSec > startSec) {
@@ -146,12 +122,11 @@ class _QuizScreenState extends State<QuizScreen> {
     });
   }
 
+
   void _processLobbyData(GameProvider game, {bool force = false}) {
     final lobby = game.lobby;
     if (lobby == null || lobby.quizData == null || lobby.quizData!.isEmpty) {
-      if (mounted && _questionText != "Synchronizing...") {
-        setState(() => _questionText = "Synchronizing...");
-      }
+      if (mounted && _questionText != "Synchronizing...") setState(() => _questionText = "Synchronizing...");
       return;
     }
 
@@ -159,7 +134,7 @@ class _QuizScreenState extends State<QuizScreen> {
       _internalIndex = lobby.currentQuestionIndex;
       _hasAnswered = false;
       _selectedAnswer = null;
-      _timeLeft = lobby.timer;
+      _timeLeft = lobby.timer.toDouble(); // ✅ Reset to double
 
       final int idx = (_internalIndex < 0 || _internalIndex >= lobby.quizData!.length) ? 0 : _internalIndex;
       final q = lobby.quizData![idx];
@@ -188,11 +163,12 @@ class _QuizScreenState extends State<QuizScreen> {
 
   void startTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    // ✅ Tick every 0.1s for smoothness
+    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       if (!mounted) return;
       setState(() {
         if (_timeLeft > 0) {
-          _timeLeft--;
+          _timeLeft = (_timeLeft - 0.1).clamp(0.0, 999.0);
         } else {
           timer.cancel();
           if (!_hasAnswered) _submitAnswer("", context);
@@ -210,16 +186,12 @@ class _QuizScreenState extends State<QuizScreen> {
 
     final game = Provider.of<GameProvider>(ctx, listen: false);
     try {
-      await game.submitAnswer(answer, (game.lobby!.timer - _timeLeft).toDouble(), _internalIndex);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to submit: $e"), backgroundColor: Colors.red),
-      );
-    }
+      await game.submitAnswer(answer, (game.lobby!.timer - _timeLeft), _internalIndex);
+    } catch (_) {}
   }
 
- void _confirmLeave(BuildContext context, GameProvider game) {
+  // ... (_confirmLeave unchanged) ...
+    void _confirmLeave(BuildContext context, GameProvider game) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -240,12 +212,9 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
             onPressed: () async {
               Navigator.pop(context); // Close Dialog
-              
               if (game.amIHost) {
-                // ✅ FIX: Host resets everyone to lobby
                 await game.resetToLobby(); 
               } else {
-                // ✅ FIX: Client just leaves
                 await game.leaveLobby(); 
               }
             },
@@ -258,22 +227,19 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
+    final theme = Theme.of(context);
     final lobby = game.lobby;
 
     if (lobby == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     final int maxTime = lobby.timer;
-    final double progress = maxTime > 0 ? (_timeLeft / maxTime).toDouble() : 0.0;
+    final double progress = maxTime > 0 ? (_timeLeft / maxTime) : 0.0;
     
-    // ✅ NEW INFO LOGIC
     final int currentQ = _internalIndex + 1;
     final int totalQ = lobby.quizData?.length ?? 10; 
 
     if (_questionText == "Synchronizing...") {
-      return const BaseScaffold(
-        showSettings: false,
-        body: Center(child: Text("Synchronizing...", style: TextStyle(color: Colors.white))),
-      );
+      return const BaseScaffold(body: Center(child: Text("Synchronizing...")));
     }
 
     return BaseScaffold(
@@ -285,11 +251,10 @@ class _QuizScreenState extends State<QuizScreen> {
           icon: const Icon(Icons.exit_to_app, color: Colors.redAccent),
           onPressed: () => _confirmLeave(context, game),
         ),
-        // ✅ ADDED: Player Name + Question Count in AppBar
         title: Column(
           children: [
-            Text(game.myName, style: const TextStyle(fontSize: 14, color: Colors.white70)),
-            Text("Question $currentQ / $totalQ", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(game.myName, style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withOpacity(0.7))),
+            Text("Question $currentQ / $totalQ", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface)),
           ],
         ),
         centerTitle: true,
@@ -314,11 +279,21 @@ class _QuizScreenState extends State<QuizScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 12,
-                    backgroundColor: Colors.white10,
-                    color: progress < 0.3 ? Colors.redAccent : (progress < 0.6 ? Colors.amber : Colors.greenAccent),
+                  child: Column(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 12,
+                          backgroundColor: theme.colorScheme.onSurface.withOpacity(0.1),
+                          color: progress < 0.3 ? Colors.redAccent : (progress < 0.6 ? Colors.amber : theme.colorScheme.primary),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // ✅ Display decimal time
+                      Text("${_timeLeft.toStringAsFixed(1)}s", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
+                    ],
                   ),
                 ),
                 const Spacer(),
@@ -347,7 +322,7 @@ class _QuizScreenState extends State<QuizScreen> {
                       ],
                       Text(
                         _questionText,
-                        style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 22, color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -361,8 +336,12 @@ class _QuizScreenState extends State<QuizScreen> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _selectedAnswer == ans ? game.themeColor : Colors.white.withValues(alpha: 0.1),
+                          // Use Theme for selected, transparent for unselected
+                          backgroundColor: _selectedAnswer == ans ? theme.colorScheme.primary : theme.colorScheme.surface.withOpacity(0.6),
+                          foregroundColor: _selectedAnswer == ans ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                           minimumSize: const Size(double.infinity, 60),
+                          elevation: _selectedAnswer == ans ? 10 : 0,
+                          side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.3)),
                         ),
                         onPressed: _hasAnswered ? null : () => _submitAnswer(ans, context),
                         child: Text(ans, style: const TextStyle(fontSize: 18)),
@@ -380,7 +359,7 @@ class _QuizScreenState extends State<QuizScreen> {
               confettiController: _confettiController,
               blastDirectionality: BlastDirectionality.explosive,
               shouldLoop: false,
-              colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
+              colors: [theme.colorScheme.primary, theme.colorScheme.secondary, Colors.white],
             ),
           ),
         ],

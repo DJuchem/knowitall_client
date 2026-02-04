@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <title>KNOW IT ALL - SPECTATOR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
       --bg-dark: #0F1221;
@@ -28,16 +29,30 @@
     body::before { content: ""; position: absolute; inset: 0; background: rgba(15, 18, 33, 0.85); backdrop-filter: blur(5px); z-index: -1; }
 
     /* --- LOGO --- */
-    #appLogo { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); width: 220px; z-index: 100; animation: float 6s ease-in-out infinite; }
-    @keyframes float { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-15px); } }
+    #appLogo { width: 350px; margin-bottom: 20px; z-index: 100; animation: float 6s ease-in-out infinite; }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 
     /* --- PANELS --- */
     .glass-panel { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 32px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); padding: 40px; text-align: center; }
     #setup, #game, #lobbyView, #questionView, #resultsView, #gameOverView { width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; justify-content: center; }
-    #setup { display: flex; }
+    #setup { display: flex; flex-direction: column; }
 
-    /* --- SETUP --- */
-    .tv-code { font-size: 140px; font-weight: 900; color: white; text-shadow: 0 0 40px var(--primary); letter-spacing: 15px; margin: 20px 0; }
+    /* --- SETUP LAYOUT --- */
+    .setup-container { display: flex; align-items: center; gap: 60px; margin-top: 20px; }
+    
+    /* Left: Code */
+    .code-box { text-align: center; }
+    .tv-code-label { font-size: 24px; color: var(--primary); letter-spacing: 4px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; }
+    .tv-code { font-size: 160px; font-weight: 900; color: white; text-shadow: 0 0 50px var(--primary); letter-spacing: 10px; line-height: 1; margin: 0; }
+    .tv-sub { font-size: 22px; opacity: 0.6; margin-top: 15px; }
+
+    /* Right: QR */
+    .qr-box { 
+        background: white; padding: 20px; border-radius: 20px; 
+        box-shadow: 0 0 40px rgba(71, 200, 255, 0.3);
+        animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
 
     /* --- LOBBY --- */
     #lobbyView { flex-direction: row; padding: 120px 60px 40px 60px; box-sizing: border-box; }
@@ -61,8 +76,8 @@
     @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
     /* --- QUESTION --- */
-    .quiz-layout { display: flex; width: 90%; max-width: 1600px; height: 75%; margin-top: 100px; gap: 40px; }
-    .main-q-area { flex: 3; display: flex; flex-direction: column; align-items: center; }
+    .quiz-layout { display: flex; width: 90%; max-width: 1600px; height: 75%; margin-top: 20px; gap: 40px; }
+    .main-q-area { flex: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .side-standings { flex: 1; background: rgba(0,0,0,0.4); border-radius: 24px; padding: 20px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); }
     .q-text { font-size: 42px; font-weight: 800; line-height: 1.2; margin-bottom: 30px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); text-align: center; }
     .media-frame { height: 300px; border-radius: 16px; overflow: hidden; margin-bottom: 30px; display: none; border: 1px solid rgba(255,255,255,0.2); }
@@ -82,41 +97,17 @@
     .change-badge { font-size: 18px; font-weight: bold; margin-left: auto; margin-right: 15px; }
     @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
 
-    /* --- GAME OVER PODIUM (NEW) --- */
-    .podium-container { 
-        display: flex; align-items: flex-end; justify-content: center; gap: 40px; 
-        height: 500px; margin-top: 50px; width: 100%;
-    }
-    .podium-column {
-        display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-        position: relative; animation: riseUp 1s ease-out forwards;
-    }
-    .podium-block {
-        width: 160px; border-radius: 20px 20px 0 0;
-        background: linear-gradient(to top, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-        border: 1px solid rgba(255,255,255,0.2); border-bottom: none;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 60px; font-weight: 900; color: rgba(255,255,255,0.2);
-    }
-    
-    /* Ranks */
+    /* --- GAME OVER --- */
+    .podium-container { display: flex; align-items: flex-end; justify-content: center; gap: 40px; height: 500px; margin-top: 50px; width: 100%; }
+    .podium-column { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; animation: riseUp 1s ease-out forwards; }
+    .podium-block { width: 160px; border-radius: 20px 20px 0 0; background: linear-gradient(to top, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); border: 1px solid rgba(255,255,255,0.2); border-bottom: none; display: flex; align-items: center; justify-content: center; font-size: 60px; font-weight: 900; color: rgba(255,255,255,0.2); }
     .rank-1 .podium-block { height: 350px; border-top: 4px solid gold; background: linear-gradient(to top, rgba(255,215,0,0.4), transparent); }
     .rank-2 .podium-block { height: 250px; border-top: 4px solid silver; background: linear-gradient(to top, rgba(192,192,192,0.4), transparent); }
     .rank-3 .podium-block { height: 180px; border-top: 4px solid #cd7f32; background: linear-gradient(to top, rgba(205,127,50,0.4), transparent); }
-
-    .podium-avatar { 
-        width: 120px; height: 120px; border-radius: 50%; object-fit: cover; 
-        border: 4px solid white; margin-bottom: 20px; 
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
+    .podium-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid white; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .podium-name { font-size: 24px; font-weight: bold; margin-bottom: 5px; text-shadow: 0 2px 5px black; }
     .podium-score { font-size: 18px; opacity: 0.8; margin-bottom: 15px; }
-    
-    .crown { 
-        position: absolute; top: -80px; font-size: 60px; 
-        animation: bounce 2s infinite ease-in-out; 
-    }
-
+    .crown { position: absolute; top: -80px; font-size: 60px; animation: bounce 2s infinite ease-in-out; }
     @keyframes riseUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 
@@ -124,13 +115,22 @@
 </head>
 
 <body>
-  <img id="appLogo" src="assets/images/logo_text.png" onerror="this.style.display='none'">
-
+  
   <div id="setup">
-    <div class="glass-panel" style="padding: 60px 100px;">
-      <h2 style="color:white; opacity:0.6; font-weight:600; letter-spacing:4px;">CONNECT TO TV</h2>
-      <div id="tvCode" class="tv-code">----</div>
-      <div style="opacity: 0.5; font-size: 20px;">Enter this code on the host device</div>
+    <img id="appLogo" src="assets/images/logo_text.png" onerror="this.style.display='none'">
+    
+    <div class="glass-panel" style="padding: 50px 80px;">
+      <div class="setup-container">
+        <div class="code-box">
+            <div class="tv-code-label">ENTER CODE</div>
+            <div id="tvCode" class="tv-code">----</div>
+            <div class="tv-sub">on your device to connect</div>
+        </div>
+
+        <div class="qr-box">
+            <div id="qrcode"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -180,6 +180,19 @@
   <script>
     const tvCode = Math.random().toString(36).substring(2, 6).toUpperCase();
     document.getElementById('tvCode').innerText = tvCode;
+    
+    // --- GENERATE QR CODE ---
+    // In a real scenario, this would be the URL players visit
+    const playerUrl = window.location.href.replace("tv", "client"); // Example logic
+    new QRCode(document.getElementById("qrcode"), {
+        text: playerUrl,
+        width: 180,
+        height: 180,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
+
     const connection = new signalR.HubConnectionBuilder().withUrl("/ws").withAutomaticReconnect().build();
     let globalPlayers = [];
 
@@ -266,7 +279,7 @@
         const miniList = document.getElementById('miniStandingsList');
         miniList.innerHTML = '';
         const sorted = [...players].sort((a,b) => b.score - a.score);
-        sorted.reverse().forEach((p, i) => {
+        sorted.slice(0, 5).forEach((p, i) => {
              const row = document.createElement('div');
              row.className = 'mini-rank';
              row.innerHTML = `<span>#${i+1}</span><img src="${fixAvatar(p.avatar)}"><span>${p.name}</span><span class="score">${p.score}</span>`;
@@ -297,7 +310,6 @@
     connection.on("game_started", handleNewRound);
     connection.on("new_round", handleNewRound);
 
- // 4. RESULTS - FIXED AVATAR
     connection.on("question_results", (data) => {
         showView('resultsView');
         document.getElementById('correctAnswerDisplay').innerText = data.correctAnswer;
@@ -306,7 +318,6 @@
         lb.innerHTML = '';
         
         const results = data.results.sort((a, b) => b.score - a.score);
-        // Sync global cache
         globalPlayers = results; 
 
         results.slice(0, 5).forEach((p, index) => {
@@ -321,9 +332,7 @@
             row.innerHTML = `
                 <div style="display:flex; align-items:center;">
                     <span style="opacity:0.5; width:30px;">#${index + 1}</span>
-                    
                     <img src="${fixAvatar(p.avatar)}" style="width:50px; height:50px; border-radius:50%; margin:0 15px; object-fit:cover; border:2px solid rgba(255,255,255,0.2);">
-                    
                     <span style="font-size: 22px; font-weight:bold;">${p.name}</span>
                 </div>
                 <div style="display:flex; align-items:center;">
@@ -335,26 +344,18 @@
         });
     });
 
-    // --- GAME OVER PODIUM LOGIC ---
     connection.on("game_over", () => {
         showView('gameOverView');
         const podium = document.getElementById('podium');
         podium.innerHTML = '';
         
-        // Sort players by score descending
         const winners = [...globalPlayers].sort((a, b) => b.score - a.score).slice(0, 3);
-        
-        // Re-order for visual podium: 2nd (Left), 1st (Center), 3rd (Right)
         const order = [winners[1], winners[0], winners[2]].filter(p => p !== undefined);
         
         order.forEach(p => {
-            // Find rank in original sorted list
             const rank = winners.indexOf(p) + 1;
-            
             const col = document.createElement('div');
             col.className = `podium-column rank-${rank}`;
-            
-            // Crown for 1st
             const crownHtml = rank === 1 ? '<div class="crown">👑</div>' : '';
             
             col.innerHTML = `
@@ -368,14 +369,7 @@
         });
     });
 
-    // Reset logic: Go back to 'Connect' screen (setup)
-    function resetToSetup() {
-        // Technically we are still connected to SignalR, but logic says "show code again"
-        showView('setup');
-        // Optional: reload to ensure clean slate?
-        // location.reload();
-    }
-
+    function resetToSetup() { showView('setup'); }
     connection.on("game_reset", () => showView('lobbyView'));
     connection.on("lobby_deleted", resetToSetup);
 

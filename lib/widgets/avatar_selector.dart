@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart'; 
 
 class AvatarSelector extends StatefulWidget {
   final String initialAvatar;
@@ -18,6 +20,7 @@ class AvatarSelector extends StatefulWidget {
 class _AvatarSelectorState extends State<AvatarSelector> {
   List<String> _avatars = [];
   bool _isLoading = true;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -49,76 +52,138 @@ class _AvatarSelectorState extends State<AvatarSelector> {
       
       paths.sort(); 
 
-      if (mounted) setState(() { _avatars = paths; _isLoading = false; });
+      if (mounted) {
+        setState(() {
+          _avatars = paths;
+          _isLoading = false;
+        });
+        _scrollToSelected();
+      }
     } catch (e) {
       if (mounted) setState(() { _avatars = []; _isLoading = false; });
     }
   }
 
-  void _uploadAvatar() {
-    // Placeholder for FilePicker logic
-    // In a real app: FilePicker.platform.pickFiles()...
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Upload functionality coming soon!"))
-    );
+  void _scrollToSelected() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_avatars.isEmpty || !_scrollController.hasClients) return;
+      final initialClean = _normalizePath(widget.initialAvatar);
+      // Only scroll for standard assets
+      if (!initialClean.startsWith("data:")) {
+        final index = _avatars.indexOf(initialClean);
+        if (index != -1) {
+          final row = index ~/ 4;
+          final offset = row * 80.0; 
+          _scrollController.animateTo(offset, duration: const Duration(milliseconds: 500), curve: Curves.easeOut);
+        }
+      }
+    });
+  }
+
+  Future<void> _uploadCustom() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery, 
+        maxWidth: 200, 
+        maxHeight: 200,
+        imageQuality: 70
+      );
+
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        final base64String = "data:image/png;base64,${base64Encode(bytes)}";
+        widget.onSelect(base64String); 
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error picking image."), backgroundColor: Colors.red)
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_isLoading) return const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()));
+    
+    final theme = Theme.of(context);
+    final isCustom = widget.initialAvatar.startsWith("data:");
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(12),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4, 
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      // Add +1 for the Upload Button
-      itemCount: _avatars.length + 1,
-      itemBuilder: (ctx, i) {
-        // --- UPLOAD BUTTON (Index 0) ---
-        if (i == 0) {
-          return GestureDetector(
-            onTap: _uploadAvatar,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                shape: BoxShape.circle,
-                border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
-              ),
-              child: Icon(Icons.camera_alt, color: Theme.of(context).colorScheme.primary),
+    return Column(
+      children: [
+        // ✅ FIX: Use Expanded instead of SizedBox(height: 300) to prevent overflow
+        Expanded(
+          child: GridView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(8),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4, 
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
             ),
-          );
-        }
+            itemCount: _avatars.length,
+            itemBuilder: (ctx, i) {
+              final path = _avatars[i];
+              final isSelected = !isCustom && _normalizePath(path) == _normalizePath(widget.initialAvatar);
 
-        // --- AVATAR LIST (Index 1+) ---
-        final path = _avatars[i - 1];
-        final cleanPath = _normalizePath(path);
-        final cleanInitial = _normalizePath(widget.initialAvatar);
-        final isSelected = cleanPath == cleanInitial;
-
-        return GestureDetector(
-          onTap: () => widget.onSelect("assets/$path"),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent, 
-                width: 4
-              ),
-            ),
-            child: ClipOval(
-              child: Image.asset(
-                "assets/$path",
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Icon(Icons.person),
-              ),
+              return GestureDetector(
+                onTap: () => widget.onSelect("assets/$path"),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: isSelected ? theme.colorScheme.primary : Colors.transparent, width: 4),
+                    boxShadow: isSelected ? [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.5), blurRadius: 8)] : [],
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      "assets/$path",
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.white30),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        
+        if (isCustom)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("Custom Avatar Selected", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const SizedBox(width: 8),
+                Container(
+                  width: 30, height: 30,
+                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: theme.colorScheme.primary)),
+                  child: ClipOval(child: Image.memory(base64Decode(widget.initialAvatar.split(',')[1]), fit: BoxFit.cover)),
+                )
+              ],
             ),
           ),
-        );
-      },
+
+        // ✅ FILE PICKER BUTTON (Always visible at bottom)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: SizedBox(
+            width: double.infinity,
+            height: 45,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.upload_file),
+              label: const Text("UPLOAD PHOTO"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.secondary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+              ),
+              onPressed: _uploadCustom,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
