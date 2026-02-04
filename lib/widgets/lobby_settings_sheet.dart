@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 import '../providers/game_provider.dart';
 
 class LobbySettingsSheet extends StatefulWidget {
@@ -10,11 +12,16 @@ class LobbySettingsSheet extends StatefulWidget {
 }
 
 class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
-  // Local state to hold changes before saving
   late String _mode;
-  late double _questions; // Double for Slider
-  late double _timer;     // Double for Slider
+  late double _questions;
+  late double _timer;
   late String _difficulty;
+  
+  // ✅ New Topic/Category State
+  late String _selectedCategory;
+  bool _catsLoading = false;
+  String? _catsError;
+  Map<String, String> _categories = {"Any Category": ""};
 
   @override
   void initState() {
@@ -22,16 +29,44 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
     final lobby = Provider.of<GameProvider>(context, listen: false).lobby;
     if (lobby != null) {
       _mode = lobby.mode;
-      // ✅ FIX: Use quizData length or default to 10
       _questions = (lobby.quizData?.length ?? 10).toDouble();
       _timer = lobby.timer.toDouble();
       _difficulty = lobby.difficulty ?? "mixed";
+      _selectedCategory = lobby.category ?? ""; // Assuming lobby model has category
     } else {
-      // Fallbacks if lobby is null
       _mode = "general-knowledge";
       _questions = 10;
       _timer = 20;
       _difficulty = "mixed";
+      _selectedCategory = "";
+    }
+    _fetchCategories();
+  }
+
+  // ✅ Category Fetching Logic
+  Future<void> _fetchCategories() async {
+    if (!mounted) return;
+    setState(() { _catsLoading = true; _catsError = null; });
+    try {
+      final resp = await http.get(Uri.parse("https://opentdb.com/api_category.php"));
+      if (resp.statusCode != 200) throw Exception("HTTP ${resp.statusCode}");
+
+      final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
+      final list = (decoded["trivia_categories"] as List?) ?? [];
+      final Map<String, String> map = {"Any Category": ""};
+      for (final item in list) {
+        if (item is Map) map[item["name"].toString()] = item["id"].toString();
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _categories = map;
+        if (!_categories.containsValue(_selectedCategory)) _selectedCategory = "";
+      });
+    } catch (e) {
+      if (mounted) setState(() { _catsError = "Fetch failed"; });
+    } finally {
+      if (mounted) setState(() => _catsLoading = false);
     }
   }
 
@@ -39,6 +74,9 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
     final theme = Theme.of(context);
+    
+    // ✅ Logic: Disable difficulty if a specific topic is selected (to ensure question count)
+    final bool disableDifficulty = _selectedCategory.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -50,7 +88,7 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-           Center(
+          Center(
             child: Container(
               width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(2)),
@@ -77,10 +115,24 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
                     theme: theme,
                     onChange: (val) => setState(() => _mode = val ?? "general-knowledge"),
                   ),
+
+                  // ✅ NEW: TOPIC SELECTION BOX
+                  if (_mode == "general-knowledge") ...[
+                    const SizedBox(height: 16),
+                    _buildLabel("TOPIC", theme),
+                    if (_catsLoading) const LinearProgressIndicator(minHeight: 2),
+                    _buildDropdown(
+                      items: _categories,
+                      value: _selectedCategory,
+                      theme: theme,
+                      onChange: (val) => setState(() {
+                        _selectedCategory = val ?? "";
+                        if (_selectedCategory.isNotEmpty) _difficulty = "mixed";
+                      }),
+                    ),
+                  ],
                   
                   const SizedBox(height: 16),
-                  
-                  // QUESTIONS SLIDER
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -95,8 +147,6 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
                   ),
 
                   const SizedBox(height: 16),
-                  
-                  // TIMER SLIDER
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -111,12 +161,25 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
                   ),
 
                   const SizedBox(height: 16),
-                  _buildLabel("DIFFICULTY", theme),
-                  _buildDropdown(
-                    items: const {"Mixed": "mixed", "Easy": "easy", "Medium": "medium", "Hard": "hard"},
-                    value: _difficulty,
-                    theme: theme,
-                    onChange: (val) => setState(() => _difficulty = val ?? "mixed"),
+                  // ✅ Grayed out difficulty if topic is selected
+                  AnimatedOpacity(
+                    duration: const Duration(milliseconds: 300),
+                    opacity: disableDifficulty ? 0.4 : 1.0,
+                    child: IgnorePointer(
+                      ignoring: disableDifficulty,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildLabel("DIFFICULTY ${disableDifficulty ? '(Auto-Mixed)' : ''}", theme),
+                          _buildDropdown(
+                            items: const {"Mixed": "mixed", "Easy": "easy", "Medium": "medium", "Hard": "hard"},
+                            value: disableDifficulty ? "mixed" : _difficulty,
+                            theme: theme,
+                            onChange: (val) => setState(() => _difficulty = val ?? "mixed"),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   
                   const SizedBox(height: 32),
@@ -125,13 +188,12 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
                     height: 56,
                     child: ElevatedButton(
                       onPressed: () {
-                        // ✅ FIX: Use correct GameProvider method signature
                         game.updateSettings(
                           _mode, 
                           _questions.toInt(), 
-                          "", // Category (empty for mixed)
+                          _selectedCategory, // ✅ Pass actual category ID
                           _timer.toInt(), 
-                          _difficulty
+                          disableDifficulty ? "mixed" : _difficulty
                         );
                         Navigator.pop(context);
                       },
@@ -153,8 +215,8 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
   );
 
   Widget _buildDropdown({required Map<String, String> items, required String value, required ThemeData theme, required ValueChanged<String?> onChange}) {
-      final selected = items.containsValue(value) ? value : items.values.first;
-      return Container(
+    final selected = items.containsValue(value) ? value : items.values.first;
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: theme.inputDecorationTheme.fillColor,
@@ -168,7 +230,7 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
           isExpanded: true,
           icon: Icon(Icons.arrow_drop_down, color: theme.colorScheme.primary),
           style: theme.textTheme.bodyMedium,
-          items: items.entries.map((e) => DropdownMenuItem(value: e.value, child: Text(e.key))).toList(),
+          items: items.entries.map((e) => DropdownMenuItem(value: e.value, child: Text(e.key, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: onChange,
         ),
       ),

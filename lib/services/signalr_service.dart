@@ -1,7 +1,6 @@
 import 'package:signalr_netcore/signalr_client.dart';
 
 class SignalRService {
-  // ✅ Change: Nullable to prevent 'LateInitializationError' crashes
   HubConnection? _connection;
 
   Function(dynamic)? onLobbyUpdate;
@@ -15,8 +14,12 @@ class SignalRService {
   Function(dynamic)? onLobbyDeleted;
   Function(dynamic)? onError;
 
+  // Optional debug hooks (useful for TV Option B)
+  Function(dynamic)? onTvPairedSuccess;
+  Function(dynamic)? onTvTrace;
+  Function(dynamic)? onTvAttachSuccess;
+
   Future<void> init(String url) async {
-    // Prevent re-initializing if already connected
     if (_connection?.state == HubConnectionState.Connected) return;
 
     _connection = HubConnectionBuilder()
@@ -24,21 +27,25 @@ class SignalRService {
         .withAutomaticReconnect()
         .build();
 
-    _connection?.on("lobby_update", (args) => onLobbyUpdate?.call(args?[0]));
-    _connection?.on("game_created", (args) => onGameCreated?.call(args?[0]));
-    _connection?.on("game_joined", (args) => onGameJoined?.call(args?[0]));
-    _connection?.on("game_started", (args) => onGameStarted?.call(args?[0]));
-    _connection?.on("new_round", (args) => onNewRound?.call(args?[0]));
-    _connection?.on("question_results", (args) => onQuestionResults?.call(args?[0]));
-    _connection?.on("game_over", (args) => onGameOver?.call(args?[0]));
-    _connection?.on("game_reset", (args) => onGameReset?.call(args?[0]));
-    _connection?.on("lobby_deleted", (args) => onLobbyDeleted?.call(args?[0]));
-    _connection?.on("error", (args) => onError?.call(args?[0]));
+    _connection?.on("lobby_update", (args) => onLobbyUpdate?.call(args != null && args.isNotEmpty ? args[0] : null));
+    _connection?.on("game_created", (args) => onGameCreated?.call(args != null && args.isNotEmpty ? args[0] : null));
+    _connection?.on("game_joined", (args) => onGameJoined?.call(args != null && args.isNotEmpty ? args[0] : null));
+    _connection?.on("game_started", (args) => onGameStarted?.call(args != null && args.isNotEmpty ? args[0] : null));
+    _connection?.on("new_round", (args) => onNewRound?.call(args != null && args.isNotEmpty ? args[0] : null));
+    _connection?.on("question_results", (args) => onQuestionResults?.call(args != null && args.isNotEmpty ? args[0] : null));
+    _connection?.on("game_over", (args) => onGameOver?.call(args != null && args.isNotEmpty ? args[0] : null));
+    _connection?.on("game_reset", (args) => onGameReset?.call(args != null && args.isNotEmpty ? args[0] : null));
+    _connection?.on("lobby_deleted", (args) => onLobbyDeleted?.call(args != null && args.isNotEmpty ? args[0] : null));
+    _connection?.on("error", (args) => onError?.call(args != null && args.isNotEmpty ? args[0] : null));
+
+    // Option B debug/events (safe to have even if server doesn’t send them)
+    _connection?.on("tv_paired_success", (args) => onTvPairedSuccess?.call(args != null && args.isNotEmpty ? args[0] : null));
+    _connection?.on("tv_trace", (args) => onTvTrace?.call(args != null && args.isNotEmpty ? args[0] : null));
+    _connection?.on("tv_attach_success", (args) => onTvAttachSuccess?.call(args != null && args.isNotEmpty ? args[0] : null));
 
     await _connection?.start();
   }
 
-  // ✅ Helper: Safely invokes methods, throwing a readable error if disconnected
   Future<void> _invoke(String methodName, List<Object>? args) async {
     if (_connection == null || _connection!.state != HubConnectionState.Connected) {
       throw Exception("Connection lost. Please restart or check internet.");
@@ -46,6 +53,26 @@ class SignalRService {
     await _connection!.invoke(methodName, args: args);
   }
 
+  // -------------------------
+  // OPTION B: TV pairing
+  // -------------------------
+  Future<void> pairTv(String tvCode, String hostKey) async {
+    await _invoke("PairTV", [tvCode.trim().toUpperCase(), hostKey.trim()]);
+  }
+
+  Future<void> syncTheme(
+    String lobbyCode,
+    String wallpaper,
+    String music,
+    bool musicEnabled,
+    double volume,
+  ) async {
+    await _invoke("SyncTheme", [lobbyCode, wallpaper, music, musicEnabled, volume]);
+  }
+
+  // -------------------------
+  // Lobby lifecycle
+  // -------------------------
   Future<void> createGame(
     String hostName,
     String hostAvatar,
@@ -55,6 +82,7 @@ class SignalRService {
     int timer,
     String difficulty,
     String customCode,
+    String hostKey, // ✅ NEW (Option B)
   ) async {
     await _invoke("CreateGame", [
       hostName,
@@ -64,15 +92,35 @@ class SignalRService {
       category,
       timer,
       difficulty,
-      customCode
+      customCode,
+      hostKey, // ✅ server expects this as last arg
     ]);
   }
 
-  Future<void> joinGame(String code, String name, String avatar, bool isHost) async {
-    await _invoke("JoinGame", [code, name, avatar, isHost]);
+  Future<void> joinGame(
+    String code,
+    String name,
+    String avatar,
+    bool spectator, // ✅ rename: this is spectator, not isHost
+    String hostKey,  // ✅ NEW (Option B)
+  ) async {
+    await _invoke("JoinGame", [
+      code,
+      name,
+      avatar,
+      spectator, // ✅ server expects spectator bool here
+      hostKey,   // ✅ then hostKey
+    ]);
   }
 
-  Future<void> updateSettings(String code, String mode, int questionCount, String category, int timer, String difficulty) async {
+  Future<void> updateSettings(
+    String code,
+    String mode,
+    int questionCount,
+    String category,
+    int timer,
+    String difficulty,
+  ) async {
     await _invoke("UpdateSettings", [code, mode, questionCount, category, timer, difficulty]);
   }
 
@@ -100,7 +148,7 @@ class SignalRService {
     try {
       await _invoke("LeaveLobby", [code]);
     } catch (_) {
-      // Ignore errors when leaving (e.g. if already disconnected)
+      // ignore
     }
   }
 

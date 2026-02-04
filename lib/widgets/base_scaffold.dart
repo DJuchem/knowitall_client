@@ -65,7 +65,7 @@ class BaseScaffold extends StatelessWidget {
           ),
           // Dark Overlay for readability
           Positioned.fill(
-            child: Container(color: Colors.black.withOpacity(0.6)),
+            child: Container(color: Colors.black.withOpacity(0.7)),
           ),
           // Content
           SafeArea(

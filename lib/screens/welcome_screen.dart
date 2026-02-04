@@ -172,7 +172,7 @@ void _showTvDialog(BuildContext context, GameProvider game) {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text("TV code saved — will link when you create/join a lobby."),
+                    content: const Text("TV paired to this device. It will automatically follow your lobbies."),
                     backgroundColor: theme.colorScheme.secondary,
                   ),
                 );
@@ -185,6 +185,7 @@ void _showTvDialog(BuildContext context, GameProvider game) {
     ),
   );
 }
+
 
 
   @override
