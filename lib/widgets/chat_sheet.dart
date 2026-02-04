@@ -60,7 +60,27 @@ class _ChatSheetState extends State<ChatSheet> {
     game.sendChat(msg);
     _msgController.clear();
     setState(() => _showEmojiPicker = false);
-    _focusNode.requestFocus();
+    _focusNode.requestFocus(); // Keep focus for rapid fire
+  }
+
+  // Helper to find player avatar
+  String _getAvatarForPlayer(GameProvider game, String playerName) {
+    if (playerName == game.myName) return game.myAvatar;
+    try {
+      final p = game.lobby?.players.firstWhere((pl) => pl.name == playerName);
+      return p?.avatar ?? "assets/avatars/avatar_0.png";
+    } catch (_) {
+      return "assets/avatars/avatar_0.png";
+    }
+  }
+
+  String _cleanPath(String path) {
+    if (path.isEmpty) return "";
+    String p = path;
+    while (p.startsWith("assets/") || p.startsWith("/assets/")) {
+      p = p.replaceFirst("assets/", "").replaceFirst("/assets/", "");
+    }
+    return p;
   }
 
   @override
@@ -68,6 +88,7 @@ class _ChatSheetState extends State<ChatSheet> {
     final game = Provider.of<GameProvider>(context);
     final chat = game.lobby?.chat ?? [];
 
+    // Auto-mark read if expanded
     if (_isExpanded && game.unreadCount > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) => game.markChatAsRead());
     }
@@ -75,18 +96,22 @@ class _ChatSheetState extends State<ChatSheet> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final screenSize = MediaQuery.of(context).size;
 
     final sheetBg = cs.surface.withOpacity(isDark ? 0.95 : 1.0);
     final myBubble = cs.primary.withOpacity(0.3);
     final otherBubble = isDark ? Colors.white10 : Colors.black.withOpacity(0.05);
 
-    // FIX: Set collapsed height to match header (68) + border/padding room to avoid overflow
-    double targetH = 70;
+    // ✅ FIX: Safer Height Calculation
+    // Collapsed: 80px (Safe buffer for 60px header)
+    // Expanded: 50% of screen height
+    double targetH = 80; 
+    
     if (_isExpanded) {
-      targetH = 500;
-      if (_showEmojiPicker) targetH += 250;
-      final screenH = MediaQuery.of(context).size.height;
-      if (targetH > screenH * 0.85) targetH = screenH * 0.85;
+      targetH = screenSize.height * 0.5; // Use 50% of screen
+      if (_showEmojiPicker) targetH += 250; // Add emoji height
+      // Cap at 85% to prevent covering the app bar
+      if (targetH > screenSize.height * 0.85) targetH = screenSize.height * 0.85;
     }
 
     return AnimatedContainer(
@@ -106,12 +131,13 @@ class _ChatSheetState extends State<ChatSheet> {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // Ensure it shrinks if content is small
         children: [
-          // HEADER
+          // --- HEADER ---
           InkWell(
             onTap: () => _toggleExpanded(game),
             child: SizedBox(
-              height: 68, // Header height
+              height: 60, // ✅ Reduced height to prevent overflow in collapsed mode
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
@@ -124,6 +150,7 @@ class _ChatSheetState extends State<ChatSheet> {
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                             color: cs.onSurface)),
+                    // Unread Badge
                     if (!_isExpanded && game.unreadCount > 0)
                       Container(
                         margin: const EdgeInsets.only(left: 10),
@@ -139,10 +166,10 @@ class _ChatSheetState extends State<ChatSheet> {
                                 fontWeight: FontWeight.bold)),
                       ),
                     const Spacer(),
+                    // Last Message Preview
                     if (!_isExpanded && chat.isNotEmpty)
                       Flexible(
                         child: Text(
-                          // ✅ FIXED: Use .from and .text instead of map syntax []
                           "${chat.last.from}: ${chat.last.text}",
                           style: TextStyle(color: cs.onSurface.withOpacity(0.6)),
                           overflow: TextOverflow.ellipsis,
@@ -153,12 +180,15 @@ class _ChatSheetState extends State<ChatSheet> {
               ),
             ),
           ),
+          
+          // --- EXPANDED CONTENT ---
           if (_isExpanded)
             Expanded(
               child: Column(
                 children: [
                   Divider(height: 1, color: cs.onSurface.withOpacity(0.1)),
-                  // MESSAGES
+                  
+                  // MESSAGES LIST
                   Expanded(
                     child: ListView.builder(
                       reverse: true,
@@ -166,10 +196,10 @@ class _ChatSheetState extends State<ChatSheet> {
                       itemCount: chat.length,
                       itemBuilder: (ctx, i) {
                         final msg = chat[chat.length - 1 - i];
-                        // ✅ FIXED: Use .from and .text instead of map syntax []
                         final sender = msg.from;
                         final text = msg.text;
                         final isMe = sender == game.myName;
+                        final avatarPath = _getAvatarForPlayer(game, sender);
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
@@ -180,12 +210,12 @@ class _ChatSheetState extends State<ChatSheet> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               if (!isMe) ...[
+                                // ✅ FIX: Show Avatar Image
                                 CircleAvatar(
-                                    radius: 14,
-                                    backgroundColor: cs.onSurface.withOpacity(0.1),
-                                    child: Text(sender.isNotEmpty ? sender[0] : "?",
-                                        style: TextStyle(
-                                            fontSize: 10, color: cs.onSurface))),
+                                  radius: 16,
+                                  backgroundColor: Colors.black26,
+                                  backgroundImage: AssetImage("assets/${_cleanPath(avatarPath)}"),
+                                ),
                                 const SizedBox(width: 8),
                               ],
                               Flexible(
@@ -218,12 +248,14 @@ class _ChatSheetState extends State<ChatSheet> {
                       },
                     ),
                   ),
+                  
                   // INPUT AREA
                   Container(
                     padding: const EdgeInsets.all(12),
                     color: cs.surface.withOpacity(0.5),
                     child: Column(
                       children: [
+                        // Quick Emoji Bar
                         SizedBox(
                           height: 40,
                           child: ListView.separated(
@@ -240,6 +272,7 @@ class _ChatSheetState extends State<ChatSheet> {
                           ),
                         ),
                         const SizedBox(height: 10),
+                        // Text Field Row
                         Row(
                           children: [
                             IconButton(
@@ -289,6 +322,8 @@ class _ChatSheetState extends State<ChatSheet> {
                       ],
                     ),
                   ),
+                  
+                  // Full Emoji Picker
                   if (_showEmojiPicker)
                     SizedBox(
                       height: 250,

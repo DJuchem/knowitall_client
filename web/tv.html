@@ -42,9 +42,9 @@
         flex-direction: column; align-items: center; justify-content: center; 
     }
     
-    #setup { display: flex; } /* Initial state */
+    #setup { display: flex; }
 
-    /* SETUP SCREEN */
+    /* SETUP SCREEN - DUAL QR */
     .setup-container { display: flex; align-items: center; gap: 80px; margin-top: 60px; }
     .code-box { text-align: right; }
     .tv-code-label { font-size: 20px; color: var(--primary); letter-spacing: 4px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
@@ -118,7 +118,7 @@
 </head>
 
 <body>
-  <img id="appLogo" src="assets/images/logo_text.png" onerror="this.style.display='none'">
+  <img id="appLogo" src="assets/logo2.png" onerror="this.style.display='none'">
 
   <div id="setup">
     <div class="glass-panel" style="padding: 50px 80px;">
@@ -128,9 +128,15 @@
             <div id="tvCode" class="tv-code">----</div>
             <div class="tv-sub">Enter on your device</div>
         </div>
-        <div class="qr-box">
-            <div id="qrcode"></div>
-            <div style="color:black; font-weight:bold; margin-top:5px; font-size:12px;">SCAN IN APP</div>
+        
+        <div class="qr-box" style="margin-left: 40px;">
+            <div id="qrcode-app"></div>
+            <div style="color:black; font-weight:bold; margin-top:5px; font-size:12px;">OPEN APP</div>
+        </div>
+
+        <div class="qr-box" style="margin-left: 20px;">
+            <div id="qrcode-tv"></div>
+            <div style="color:black; font-weight:bold; margin-top:5px; font-size:12px;">SCAN CODE</div>
         </div>
       </div>
     </div>
@@ -184,54 +190,56 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
   <script>
     let globalPlayers = [];
-
-    // 1. Generate Random TV Code
     const tvCode = Math.random().toString(36).substring(2, 6).toUpperCase();
     document.getElementById('tvCode').innerText = tvCode;
     
-    // 2. Generate QR Code (RAW STRING only, not a URL)
-    new QRCode(document.getElementById("qrcode"), {
-        text: tvCode, // "ABCD"
-        width: 160,
-        height: 160,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
+    // QR 1: OPEN APP (Static URL)
+    new QRCode(document.getElementById("qrcode-app"), {
+        text: "https://know-it-all.fun",
+        width: 140, height: 140,
+        colorDark : "#000000", colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.L
+    });
+
+    // QR 2: SCAN TV CODE (Raw String for App Scanner)
+    new QRCode(document.getElementById("qrcode-tv"), {
+        text: tvCode,
+        width: 140, height: 140,
+        colorDark : "#000000", colorLight : "#ffffff",
         correctLevel : QRCode.CorrectLevel.H
     });
 
-    // 3. Dynamic SignalR Connection
-// --- UPDATED SIGNALR SETUP ---
-// Ensure we use the correct protocol for production (wss for https, ws for http)
-const protocol = window.location.protocol === "https:" ? "https:" : "http:";
-const host = window.location.host;
+    // ROBUST CONNECTION LOGIC
+    const hostname = window.location.hostname;
+    const isProduction = hostname.includes("know-it-all.fun");
+    
+    let serverUrl;
+    if (isProduction) {
+        const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+        serverUrl = `${protocol}//${window.location.host}/ws`;
+    } else {
+        // Assume API is on 5074 for local testing even if HTML is on different port
+        serverUrl = "http://localhost:5074/ws";
+    }
 
-// Fallback logic for local development
-const serverUrl = window.location.protocol.startsWith("http") 
-    ? `${protocol}//${host}/ws` 
-    : "http://localhost:5074/ws";
-
-const connection = new signalR.HubConnectionBuilder()
-    .withUrl(serverUrl, {
-        // Essential for Cloudflare / Proxy environments to prevent negotiation errors
-        skipNegotiation: true,
-        transport: signalR.HttpTransportType.WebSockets
-    }) 
-    .withAutomaticReconnect()
-    .build();
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl(serverUrl, {
+            skipNegotiation: true, 
+            transport: signalR.HttpTransportType.WebSockets
+        }) 
+        .withAutomaticReconnect()
+        .build();
 
     async function start() {
         try {
             await connection.start();
-            console.log("Connected to SignalR");
+            console.log("Connected to API at:", serverUrl);
             await connection.invoke("RegisterTV", tvCode);
-            
-            // Enable music on interaction
             document.body.addEventListener('click', () => {
-                const audio = document.getElementById('bgMusic');
-                audio.play().catch(() => {});
+                document.getElementById('bgMusic').play().catch(()=>{});
             }, {once:true});
         } catch (err) { 
-            console.error("SignalR Connection Error:", err);
+            console.error("Connection failed:", err);
             setTimeout(start, 5000); 
         }
     }
@@ -246,7 +254,6 @@ const connection = new signalR.HubConnectionBuilder()
         });
     }
 
-    // HELPER: Avatar Path
     function fixAvatar(path) {
         if (!path) return "assets/avatars/avatar_0.png";
         if (path.startsWith("http") || path.startsWith("data:")) return path;
@@ -254,18 +261,13 @@ const connection = new signalR.HubConnectionBuilder()
         return `assets/${clean}`;
     }
 
-    // SIGNALR EVENTS
-
-    // Lobby Updates
+    // --- SIGNALR EVENTS ---
     connection.on("lobby_update", (state) => {
         if (state.started) return; 
         showView('lobbyView');
-        
-        // Update Code
         const codeEl = document.getElementById('lobbyCodeDisplay');
         if (codeEl) codeEl.innerText = state.code || "ERR";
 
-        // Update Players
         globalPlayers = state.players || [];
         const grid = document.getElementById('playerGrid');
         grid.innerHTML = '';
@@ -276,12 +278,10 @@ const connection = new signalR.HubConnectionBuilder()
             grid.appendChild(card);
         });
 
-        // Update Chat
         const chatList = document.getElementById('chatList');
         chatList.innerHTML = '';
         if (state.chat) {
             state.chat.forEach(msg => {
-                // Try to find sender avatar
                 const p = globalPlayers.find(pl => pl.name === msg.from) || { avatar: "" };
                 const div = document.createElement('div');
                 div.className = 'chat-msg';
@@ -292,13 +292,10 @@ const connection = new signalR.HubConnectionBuilder()
         }
     });
 
-    // Game Started / New Round
     const handleNewRound = (data) => {
         showView('questionView');
-        // Handle data structure variance
         let q = data.questionData || (data.quizData ? data.quizData[data.questionIndex || 0] : null);
         
-        // Update Mini Standings
         const players = (data.players && data.players.length > 0) ? data.players : globalPlayers;
         globalPlayers = players;
         const miniList = document.getElementById('miniStandingsList');
@@ -312,21 +309,13 @@ const connection = new signalR.HubConnectionBuilder()
         });
 
         if (!q) return;
-        
-        // Text
         document.getElementById('questionText').innerText = q.Question || q.question || "Question";
-        
-        // Media
         const mediaBox = document.getElementById('mediaContainer');
         const mediaUrl = q.MediaPayload || q.mediaPayload || q.Image || q.image;
         if (mediaUrl && mediaUrl.startsWith("http")) { 
-            mediaBox.style.display = 'block'; 
-            mediaBox.innerHTML = `<img src="${mediaUrl}">`; 
-        } else { 
-            mediaBox.style.display = 'none'; 
-        }
+            mediaBox.style.display = 'block'; mediaBox.innerHTML = `<img src="${mediaUrl}">`; 
+        } else { mediaBox.style.display = 'none'; }
 
-        // Answers
         const container = document.getElementById('answersContainer');
         container.innerHTML = '';
         let answers = [];
@@ -334,13 +323,10 @@ const connection = new signalR.HubConnectionBuilder()
         const incorrect = q.IncorrectAnswers || q.incorrectAnswers || [];
         if (correct) answers.push(correct);
         if (Array.isArray(incorrect)) answers.push(...incorrect);
-        
-        // Simple shuffle
         for (let i = answers.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [answers[i], answers[j]] = [answers[j], answers[i]];
         }
-
         answers.forEach(ans => {
             const div = document.createElement('div');
             div.className = 'answer-box';
@@ -352,66 +338,58 @@ const connection = new signalR.HubConnectionBuilder()
     connection.on("game_started", handleNewRound);
     connection.on("new_round", handleNewRound);
 
-    // Results
-    connection.on("question_results", (data) => {
-        showView('resultsView');
-        document.getElementById('correctAnswerDisplay').innerText = data.correctAnswer;
-        
-        const lb = document.getElementById('leaderboard');
-        lb.innerHTML = '';
-        
-        const results = (data.results || []).sort((a, b) => b.score - a.score);
-        globalPlayers = results; 
+    
+connection.on("question_results", (data) => {
+    showView('resultsView');
+    document.getElementById('correctAnswerDisplay').innerText = data.correctAnswer;
+    
+    const lb = document.getElementById('leaderboard');
+    lb.innerHTML = '';
+    
+    const results = (data.results || []).sort((a, b) => b.score - a.score);
+    globalPlayers = results; 
 
-        results.slice(0, 5).forEach((p, index) => {
-            const row = document.createElement('div');
-            row.className = `lb-row ${index === 0 ? 'winner' : ''}`;
-            const changeHtml = p.correct ? `<span style="color:#00ff00;">(+${p.earned})</span>` : `<span style="color:#ff3333;">(X)</span>`;
-            row.innerHTML = `
-                <div style="display:flex; align-items:center;">
-                    <span style="opacity:0.5; width:30px;">#${index + 1}</span>
-                    <img src="${fixAvatar(p.avatar)}" style="width:50px; height:50px; border-radius:50%; margin:0 15px; object-fit:cover; border:2px solid rgba(255,255,255,0.2);">
-                    <span style="font-size: 22px; font-weight:bold;">${p.name}</span>
-                </div>
-                <div style="display:flex; align-items:center; margin-left:auto;">
-                    <div style="margin-right:15px; font-weight:bold;">${changeHtml}</div>
-                    <span style="font-weight:900; font-size:22px;">${p.score}</span>
-                </div>
-            `;
-            lb.appendChild(row);
-        });
+    results.slice(0, 5).forEach((p, index) => {
+        const row = document.createElement('div');
+        row.className = `lb-row ${index === 0 ? 'winner' : ''}`;
+        
+        // ✅ CRITICAL: Ensure fixAvatar is called here to prevent 404
+        const avatarUrl = fixAvatar(p.avatar); 
+
+        row.innerHTML = `
+            <div style="display:flex; align-items:center;">
+                <span style="opacity:0.5; width:30px;">#${index + 1}</span>
+                <img src="${avatarUrl}" style="width:50px; height:50px; border-radius:50%; margin:0 15px; object-fit:cover; border:2px solid rgba(255,255,255,0.2);">
+                <span style="font-size: 22px; font-weight:bold;">${p.name}</span>
+            </div>
+            <div style="display:flex; align-items:center; margin-left:auto;">
+                <span style="font-weight:900; font-size:22px;">${p.score}</span>
+            </div>
+        `;
+        lb.appendChild(row);
     });
+});
 
-    // Game Over
     connection.on("game_over", () => {
         showView('gameOverView');
         const podium = document.getElementById('podium');
         podium.innerHTML = '';
-        
         const winners = [...globalPlayers].sort((a, b) => b.score - a.score).slice(0, 3);
         const order = [winners[1], winners[0], winners[2]].filter(p => p !== undefined);
-        
         order.forEach(p => {
             const rank = winners.indexOf(p) + 1;
             const col = document.createElement('div');
             col.className = `podium-column rank-${rank}`;
-            col.innerHTML = `
-                <div style="font-weight:bold; font-size:20px; margin-bottom:5px;">${p.name}</div>
-                <img src="${fixAvatar(p.avatar)}" class="podium-avatar">
-                <div class="podium-block">${rank}</div>
-            `;
+            col.innerHTML = `<div style="font-weight:bold; font-size:20px; margin-bottom:5px;">${p.name}</div><img src="${fixAvatar(p.avatar)}" class="podium-avatar"><div class="podium-block">${rank}</div>`;
             podium.appendChild(col);
         });
     });
 
-    // Theme & Reset
     connection.on("ThemeUpdate", (data) => {
         if(data.wallpaper) document.body.style.backgroundImage = `url('${fixAvatar(data.wallpaper)}')`;
     });
-    
     connection.on("lobby_deleted", () => showView('setup'));
     connection.on("game_reset", () => showView('lobbyView'));
-
   </script>
 </body>
 </html>
