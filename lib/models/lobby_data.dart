@@ -31,6 +31,8 @@ class LobbyData {
     
   });
 
+
+
   factory LobbyData.fromJson(Map<String, dynamic> json) {
     var pList = json['players'] as List? ?? [];
     var sList = json['spectators'] as List? ?? [];
