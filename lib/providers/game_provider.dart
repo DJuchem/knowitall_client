@@ -37,12 +37,14 @@ class GameProvider extends ChangeNotifier {
 
   String _myName = "Player";
   String _myAvatar = "assets/avatars/avatar_0.png";
+  
+  // ✅ STREAK & CHAT TRACKING
   int _currentStreak = 0;
   int _lastChatReadIndex = 0; 
 
   // --- INDEPENDENT SETTINGS ---
   String _colorScheme = "Default"; 
-  String _wallpaper = "assets/bg/background_default.png";
+  String _wallpaper = "assets/bg/background_default.webp";
   String _bgMusic = "assets/music/default.mp3";
   Brightness _brightness = Brightness.dark;
   
@@ -63,7 +65,6 @@ class GameProvider extends ChangeNotifier {
     "Population": "population",
   };
 
-  // ✅ DECOUPLED MUSIC LIST
   final Map<String, String> musicOptions = {
     "KnowItAll": "assets/music/background-music.mp3",
     "Chill Lo-Fi": "assets/music/synth.mp3",
@@ -75,9 +76,8 @@ class GameProvider extends ChangeNotifier {
     "Classical Focus": "assets/music/RondoAllegro.mp3",
   };
 
-  // ✅ DECOUPLED WALLPAPER LIST
   final Map<String, String> wallpaperOptions = {
-    "Default": "assets/bg/background_default.webp",
+    "Default": "assets/bg/background_default.png", 
     "Neon City": "assets/bg/cyberpunk.jpg",
     "Digital Rain": "assets/bg/matrix_rain.jpg",
     "Deep Galaxy": "assets/bg/galaxy.jpg",
@@ -99,7 +99,6 @@ class GameProvider extends ChangeNotifier {
   String get myAvatar => _myAvatar;
   bool get amIHost => _currentLobby != null && _currentLobby!.host.trim().toLowerCase() == _myName.trim().toLowerCase();
 
-  // Theme getters
   String get currentScheme => _colorScheme;
   Color get themeColor => AppTheme.schemes[_colorScheme]?.primary ?? const Color(0xFFE91E63);
   
@@ -126,7 +125,6 @@ class GameProvider extends ChangeNotifier {
     _myName = prefs.getString('username') ?? "Player";
     _myAvatar = prefs.getString('avatar') ?? "assets/avatars/avatar_0.png";
     
-    // Load decoupled settings
     if (prefs.containsKey('theme_scheme')) _colorScheme = prefs.getString('theme_scheme')!;
     if (prefs.containsKey('theme_wallpaper')) _wallpaper = prefs.getString('theme_wallpaper')!;
     if (prefs.containsKey('theme_music')) _bgMusic = prefs.getString('theme_music')!;
@@ -147,6 +145,7 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ✅ MISSING METHOD RESTORED
   void markChatAsRead() {
     if (_currentLobby != null) {
       _lastChatReadIndex = _currentLobby!.chat.length;
@@ -186,7 +185,6 @@ class GameProvider extends ChangeNotifier {
 
   void setMusicTrack(String track) {
     _bgMusic = track;
-    // Save preference
     SharedPreferences.getInstance().then((prefs) => prefs.setString('theme_music', track));
     
     if (_isMusicEnabled) {
@@ -212,7 +210,6 @@ class GameProvider extends ChangeNotifier {
     } catch (_) {}
   }
 
-  // ✅ UPDATED: Decoupled update method
   void updateTheme({String? scheme, String? bg, Brightness? brightness}) {
     if (scheme != null) _colorScheme = scheme;
     if (bg != null) _wallpaper = bg;
@@ -224,7 +221,6 @@ class GameProvider extends ChangeNotifier {
       prefs.setBool('theme_bright', _brightness == Brightness.dark);
     });
     
-    // Sync to TV if connected
     if (_currentLobby != null) syncTvTheme();
     notifyListeners();
   }
@@ -240,7 +236,7 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ RESTORED MISSING METHOD
+  // ✅ HELPER METHOD RESTORED
   Future<void> _tryLinkTv(String lobbyCode) async {
     if (_pendingTvCode != null && _hubConnection != null) {
       try {
@@ -263,7 +259,6 @@ class GameProvider extends ChangeNotifier {
   Future<void> connect(String url) async {
     if (_hubConnection != null) return;
     _hubConnection = HubConnectionBuilder().withUrl(url).withAutomaticReconnect().build();
-    // ... (SignalR handlers same as previous) ...
     
     _hubConnection!.on("game_created", _handleLobbyUpdate);
     _hubConnection!.on("game_joined", _handleLobbyUpdate);
@@ -276,6 +271,7 @@ class GameProvider extends ChangeNotifier {
         notifyListeners();
       }
     });
+    
     _hubConnection!.on("new_round", (args) {
       if (args != null && args.isNotEmpty) {
         final map = args[0] as Map<String, dynamic>;
@@ -285,23 +281,28 @@ class GameProvider extends ChangeNotifier {
         notifyListeners();
       }
     });
+
     _hubConnection!.on("question_results", (args) {
       if (args != null && args.isNotEmpty) {
         _lastResults = args[0] as Map<String, dynamic>;
+        _handleStreakUpdate(_lastResults); // ✅ CALCULATE STREAK
         _appState = AppState.results;
         notifyListeners();
       }
     });
+
     _hubConnection!.on("game_over", (_) {
       _appState = AppState.gameOver;
       playSfx("gameover");
       notifyListeners();
     });
+    
     _hubConnection!.on("lobby_deleted", (_) {
       _appState = AppState.welcome;
       _currentLobby = null;
       notifyListeners();
     });
+    
     _hubConnection!.on("game_reset", (_) {
       _appState = AppState.lobby;
       _currentStreak = 0;
@@ -312,6 +313,28 @@ class GameProvider extends ChangeNotifier {
     if (_pendingTvCode != null) {
        await _hubConnection!.invoke("LinkTV", args: <Object>[_pendingTvCode!, ""]);
        _pendingTvCode = null;
+    }
+  }
+
+  // ✅ STREAK CALCULATION LOGIC RESTORED
+  void _handleStreakUpdate(Map<String, dynamic>? results) {
+    if (results == null) return;
+    final list = (results['results'] ?? []) as List;
+    final myResult = list.firstWhere(
+      (r) => r['name'] == _myName, 
+      orElse: () => null
+    );
+
+    if (myResult != null) {
+      final bool correct = myResult['correct'] == true;
+      if (correct) {
+        _currentStreak++;
+        if (_currentStreak > 2) playSfx("streak");
+        else playSfx("correct");
+      } else {
+        _currentStreak = 0;
+        playSfx("wrong");
+      }
     }
   }
 

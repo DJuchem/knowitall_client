@@ -43,6 +43,7 @@ dependencies:
   confetti: ^0.7.0      # For streak animations
   youtube_player_iframe: ^5.2.2
   emoji_picker_flutter: ^1.6.4
+  mobile_scanner: ^5.1.0
 
 dev_dependencies:
   flutter_test:

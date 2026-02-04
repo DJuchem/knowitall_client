@@ -7,7 +7,7 @@ class BaseScaffold extends StatelessWidget {
   final bool showSettings;
   final bool extendBodyBehindAppBar;
   final PreferredSizeWidget? appBar;
-  final VoidCallback? onSettingsTap; // ✅ NEW: Callback for settings
+  final VoidCallback? onSettingsTap;
 
   const BaseScaffold({
     super.key,
@@ -15,32 +15,35 @@ class BaseScaffold extends StatelessWidget {
     this.showSettings = false,
     this.extendBodyBehindAppBar = false,
     this.appBar,
-    this.onSettingsTap, // ✅ NEW
+    this.onSettingsTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
-    final bgPath = game.wallpaper;
-
-    // Clean path logic duplicated here just for safety, though Provider usually handles it
-    String cleanBg = bgPath;
-    while (cleanBg.startsWith("assets/") || cleanBg.startsWith("/assets/")) {
-      cleanBg = cleanBg.replaceFirst("assets/", "").replaceFirst("/assets/", "");
+    
+    // ✅ FIX: Smart Asset Path Handling
+    String bgPath = game.wallpaper;
+    // If it doesn't start with assets/ and isn't a web url/data uri, add assets/
+    if (!bgPath.startsWith("assets/") && !bgPath.startsWith("http") && !bgPath.startsWith("data:")) {
+      bgPath = "assets/$bgPath";
     }
+    // (Optional) If your asset keys in pubspec don't include 'assets/', adjust accordingly.
+    // But usually in Flutter, the key IS 'assets/foo.png'.
 
     return Scaffold(
       extendBodyBehindAppBar: extendBodyBehindAppBar || appBar != null,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Fallback color
       appBar: appBar ?? (showSettings
           ? AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
+              iconTheme: IconThemeData(color: Colors.white),
               actions: [
                 Padding(
                   padding: const EdgeInsets.only(right: 16.0),
                   child: IconButton(
-                    icon: const Icon(Icons.settings, color: Colors.white, size: 30),
-                    // ✅ FIX: Call the passed function
+                    icon: const Icon(Icons.settings, size: 30),
                     onPressed: onSettingsTap, 
                   ),
                 )
@@ -49,25 +52,28 @@ class BaseScaffold extends StatelessWidget {
           : null),
       body: Stack(
         children: [
-          // Background
+          // Background Image
           Positioned.fill(
             child: Image.asset(
-              "assets/$cleanBg",
+              bgPath,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(color: const Color(0xFF0F1221)),
+              errorBuilder: (_, __, ___) {
+                // Fail silently to background color
+                return Container(color: Theme.of(context).scaffoldBackgroundColor);
+              },
             ),
           ),
-          // Dark Overlay
+          // Dark Overlay for readability
           Positioned.fill(
             child: Container(color: Colors.black.withOpacity(0.6)),
           ),
           // Content
           SafeArea(
-            top: !extendBodyBehindAppBar && appBar == null, // Handle safe area manually if no appbar
+            top: !extendBodyBehindAppBar && appBar == null,
             child: body,
           ),
         ],
-      ),
+      ),  
     );
   }
 }

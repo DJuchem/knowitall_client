@@ -5,11 +5,12 @@ import 'package:animate_do/animate_do.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/game_provider.dart';
 import '../widgets/avatar_selector.dart';
-
 import '../widgets/base_scaffold.dart';
 import '../theme/app_theme.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:html' as html;
+// ✅ ADD THIS for QR Scanning
+import 'package:mobile_scanner/mobile_scanner.dart'; 
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -26,10 +27,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   String _selectedAvatar = "avatars/avatar_0.png";
 
   String get _serverUrl {
+    // 1. PRODUCTION (Docker / Release Build)
     if (kReleaseMode && kIsWeb) {
       final location = html.window.location;
+      // Use 'http' or 'https'. SignalR handles the upgrade to wss internally.
       return "${location.protocol}//${location.host}/ws";
     }
+    
+    // 2. DEVELOPMENT (Localhost Debugging)
+    // Update '5074' if your local port is different
     return "http://localhost:5074/ws"; 
   }
 
@@ -71,6 +77,48 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     return true;
   }
 
+  // ✅ HELPER: Open Camera Scanner
+  void _openCameraScanner(BuildContext context) {
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => Container(
+            height: 500,
+            decoration: const BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20))
+            ),
+            child: Column(
+                children: [
+                    const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text("Scan TV QR Code", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    ),
+                    Expanded(
+                        child: MobileScanner(
+                            onDetect: (capture) {
+                                final List<Barcode> barcodes = capture.barcodes;
+                                if (barcodes.isNotEmpty) {
+                                    final String? code = barcodes.first.rawValue;
+                                    // Our TV code is exactly 4 chars
+                                    if (code != null && code.length == 4) {
+                                        setState(() {
+                                            _tvCodeController.text = code.toUpperCase();
+                                        });
+                                        Navigator.pop(context); // Close scanner
+                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Code Scanned!"), backgroundColor: Colors.green));
+                                    }
+                                }
+                            },
+                        ),
+                    ),
+                ],
+            ),
+        ),
+    );
+  }
+
   void _showTvDialog(BuildContext context, GameProvider game) {
     final theme = Theme.of(context);
     showDialog(
@@ -81,34 +129,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // LOGO
-            Image.asset(
-               _cleanPath(game.config.logoPath), 
-               height: 60, 
-               errorBuilder: (_,__,___) => const Icon(Icons.tv, size: 50)
-            ),
+            const Icon(Icons.tv, size: 60, color: Colors.white54),
+            const SizedBox(height: 16),
+            const Text("Enter or Scan the 4-letter code displayed on the TV screen:", textAlign: TextAlign.center),
             const SizedBox(height: 20),
-            
-            // QR CODE PLACEHOLDER (or Asset)
-            Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.colorScheme.primary, width: 4),
-              ),
-              child: const Center(
-                child: Icon(Icons.qr_code_2, size: 100, color: Colors.black),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text("Scan to Connect", style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5), fontSize: 10)),
-            
-            const SizedBox(height: 20),
-            Text("OR ENTER CODE", style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            
             TextField(
               controller: _tvCodeController,
               textAlign: TextAlign.center,
@@ -118,6 +142,20 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 fillColor: theme.colorScheme.onSurface.withOpacity(0.05),
                 contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                // ✅ ADD SCAN BUTTON
+                suffixIcon: IconButton(
+                    icon: const Icon(Icons.qr_code_scanner, color: Colors.cyanAccent),
+                    onPressed: () {
+                        // Close dialog momentarily to show scanner? 
+                        // Or stack scanner on top? Stack usually works better.
+                        // However, showModalBottomSheet works best from the root context.
+                        Navigator.pop(context); // Close current dialog
+                        _openCameraScanner(context); // Open Scanner
+                        // Note: You might need logic to re-open this dialog after scanning
+                        // For now, let's assume the user re-opens it or we just populate the field.
+                        // Better UX: Keep this open and open scanner on top.
+                    }, 
+                ),
               ),
             ),
           ],
@@ -147,7 +185,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     final game = Provider.of<GameProvider>(context);
     final theme = Theme.of(context);
 
-    // ✅ Replaced Dialog with BottomSheet
     void openSettings() {
       showModalBottomSheet(
         context: context,
@@ -161,163 +198,150 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       showSettings: true,
       extendBodyBehindAppBar: true,
       onSettingsTap: openSettings, 
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 500), 
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start, 
-                    children: [
-                      
-                      // 1. TOP SPACER
-                      const Spacer(flex: 1),
-
-                      // 2. LOGO 
-                      Flexible(
-                        flex: 6, 
-                        child: FadeInDown(
-                          child: Hero(
-                            tag: 'app_logo',
-                            child: Image.asset(
-                              _cleanPath(game.config.logoPath),
-                              fit: BoxFit.contain,
-                              width: double.infinity, 
-                            ),
-                          ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500), 
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center, 
+                  children: [
+                    
+                    // 1. LOGO 
+                    FadeInDown(
+                      child: Hero(
+                        tag: 'app_logo',
+                        child: Image.asset(
+                          _cleanPath(game.config.logoPath),
+                          fit: BoxFit.contain,
+                          height: 120, 
+                          errorBuilder: (_,__,___) => const Icon(Icons.quiz, size: 80, color: Colors.white),
                         ),
                       ),
-                      
-                      const SizedBox(height: 20),
+                    ),
+                    
+                    const SizedBox(height: 30),
 
-                      // 3. MAIN CARD
-                      Expanded(
-                        flex: 10, 
-                        child: FadeInUp(
-                          child: GlassContainer(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // NICKNAME
-                                TextField(
-                                  controller: _nameController,
-                                  style: TextStyle(color: theme.colorScheme.onSurface),
-                                  decoration: const InputDecoration(
-                                    prefixIcon: Icon(Icons.person),
-                                    labelText: "NICKNAME",
-                                  ),
-                                ),
-                                
-                                const SizedBox(height: 16),
-                                
-                                // AVATAR SELECTOR
-                                Expanded(
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.onSurface.withOpacity(0.05),
-                                      borderRadius: BorderRadius.circular(16)
-                                    ),
-                                    child: AvatarSelector(
-                                      initialAvatar: _cleanPath(_selectedAvatar),
-                                      onSelect: (val) => setState(() => _selectedAvatar = _cleanPath(val)),
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(height: 20),
-
-                                // CREATE BUTTON
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 60,
-                                  child: ElevatedButton(
-                                    onPressed: () async {
-                                      if (!_validateInput(context)) return;
-                                      await _saveUserPrefs();
-                                      game.initMusic();
-                                      game.setPlayerInfo(_nameController.text.trim(), _cleanPath(_selectedAvatar));
-                                      await game.connect(_serverUrl);
-                                      game.setAppState(AppState.create);
-                                    },
-                                    child: const Text("CREATE NEW GAME"),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 20),
-
-                      // 4. JOIN & TV (Bottom)
-                      FadeInUp(
-                        delay: const Duration(milliseconds: 200),
+                    // 2. MAIN CARD
+                    FadeInUp(
+                      child: GlassContainer(
+                        padding: const EdgeInsets.all(24),
                         child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: SizedBox(
-                                    height: 60,
-                                    child: TextField(
-                                      controller: _codeController,
-                                      style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, letterSpacing: 3, fontSize: 20),
-                                      textAlign: TextAlign.center,
-                                      decoration: const InputDecoration(
-                                        hintText: "GAME CODE",
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                SizedBox(
-                                  height: 60,
-                                  width: 70,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: theme.colorScheme.secondary,
-                                      padding: EdgeInsets.zero,
-                                    ),
-                                    onPressed: () async {
-                                      if (!_validateInput(context)) return;
-                                      final code = _codeController.text.trim();
-                                      if (code.isEmpty) return;
-                                      await _saveUserPrefs();
-                                      game.initMusic();
-                                      game.setPlayerInfo(_nameController.text.trim(), _cleanPath(_selectedAvatar));
-                                      await game.connect(_serverUrl);
-                                      await game.joinLobby(code, _nameController.text.trim(), _cleanPath(_selectedAvatar));
-                                    },
-                                    child: const Icon(Icons.arrow_forward, color: Colors.white, size: 30),
-                                  ),
-                                ),
-                              ],
+                            // NICKNAME
+                            TextField(
+                              controller: _nameController,
+                              style: TextStyle(color: theme.colorScheme.onSurface),
+                              decoration: const InputDecoration(
+                                prefixIcon: Icon(Icons.person),
+                                labelText: "NICKNAME",
+                              ),
                             ),
                             
-                            TextButton.icon(
-                              onPressed: () => _showTvDialog(context, game),
-                              icon: Icon(Icons.tv, color: theme.colorScheme.secondary),
-                              label: Text("CONNECT TO TV", style: TextStyle(color: theme.colorScheme.secondary)),
+                            const SizedBox(height: 16),
+                            
+                            // ✅ FIXED: AVATAR SELECTOR (Fixed Height container)
+                            Container(
+                              height: 350, // Fixed height ensures multi-row visibility
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.onSurface.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(16)
+                              ),
+                              child: AvatarSelector(
+                                initialAvatar: _cleanPath(_selectedAvatar),
+                                onSelect: (val) => setState(() => _selectedAvatar = _cleanPath(val)),
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // CREATE BUTTON
+                            SizedBox(
+                              width: double.infinity,
+                              height: 60,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  if (!_validateInput(context)) return;
+                                  await _saveUserPrefs();
+                                  game.initMusic();
+                                  game.setPlayerInfo(_nameController.text.trim(), _cleanPath(_selectedAvatar));
+                                  await game.connect(_serverUrl);
+                                  game.setAppState(AppState.create);
+                                },
+                                child: const Text("CREATE NEW GAME"),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      
-                      // 5. BOTTOM SPACER (Push content up)
-                      const Spacer(flex: 2),
-                    ],
-                  ),
+                    ),
+                    
+                    const SizedBox(height: 20),
+
+                    // 3. JOIN & TV
+                    FadeInUp(
+                      delay: const Duration(milliseconds: 200),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 60,
+                                  child: TextField(
+                                    controller: _codeController,
+                                    style: TextStyle(color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold, letterSpacing: 3, fontSize: 20),
+                                    textAlign: TextAlign.center,
+                                    decoration: const InputDecoration(
+                                      hintText: "GAME CODE",
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              SizedBox(
+                                height: 60,
+                                width: 70,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: theme.colorScheme.secondary,
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                  onPressed: () async {
+                                    if (!_validateInput(context)) return;
+                                    final code = _codeController.text.trim();
+                                    if (code.isEmpty) return;
+                                    await _saveUserPrefs();
+                                    game.initMusic();
+                                    game.setPlayerInfo(_nameController.text.trim(), _cleanPath(_selectedAvatar));
+                                    await game.connect(_serverUrl);
+                                    await game.joinLobby(code, _nameController.text.trim(), _cleanPath(_selectedAvatar));
+                                  },
+                                  child: const Icon(Icons.arrow_forward, color: Colors.white, size: 30),
+                                ),
+                              ),
+                            ],
+                          ),
+                          
+                          const SizedBox(height: 10),
+                          TextButton.icon(
+                            onPressed: () => _showTvDialog(context, game),
+                            icon: Icon(Icons.tv, color: theme.colorScheme.secondary),
+                            label: Text("CONNECT TO TV", style: TextStyle(color: theme.colorScheme.secondary)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }

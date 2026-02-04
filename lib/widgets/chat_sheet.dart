@@ -32,7 +32,9 @@ class _ChatSheetState extends State<ChatSheet> {
     final start = sel.start >= 0 ? sel.start : text.length;
     final end = sel.end >= 0 ? sel.end : text.length;
     final newText = text.replaceRange(start, end, insert);
-    _msgController.value = TextEditingValue(text: newText, selection: TextSelection.collapsed(offset: start + insert.length));
+    _msgController.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: start + insert.length));
   }
 
   void _onEmojiPicked(String emoji) {
@@ -65,7 +67,7 @@ class _ChatSheetState extends State<ChatSheet> {
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
     final chat = game.lobby?.chat ?? [];
-    
+
     if (_isExpanded && game.unreadCount > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) => game.markChatAsRead());
     }
@@ -74,14 +76,15 @@ class _ChatSheetState extends State<ChatSheet> {
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    final sheetBg = cs.surface.withOpacity(isDark ? 0.95 : 1.0); 
+    final sheetBg = cs.surface.withOpacity(isDark ? 0.95 : 1.0);
     final myBubble = cs.primary.withOpacity(0.3);
-    final otherBubble = Colors.white.withOpacity(0.1);
+    final otherBubble = isDark ? Colors.white10 : Colors.black.withOpacity(0.05);
 
+    // FIX: Set collapsed height to match header (68) + border/padding room to avoid overflow
     double targetH = 70;
     if (_isExpanded) {
-      targetH = 500; 
-      if (_showEmojiPicker) targetH += 250; 
+      targetH = 500;
+      if (_showEmojiPicker) targetH += 250;
       final screenH = MediaQuery.of(context).size.height;
       if (targetH > screenH * 0.85) targetH = screenH * 0.85;
     }
@@ -94,8 +97,13 @@ class _ChatSheetState extends State<ChatSheet> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         color: sheetBg,
-        border: Border.all(color: Colors.white24),
-        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 20, offset: Offset(0, -5))],
+        border: Border.all(color: isDark ? Colors.white24 : Colors.black12),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, -5))
+        ],
       ),
       child: Column(
         children: [
@@ -103,36 +111,53 @@ class _ChatSheetState extends State<ChatSheet> {
           InkWell(
             onTap: () => _toggleExpanded(game),
             child: SizedBox(
-              height: 68,
+              height: 68, // Header height
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
                   children: [
-                    Icon(_isExpanded ? Icons.expand_more : Icons.chat_bubble, color: cs.primary),
+                    Icon(_isExpanded ? Icons.expand_more : Icons.chat_bubble,
+                        color: cs.primary),
                     const SizedBox(width: 12),
-                    Text("CHAT", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: cs.onSurface)),
+                    Text("CHAT",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: cs.onSurface)),
                     if (!_isExpanded && game.unreadCount > 0)
                       Container(
                         margin: const EdgeInsets.only(left: 10),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12)),
-                        child: Text("${game.unreadCount}", style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(12)),
+                        child: Text("${game.unreadCount}",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold)),
                       ),
                     const Spacer(),
                     if (!_isExpanded && chat.isNotEmpty)
-                      Flexible(child: Text("${chat.last.from}: ${chat.last.text}", style: TextStyle(color: cs.onSurface.withOpacity(0.6)), overflow: TextOverflow.ellipsis)),
+                      Flexible(
+                        child: Text(
+                          // ✅ FIXED: Use .from and .text instead of map syntax []
+                          "${chat.last.from}: ${chat.last.text}",
+                          style: TextStyle(color: cs.onSurface.withOpacity(0.6)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                   ],
                 ),
               ),
             ),
           ),
-
           if (_isExpanded)
             Expanded(
               child: Column(
                 children: [
-                  const Divider(height: 1, color: Colors.white12),
-                  
+                  Divider(height: 1, color: cs.onSurface.withOpacity(0.1)),
                   // MESSAGES
                   Expanded(
                     child: ListView.builder(
@@ -141,21 +166,32 @@ class _ChatSheetState extends State<ChatSheet> {
                       itemCount: chat.length,
                       itemBuilder: (ctx, i) {
                         final msg = chat[chat.length - 1 - i];
-                        final isMe = msg.from == game.myName;
-                        
+                        // ✅ FIXED: Use .from and .text instead of map syntax []
+                        final sender = msg.from;
+                        final text = msg.text;
+                        final isMe = sender == game.myName;
+
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Row(
-                            mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                            mainAxisAlignment: isMe
+                                ? MainAxisAlignment.end
+                                : MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               if (!isMe) ...[
-                                CircleAvatar(radius: 14, backgroundColor: Colors.white10, child: Text(msg.from[0], style: const TextStyle(fontSize: 10, color: Colors.white))),
+                                CircleAvatar(
+                                    radius: 14,
+                                    backgroundColor: cs.onSurface.withOpacity(0.1),
+                                    child: Text(sender.isNotEmpty ? sender[0] : "?",
+                                        style: TextStyle(
+                                            fontSize: 10, color: cs.onSurface))),
                                 const SizedBox(width: 8),
                               ],
                               Flexible(
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 10),
                                   decoration: BoxDecoration(
                                     color: isMe ? myBubble : otherBubble,
                                     borderRadius: BorderRadius.circular(16),
@@ -163,8 +199,15 @@ class _ChatSheetState extends State<ChatSheet> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      if (!isMe) Text(msg.from, style: TextStyle(fontSize: 10, color: cs.primary, fontWeight: FontWeight.bold)),
-                                      Text(msg.text, style: TextStyle(fontSize: 16, color: cs.onSurface)),
+                                      if (!isMe)
+                                        Text(sender,
+                                            style: TextStyle(
+                                                fontSize: 10,
+                                                color: cs.primary,
+                                                fontWeight: FontWeight.bold)),
+                                      Text(text,
+                                          style: TextStyle(
+                                              fontSize: 16, color: cs.onSurface)),
                                     ],
                                   ),
                                 ),
@@ -175,23 +218,24 @@ class _ChatSheetState extends State<ChatSheet> {
                       },
                     ),
                   ),
-
                   // INPUT AREA
                   Container(
                     padding: const EdgeInsets.all(12),
-                    color: Colors.black12,
+                    color: cs.surface.withOpacity(0.5),
                     child: Column(
                       children: [
-                        // Quick Emoji
                         SizedBox(
                           height: 40,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: _quickEmojis.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 15),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 15),
                             itemBuilder: (_, i) => GestureDetector(
                               onTap: () => _onEmojiPicked(_quickEmojis[i]),
-                              child: Center(child: Text(_quickEmojis[i], style: const TextStyle(fontSize: 24))),
+                              child: Center(
+                                  child: Text(_quickEmojis[i],
+                                      style: const TextStyle(fontSize: 24))),
                             ),
                           ),
                         ),
@@ -199,10 +243,18 @@ class _ChatSheetState extends State<ChatSheet> {
                         Row(
                           children: [
                             IconButton(
-                              icon: Icon(_showEmojiPicker ? Icons.keyboard : Icons.emoji_emotions_outlined, color: Colors.white70),
+                              icon: Icon(
+                                  _showEmojiPicker
+                                      ? Icons.keyboard
+                                      : Icons.emoji_emotions_outlined,
+                                  color: cs.onSurface.withOpacity(0.7)),
                               onPressed: () {
-                                setState(() => _showEmojiPicker = !_showEmojiPicker);
-                                if (_showEmojiPicker) _focusNode.unfocus(); else _focusNode.requestFocus();
+                                setState(() =>
+                                    _showEmojiPicker = !_showEmojiPicker);
+                                if (_showEmojiPicker)
+                                  _focusNode.unfocus();
+                                else
+                                  _focusNode.requestFocus();
                               },
                             ),
                             Expanded(
@@ -212,14 +264,19 @@ class _ChatSheetState extends State<ChatSheet> {
                                 style: TextStyle(color: cs.onSurface),
                                 decoration: InputDecoration(
                                   hintText: "Type a message...",
-                                  hintStyle: TextStyle(color: cs.onSurface.withOpacity(0.4)),
+                                  hintStyle: TextStyle(
+                                      color: cs.onSurface.withOpacity(0.4)),
                                   filled: true,
                                   fillColor: cs.onSurface.withOpacity(0.1),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                      borderSide: BorderSide.none),
                                 ),
                                 onSubmitted: (_) => _send(game),
-                                onTap: () => setState(() => _showEmojiPicker = false),
+                                onTap: () =>
+                                    setState(() => _showEmojiPicker = false),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -232,8 +289,6 @@ class _ChatSheetState extends State<ChatSheet> {
                       ],
                     ),
                   ),
-
-                  // EMOJI PICKER
                   if (_showEmojiPicker)
                     SizedBox(
                       height: 250,
@@ -259,18 +314,34 @@ class _FancyEmojiPicker extends StatelessWidget {
   final List<String> recent;
   final Function(String) onPick;
 
-  const _FancyEmojiPicker({required this.primary, required this.isDark, required this.recent, required this.onPick});
+  const _FancyEmojiPicker(
+      {required this.primary,
+      required this.isDark,
+      required this.recent,
+      required this.onPick});
 
   @override
   Widget build(BuildContext context) {
-    final emojis = ["😀","😃","😄","😁","😆","😅","😂","🤣","😊","😇","🙂","🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","☹️","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖","😺","😸","😹","😻","😼","😼","😽","🙀","😿","😾","🙈","🙉","🙊","👋","🤚","🖐️","✋","🖖","👌","🤌","🤏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏"];
+    final emojis = [
+      "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰",
+      "😘", "😗", "😙", "😚", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨",
+      "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "🤥", "😌", "😔", "😪", "🤤", "😴", "😷", "🤒", "🤕",
+      "🤢", "🤮", "🤧", "🥵", "🥶", "🥴", "😵", "🤯", "🤠", "🥳", "😎", "🤓", "🧐", "😕", "😟", "🙁",
+      "☹️", "😮", "😯", "😲", "😳", "🥺", "😦", "😧", "😨", "😰", "😥", "😢", "😭", "😱", "😖", "😣",
+      "😞", "😓", "😩", "😫", "🥱", "😤", "😡", "😠", "🤬", "😈", "👿", "💀", "☠️", "💩", "🤡", "👹",
+      "👺", "👻", "👽", "👾", "🤖", "😺", "😸", "😹", "😻", "😼", "😼", "😽", "🙀", "😿", "😾", "🙈",
+      "🙉", "🙊", "👋", "🤚", "🖐️", "✋", "🖖", "👌", "🤌", "🤏", "✌️", "🤞", "🤟", "🤘", "🤙", "👈",
+      "👉", "👆", "🖕", "👇", "☝️", "👍", "👎", "✊", "👊", "🤛", "🤜", "👏", "🙌", "👐", "🤲", "🤝", "🙏"
+    ];
     return GridView.builder(
       padding: const EdgeInsets.all(10),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 8, crossAxisSpacing: 5, mainAxisSpacing: 5),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 8, crossAxisSpacing: 5, mainAxisSpacing: 5),
       itemCount: emojis.length,
       itemBuilder: (_, i) => GestureDetector(
         onTap: () => onPick(emojis[i]),
-        child: Center(child: Text(emojis[i], style: const TextStyle(fontSize: 24))),
+        child: Center(
+            child: Text(emojis[i], style: const TextStyle(fontSize: 24))),
       ),
     );
   }

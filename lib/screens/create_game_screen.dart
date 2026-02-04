@@ -1,9 +1,9 @@
-// (Imports remain the same)
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
 import '../theme/app_theme.dart';
@@ -16,13 +16,14 @@ class CreateGameScreen extends StatefulWidget {
 }
 
 class _CreateGameScreenState extends State<CreateGameScreen> {
-  // ... (State variables same as before) ...
   final _customCodeController = TextEditingController();
+
   String _selectedMode = "general-knowledge";
   String _difficulty = "mixed";
   String _selectedCategory = "";
   int _questionCount = 10;
   bool _isLoading = false;
+
   bool _catsLoading = false;
   String? _catsError;
   Map<String, String> _categories = const {"Any Category": ""};
@@ -33,8 +34,7 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
     _fetchCategories();
     _loadSavedSettings();
   }
-  
-  // ... (_loadSavedSettings, _saveSettings, _fetchCategories same as before) ...
+
   Future<void> _loadSavedSettings() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
@@ -60,13 +60,18 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
     try {
       final resp = await http.get(Uri.parse("https://opentdb.com/api_category.php"));
       if (resp.statusCode != 200) throw Exception("HTTP ${resp.statusCode}");
+
       final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
       final list = (decoded["trivia_categories"] as List?) ?? [];
       final Map<String, String> map = {"Any Category": ""};
-      for (final item in list) { if (item is Map) map[item["name"].toString()] = item["id"].toString(); }
+      for (final item in list) {
+        if (item is Map) map[item["name"].toString()] = item["id"].toString();
+      }
+
       if (!mounted) return;
       setState(() {
         _categories = map;
+        // Reset if selected category no longer exists
         if (!_categories.containsValue(_selectedCategory)) _selectedCategory = "";
       });
     } catch (e) {
@@ -83,12 +88,18 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
 
-    // ✅ Disable Logic: If category is "Any" (empty string), we assume difficulty is customizable.
-    // If a specific category is picked, we might want to lock it or vice versa.
-    // Based on user prompt: "disable difficulty button if questions do not have a difficulty set (NULL)"
-    // Since we don't know the DB state, I will implement the UI mechanism:
-    // For this example, let's disable it if "Any Category" is NOT selected (Just to show the effect requested)
-    final bool disableDifficulty = false; // Toggle this logic as needed
+    // ✅ LOGIC: If a specific category is chosen, disable Difficulty to ensure we get enough questions.
+    // _selectedCategory == "" means "Any Category" (API allows filtering difficulty freely).
+    // _selectedCategory != "" means a specific topic (API might run out of questions if we filter too hard).
+    final bool disableDifficulty = _selectedCategory.isNotEmpty; 
+
+    // ✅ Force "mixed" if disabled to prevent UI from showing "Hard" while actually being disabled
+    if (disableDifficulty && _difficulty != "mixed") {
+      // Defer state update to next frame to avoid build collisions or just rely on render logic
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if(mounted) setState(() => _difficulty = "mixed");
+      });
+    }
 
     return BaseScaffold(
       extendBodyBehindAppBar: true, 
@@ -108,7 +119,7 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
             child: ConstrainedBox(
-              // ✅ WIDER
+              // ✅ WIDER LAYOUT
               constraints: const BoxConstraints(maxWidth: 1000),
               child: GlassContainer(
                 child: Column(
@@ -116,7 +127,7 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                   children: [
                     _buildLabel("GAME MODE", textColor),
                     _buildDropdown(
-                      items: game.gameModes, // Use provider modes
+                      items: game.gameModes, 
                       value: _selectedMode,
                       textColor: textColor,
                       onChange: (val) => setState(() => _selectedMode = val ?? "general-knowledge"),
@@ -131,7 +142,11 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                         items: _categories,
                         value: _selectedCategory,
                         textColor: textColor,
-                        onChange: (val) => setState(() => _selectedCategory = val ?? ""),
+                        onChange: (val) => setState(() {
+                           _selectedCategory = val ?? "";
+                           // If we pick a category, reset difficulty to mixed immediately
+                           if (_selectedCategory.isNotEmpty) _difficulty = "mixed";
+                        }),
                       ),
                     ],
 
@@ -150,15 +165,16 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                       onChanged: (v) => setState(() => _questionCount = v.toInt()),
                     ),
 
-                    // ✅ DISABLED STATE UI
-                    Opacity(
-                      opacity: disableDifficulty ? 0.5 : 1.0,
+                    // ✅ GRAYED OUT DIFFICULTY SECTION
+                    AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: disableDifficulty ? 0.4 : 1.0,
                       child: IgnorePointer(
                         ignoring: disableDifficulty,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            _buildLabel("DIFFICULTY ${disableDifficulty ? '(Locked)' : ''}", textColor),
+                            _buildLabel("DIFFICULTY ${disableDifficulty ? '(Auto-Mixed)' : ''}", textColor),
                             _buildDropdown(
                               items: const {"Mixed": "mixed", "Easy": "easy", "Medium": "medium", "Hard": "hard"},
                               value: disableDifficulty ? "mixed" : _difficulty,
@@ -201,7 +217,7 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                             await game.createLobby(
                               game.myName, game.myAvatar, _selectedMode,
                               _questionCount, _selectedCategory, 30, 
-                              disableDifficulty ? "mixed" : _difficulty,
+                              disableDifficulty ? "mixed" : _difficulty, // Force mixed if disabled
                               _customCodeController.text.trim().toUpperCase(),
                             );
                           } catch (e) {
@@ -224,13 +240,27 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
   }
 
   Widget _buildLabel(String text, Color color) => Padding(
-    padding: const EdgeInsets.only(bottom: 6.0),
-    child: Text(text, style: TextStyle(color: color.withOpacity(0.8), fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 1.1)),
+    padding: const EdgeInsets.only(bottom: 6.0, top: 8.0),
+    child: Text(
+      text,
+      style: TextStyle(
+        color: color.withOpacity(0.8),
+        fontWeight: FontWeight.bold,
+        fontSize: 14,
+        letterSpacing: 1.1,
+      ),
+    ),
   );
 
-  Widget _buildDropdown({required Map<String, String> items, required String value, required Color textColor, required ValueChanged<String?> onChange}) {
+  Widget _buildDropdown({
+    required Map<String, String> items,
+    required String value,
+    required Color textColor,
+    required ValueChanged<String?> onChange,
+  }) {
     final theme = Theme.of(context);
     final selected = items.containsValue(value) ? value : items.values.first;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       decoration: BoxDecoration(
@@ -243,8 +273,11 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
           value: selected,
           dropdownColor: theme.cardColor,
           isExpanded: true,
+          icon: Icon(Icons.arrow_drop_down, color: theme.colorScheme.primary),
           style: TextStyle(color: textColor, fontSize: 16),
-          items: items.entries.map((e) => DropdownMenuItem<String>(value: e.value, child: Text(e.key, overflow: TextOverflow.ellipsis))).toList(),
+          items: items.entries
+              .map((e) => DropdownMenuItem<String>(value: e.value, child: Text(e.key, overflow: TextOverflow.ellipsis)))
+              .toList(),
           onChanged: onChange,
         ),
       ),
