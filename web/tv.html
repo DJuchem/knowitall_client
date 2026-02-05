@@ -217,6 +217,44 @@
 
     audio { display:none; }
 
+    /* Audio unlock overlay (shown only when needed) */
+#audioGate {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+}
+#audioGate .gateBox {
+  background: rgba(20,20,35,0.95);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 18px;
+  padding: 22px 26px;
+  text-align: center;
+  min-width: 320px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+}
+#audioGate button {
+  margin-top: 14px;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  color: #000;
+}
+#audioGate .hint {
+  opacity: 0.75;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+
     /* Debug panel */
     #debugBox {
       position: fixed;
@@ -357,6 +395,7 @@
     </div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
   <script>
     // -------------------------

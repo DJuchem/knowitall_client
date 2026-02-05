@@ -91,13 +91,11 @@ class _AvatarGridState extends State<_AvatarGrid> {
     _loadAvatars();
   }
 
-  String _normalizePath(String path) {
-    String p = path;
-    while (p.startsWith("assets/") || p.startsWith("/assets/")) {
-      p = p.replaceFirst("assets/", "").replaceFirst("/assets/", "");
-    }
-    return p;
-  }
+String _normalizePath(String path) {
+  // Only remove leading slash, DO NOT strip assets/ repeatedly.
+  if (path.startsWith("/")) return path.substring(1);
+  return path;
+}
 
   Future<void> _loadAvatars() async {
     try {
@@ -172,22 +170,25 @@ class _AvatarGridState extends State<_AvatarGrid> {
               final isSelected = !isCustom && _normalizePath(path) == _normalizePath(widget.initialAvatar);
 
               return GestureDetector(
-                onTap: () => widget.onSelect("assets/$path"),
+                onTap: () => widget.onSelect(path), // <- store manifest key as-is
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isSelected ? theme.colorScheme.primary : Colors.transparent,
-                      width: 4, // Thicker selection border
+                      width: 4,
                     ),
-                    boxShadow: isSelected ? [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.5), blurRadius: 10)] : [],
+                    boxShadow: isSelected
+                        ? [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.5), blurRadius: 10)]
+                        : [],
                   ),
                   child: ClipOval(
-                    child: Image.asset("assets/$path", fit: BoxFit.cover),
+                    child: Image.asset(path, fit: BoxFit.cover),
                   ),
                 ),
               );
+
             },
           ),
         ),

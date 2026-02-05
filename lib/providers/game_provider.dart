@@ -70,6 +70,9 @@ class GameProvider extends ChangeNotifier {
     "Fill In The Blank": "fill_in_the_blank",
     "True / False": "true_false",
     "Population": "population",
+    "Star Trek": "star_trek",
+    "K-Pop": "kpop",
+    "Thai Culture": "thai_culture",
   };
 
   final Map<String, String> musicOptions = {
@@ -332,6 +335,8 @@ class GameProvider extends ChangeNotifier {
     _appState = AppState.results;
     notifyListeners();
   });
+
+  
 
   _hubConnection!.on("game_over", (_) {
     _appState = AppState.gameOver;

@@ -8,6 +8,7 @@ void main() {
   runApp(const KnowItAllApp());
 }
 
+
 class KnowItAllApp extends StatelessWidget {
   const KnowItAllApp({super.key});
 

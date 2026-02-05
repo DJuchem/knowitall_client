@@ -26,17 +26,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   String _selectedAvatar = "avatars/avatar_10.webp";
 
 String get _serverUrl {
-  // IMPORTANT:
-  // SignalR HubConnectionBuilder.withUrl(...) expects an HTTP/HTTPS endpoint.
-  // It will negotiate and then upgrade to WS/WSS internally.
+  // HubConnectionBuilder.withUrl expects HTTP/HTTPS (it negotiates then upgrades to WS/WSS).
   if (kIsWeb) {
-    final location = html.window.location;
-    final httpProto = (location.protocol == "https:") ? "https:" : "http:";
-    return "$httpProto//${location.host}/ws";
+    // PROD: same origin (served by your backend/reverse proxy)
+    if (kReleaseMode) {
+      // ex: https://know-it-all.fun/ws
+      return "${Uri.base.scheme}://${Uri.base.host}${Uri.base.hasPort ? ':${Uri.base.port}' : ''}/ws";
+    }
+
+    // DEV: Flutter web dev server runs on localhost:<random>, backend on 5074
+    // Use 127.0.0.1 to avoid weird localhost resolution on some setups.
+    return "http://127.0.0.1:5074/ws";
   }
 
   // Non-web dev (Android/iOS/Windows/macOS)
-  return "http://localhost:5074/ws";
+  return "http://127.0.0.1:5074/ws";
 }
 
 
@@ -64,19 +68,27 @@ String get _serverUrl {
 String _getAssetPath(String path) {
   if (path.isEmpty) return "";
   if (path.startsWith("data:") || path.startsWith("http")) return path;
+
   var p = path;
   if (p.startsWith("/")) p = p.substring(1);
+
+  // DO NOT strip "assets/" segments (your project contains assets/assets/...)
   if (!p.startsWith("assets/")) p = "assets/$p";
   return p;
 }
 
-  String _cleanPath(String path) {
-    String p = path;
-    while (p.startsWith("assets/") || p.startsWith("/assets/")) {
-      p = p.replaceFirst("assets/", "").replaceFirst("/assets/", "");
-    }
-    return p;
-  }
+
+String _cleanPath(String path) {
+  var p = path.trim();
+  if (p.startsWith("/")) p = p.substring(1);
+
+  // Keep the full key if it already starts with assets/ or assets/assets/
+  if (p.startsWith("assets/")) return p;
+
+  // Keep relative keys as-is (e.g. avatars/avatar_10.webp)
+  return p;
+}
+
 
   bool _validateInput(BuildContext context) {
     if (_nameController.text.trim().isEmpty) {
