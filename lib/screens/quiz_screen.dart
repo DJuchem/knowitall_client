@@ -1,4 +1,3 @@
-// quiz_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,9 +7,7 @@ import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
 import '../theme/app_theme.dart';
 import 'dart:math';
-// ✅ Added for origin detection
 import 'package:flutter/foundation.dart'; 
-import 'dart:html' as html;
 
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});
@@ -40,18 +37,17 @@ class _QuizScreenState extends State<QuizScreen> {
     _confettiController = ConfettiController(duration: const Duration(seconds: 2));
   }
 
-@override
-void didChangeDependencies() {
-  super.didChangeDependencies();
-  final game = Provider.of<GameProvider>(context);
-  if (game.appState != AppState.quiz) return;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final game = Provider.of<GameProvider>(context);
+    if (game.appState != AppState.quiz) return;
 
-  // ✅ This allows the frame to finish building BEFORE 
-  // stopMusic() triggers a new rebuild notification.
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (mounted) _processLobbyData(game);
-  });
-}
+    // ✅ FIX: Defer processing to avoid build conflicts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _processLobbyData(game);
+    });
+  }
 
   @override
   void dispose() {
@@ -63,90 +59,91 @@ void didChangeDependencies() {
   }
 
   void _initMedia(String? payload, String type, GameProvider game) {
-  _mediaStopTimer?.cancel();
+    _mediaStopTimer?.cancel();
 
-  if (_ytController != null) {
-    try { _ytController!.pauseVideo(); } catch (_) {}
-  }
-
-  // non-music round => ensure lobby music can resume
-  if (!type.toLowerCase().contains("music") || payload == null || payload.trim().isEmpty) {
-    if (!game.isMusicPlaying && game.isMusicEnabled) {
-      game.initMusic(); // this one can notify, it's not called during build here anymore
+    if (_ytController != null) {
+      try { _ytController!.pauseVideo(); } catch (_) {}
     }
-    return;
-  }
 
-  // MUSIC round => stop lobby bg music WITHOUT notifying provider during build-sensitive timing
-  game.stopMusic(notify: false);
+    // Non-music round: ensure lobby music resumes if enabled
+    if (!type.toLowerCase().contains("music") || payload == null || payload.trim().isEmpty) {
+      if (!game.isMusicPlaying && game.isMusicEnabled) {
+        game.initMusic(); 
+      }
+      return;
+    }
 
-  final raw = payload.trim();
-  String videoId = raw;
-  int startSec = 0;
-  int? endSec;
+    // ✅ FIX: Stop music silently (no notify) to prevent build crash
+    game.stopMusic(notify: false);
 
-  if (raw.contains('|')) {
-    final parts = raw.split('|');
-    videoId = parts[0].trim();
-    if (parts.length > 1) {
-      final rangePart = parts[1].trim();
-      if (rangePart.contains('-')) {
-        final ab = rangePart.split('-');
-        final a = int.tryParse(ab[0].trim());
-        final b = (ab.length > 1) ? int.tryParse(ab[1].trim()) : null;
-        if (a != null && b != null) {
-          if (b > a && (b - a) <= 30) {
+    final raw = payload.trim();
+    String videoId = raw;
+    int startSec = 0;
+    int? endSec;
+
+    // Parse ID and timestamp (e.g. "videoId|10-20")
+    if (raw.contains('|')) {
+      final parts = raw.split('|');
+      videoId = parts[0].trim();
+      if (parts.length > 1) {
+        final rangePart = parts[1].trim();
+        if (rangePart.contains('-')) {
+          final ab = rangePart.split('-');
+          final a = int.tryParse(ab[0].trim());
+          final b = (ab.length > 1) ? int.tryParse(ab[1].trim()) : null;
+          if (a != null && b != null) {
+            if (b > a && (b - a) <= 30) {
+              startSec = a;
+              endSec = b;
+            } else {
+              final minS = a < b ? a : b;
+              final maxS = a < b ? b : a;
+              startSec = Random().nextInt((maxS - minS) + 1) + minS;
+              endSec = null;
+            }
+          } else if (a != null) {
             startSec = a;
-            endSec = b;
-          } else {
-            final minS = a < b ? a : b;
-            final maxS = a < b ? b : a;
-            startSec = Random().nextInt((maxS - minS) + 1) + minS;
-            endSec = null;
           }
-        } else if (a != null) {
-          startSec = a;
+        } else {
+          final s = int.tryParse(rangePart);
+          if (s != null) startSec = s;
         }
-      } else {
-        final s = int.tryParse(rangePart);
-        if (s != null) startSec = s;
       }
     }
-  }
 
-  final String currentOrigin = kIsWeb ? html.window.location.origin : "";
+    if (_ytController == null) {
+      // ✅ FIX: Removed explicit 'origin' parameter to prevent HTTP/HTTPS mismatch on localhost.
+      // The player handles this automatically in most cases.
+      _ytController = YoutubePlayerController(
+        params: const YoutubePlayerParams(
+          showControls: false,
+          showFullscreenButton: false,
+          loop: false,
+          mute: false,
+          enableCaption: false,
+        ),
+      );
+    }
 
-  if (_ytController == null) {
-    _ytController = YoutubePlayerController(
-      params: YoutubePlayerParams(
-        showControls: false,
-        showFullscreenButton: false,
-        loop: false,
-        mute: false,
-        origin: currentOrigin,
-        enableCaption: false,
-      ),
+    // Load video
+    _ytController!.loadVideoById(
+      videoId: videoId,
+      startSeconds: startSec.toDouble(),
     );
+
+    // Stop timer logic
+    final int questionSeconds = game.lobby?.timer ?? 30;
+    int stopAfterSeconds = questionSeconds;
+    if (endSec != null && endSec > startSec) {
+      final segLen = endSec - startSec;
+      stopAfterSeconds = (segLen < questionSeconds) ? questionSeconds : segLen;
+    }
+
+    _mediaStopTimer = Timer(Duration(seconds: stopAfterSeconds), () {
+      if (!mounted || _ytController == null) return;
+      _ytController!.pauseVideo();
+    });
   }
-
-  _ytController!.loadVideoById(
-    videoId: videoId,
-    startSeconds: startSec.toDouble(),
-  );
-
-  final int questionSeconds = game.lobby?.timer ?? 30;
-  int stopAfterSeconds = questionSeconds;
-  if (endSec != null && endSec > startSec) {
-    final segLen = endSec - startSec;
-    stopAfterSeconds = (segLen < questionSeconds) ? questionSeconds : segLen;
-  }
-
-  _mediaStopTimer = Timer(Duration(seconds: stopAfterSeconds), () {
-    if (!mounted || _ytController == null) return;
-    _ytController!.pauseVideo();
-  });
-}
-
 
   void _processLobbyData(GameProvider game, {bool force = false}) {
     final lobby = game.lobby;
@@ -212,7 +209,6 @@ void didChangeDependencies() {
     try {
       await game.submitAnswer(answer, (game.lobby!.timer - _timeLeft), _internalIndex);
     } catch (_) {
-      // ✅ If the connection is dropped, try to at least show it locally
       debugPrint("Answer submission failed - Check WebSocket status.");
     }
   }
@@ -251,7 +247,6 @@ void didChangeDependencies() {
 
     final int maxTime = lobby.timer;
     final double progress = maxTime > 0 ? (_timeLeft / maxTime) : 0.0;
-    
     final int currentQ = _internalIndex + 1;
     final int totalQ = lobby.quizData?.length ?? 10; 
 
@@ -318,7 +313,6 @@ void didChangeDependencies() {
                   child: Column(
                     children: [
                       if (_ytController != null) ...[
-                        // ✅ Hidden Youtube Player - Ensure it exists but is tiny
                         SizedBox(height: 1, width: 1, child: YoutubePlayer(controller: _ytController!)),
                         const Icon(Icons.music_note, size: 80, color: Colors.white),
                         const Text("Listen closely...", style: TextStyle(color: Colors.white70)),
@@ -382,4 +376,4 @@ void didChangeDependencies() {
       ),
     );
   }
-} 
+}

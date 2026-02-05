@@ -18,12 +18,22 @@ class BaseScaffold extends StatelessWidget {
     this.onSettingsTap,
   });
 
+
+String _ensureAssetKey(String raw) {
+  if (raw.isEmpty) return raw;
+  if (raw.startsWith("data:") || raw.startsWith("http")) return raw;
+  var p = raw;
+  if (p.startsWith("/")) p = p.substring(1);
+  if (!p.startsWith("assets/")) p = "assets/$p";
+  return p;
+}
+
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
     
     // ✅ FIX: Smart Asset Path Handling
-    String bgPath = game.wallpaper;
+    String bgPath = _ensureAssetKey(game.wallpaper);
     // If it doesn't start with assets/ and isn't a web url/data uri, add assets/
     if (!bgPath.startsWith("assets/") && !bgPath.startsWith("http") && !bgPath.startsWith("data:")) {
       bgPath = "assets/$bgPath";

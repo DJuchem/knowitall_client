@@ -12,17 +12,17 @@ class ClientSettingsSheet extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      // Standardize height and padding to match LobbySettingsSheet
+      height: MediaQuery.of(context).size.height * 0.75, // ✅ Fixed Height
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 40)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Drag Handle
           Center(
             child: Container(
               width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20),
@@ -39,10 +39,10 @@ class ClientSettingsSheet extends StatelessWidget {
           ),
           const Divider(),
 
-          // Use Flexible + SingleChildScrollView to ensure it fits mobile screens
-          Flexible(
+          Expanded(
             child: SingleChildScrollView(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start, // Align Left
                 children: [
                   const SizedBox(height: 16),
                   _buildSectionLabel("VISUAL SCHEME", theme),
@@ -57,13 +57,26 @@ class ClientSettingsSheet extends StatelessWidget {
                     theme: theme,
                   ),
 
+                  // ✅ FIX: Restored Audio Settings
                   const SizedBox(height: 24),
                   _buildSectionLabel("AUDIO", theme),
                   SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
                     title: const Text("Background Music"),
+                    subtitle: const Text("Play music in lobby"),
                     value: game.isMusicEnabled,
                     onChanged: (v) => game.toggleMusic(v),
                   ),
+                  if (game.isMusicEnabled) 
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: _buildDropdown(
+                        value: game.currentMusic,
+                        items: game.musicOptions,
+                        onChanged: (v) => game.setMusicTrack(v!),
+                        theme: theme,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -78,7 +91,6 @@ class ClientSettingsSheet extends StatelessWidget {
     child: Text(text, style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 12)),
   );
 
-  // Helper for the visual theme cards
   Widget _buildThemeSelector(GameProvider game) {
     return SizedBox(
       height: 100,
@@ -102,18 +114,22 @@ class ClientSettingsSheet extends StatelessWidget {
   }
 
   Widget _buildDropdown({required String value, required Map<String, String> items, required Function(String?) onChanged, required ThemeData theme}) {
+    final safeValue = items.containsValue(value) ? value : items.values.first;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.black26,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: DropdownButton<String>(
-        value: items.containsValue(value) ? value : items.values.first,
-        isExpanded: true,
-        underline: const SizedBox(),
-        items: items.entries.map((e) => DropdownMenuItem(value: e.value, child: Text(e.key))).toList(),
-        onChanged: onChanged,
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: safeValue,
+          isExpanded: true,
+          icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+          items: items.entries.map((e) => DropdownMenuItem(value: e.value, child: Text(e.key))).toList(),
+          onChanged: onChanged,
+        ),
       ),
     );
   }

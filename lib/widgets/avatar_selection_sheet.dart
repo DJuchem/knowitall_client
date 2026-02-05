@@ -59,7 +59,7 @@ class AvatarSelectionSheet extends StatelessWidget {
               initialAvatar: currentAvatar,
               onSelect: (path) {
                 onAvatarSelected(path);
-                // We keep it open so user can browse, but selection updates visually
+                // Navigator.pop(context); // Uncomment if you want auto-close
               },
             ),
           ),
@@ -69,7 +69,7 @@ class AvatarSelectionSheet extends StatelessWidget {
   }
 }
 
-// ✅ The Internal Grid Widget with Local State
+// ✅ The Internal Grid Widget (Updated for 4 per row)
 class _AvatarGrid extends StatefulWidget {
   final String initialAvatar;
   final ValueChanged<String> onSelect;
@@ -83,13 +83,11 @@ class _AvatarGrid extends StatefulWidget {
 class _AvatarGridState extends State<_AvatarGrid> {
   List<String> _avatars = [];
   bool _isLoading = true;
-  String? _selectedPath; // ✅ Local state for immediate feedback
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _selectedPath = widget.initialAvatar; // Initialize with passed value
     _loadAvatars();
   }
 
@@ -128,7 +126,7 @@ class _AvatarGridState extends State<_AvatarGrid> {
       if (!initialClean.startsWith("data:")) {
         final index = _avatars.indexOf(initialClean);
         if (index != -1) {
-          final row = index ~/ 4; 
+          final row = index ~/ 4; // 4 per row
           _scrollController.jumpTo(row * 80.0);
         }
       }
@@ -141,9 +139,7 @@ class _AvatarGridState extends State<_AvatarGrid> {
       final XFile? image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 200, maxHeight: 200, imageQuality: 70);
       if (image != null) {
         final bytes = await image.readAsBytes();
-        final b64 = "data:image/png;base64,${base64Encode(bytes)}";
-        setState(() => _selectedPath = b64); // Update local
-        widget.onSelect(b64); // Update parent
+        widget.onSelect("data:image/png;base64,${base64Encode(bytes)}"); 
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Error picking image"), backgroundColor: Colors.red));
@@ -155,8 +151,7 @@ class _AvatarGridState extends State<_AvatarGrid> {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
 
     final theme = Theme.of(context);
-    final currentClean = _normalizePath(_selectedPath ?? "");
-    final isCustom = currentClean.startsWith("data:");
+    final isCustom = widget.initialAvatar.startsWith("data:");
 
     return Column(
       children: [
@@ -164,30 +159,27 @@ class _AvatarGridState extends State<_AvatarGrid> {
           child: GridView.builder(
             controller: _scrollController,
             padding: const EdgeInsets.all(8),
+            // ✅ FIX: Exactly 4 per row for larger avatars
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4, 
               crossAxisSpacing: 16, 
               mainAxisSpacing: 16,
-              childAspectRatio: 1.0, 
+              childAspectRatio: 1.0, // Square tiles
             ),
             itemCount: _avatars.length,
             itemBuilder: (ctx, i) {
               final path = _avatars[i];
-              // ✅ Check against local state
-              final isSelected = !isCustom && path == currentClean;
+              final isSelected = !isCustom && _normalizePath(path) == _normalizePath(widget.initialAvatar);
 
               return GestureDetector(
-                onTap: () {
-                  setState(() => _selectedPath = "assets/$path"); // Update visual immediately
-                  widget.onSelect("assets/$path");
-                },
+                onTap: () => widget.onSelect("assets/$path"),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isSelected ? theme.colorScheme.primary : Colors.transparent,
-                      width: 4,
+                      width: 4, // Thicker selection border
                     ),
                     boxShadow: isSelected ? [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.5), blurRadius: 10)] : [],
                   ),
@@ -200,6 +192,7 @@ class _AvatarGridState extends State<_AvatarGrid> {
           ),
         ),
         
+        // Custom Avatar Indicator
         if (isCustom)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -211,12 +204,13 @@ class _AvatarGridState extends State<_AvatarGrid> {
                 Container(
                   width: 32, height: 32,
                   decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: theme.colorScheme.primary)),
-                  child: ClipOval(child: Image.memory(base64Decode(currentClean.split(',')[1]), fit: BoxFit.cover)),
+                  child: ClipOval(child: Image.memory(base64Decode(widget.initialAvatar.split(',')[1]), fit: BoxFit.cover)),
                 )
               ],
             ),
           ),
 
+        // Upload Button
         Padding(
           padding: const EdgeInsets.only(top: 8),
           child: SizedBox(

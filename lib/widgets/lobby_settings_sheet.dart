@@ -17,7 +17,6 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
   late double _timer;
   late String _difficulty;
   
-  // ✅ New Topic/Category State
   late String _selectedCategory;
   bool _catsLoading = false;
   String? _catsError;
@@ -32,7 +31,7 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
       _questions = (lobby.quizData?.length ?? 10).toDouble();
       _timer = lobby.timer.toDouble();
       _difficulty = lobby.difficulty ?? "mixed";
-      _selectedCategory = lobby.category ?? ""; // Assuming lobby model has category
+      _selectedCategory = lobby.category ?? "";
     } else {
       _mode = "general-knowledge";
       _questions = 10;
@@ -43,7 +42,6 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
     _fetchCategories();
   }
 
-  // ✅ Category Fetching Logic
   Future<void> _fetchCategories() async {
     if (!mounted) return;
     setState(() { _catsLoading = true; _catsError = null; });
@@ -75,25 +73,29 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
     final game = Provider.of<GameProvider>(context);
     final theme = Theme.of(context);
     
-    // ✅ Logic: Disable difficulty if a specific topic is selected (to ensure question count)
     final bool disableDifficulty = _selectedCategory.isNotEmpty;
 
     return Container(
+      // ✅ FIX: Fixed height (75% of screen) to match other sheets
+      height: MediaQuery.of(context).size.height * 0.75,
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 40)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Drag Handle
           Center(
             child: Container(
               width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(2)),
             ),
           ),
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -102,10 +104,12 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
             ],
           ),
           const Divider(),
-          Flexible(
+          
+          // ✅ FIX: Use Expanded so the list takes all remaining space
+          Expanded(
             child: SingleChildScrollView(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 16),
                   _buildLabel("GAME MODE", theme),
@@ -116,7 +120,6 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
                     onChange: (val) => setState(() => _mode = val ?? "general-knowledge"),
                   ),
 
-                  // ✅ NEW: TOPIC SELECTION BOX
                   if (_mode == "general-knowledge") ...[
                     const SizedBox(height: 16),
                     _buildLabel("TOPIC", theme),
@@ -161,7 +164,6 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
                   ),
 
                   const SizedBox(height: 16),
-                  // ✅ Grayed out difficulty if topic is selected
                   AnimatedOpacity(
                     duration: const Duration(milliseconds: 300),
                     opacity: disableDifficulty ? 0.4 : 1.0,
@@ -189,10 +191,7 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
                     child: ElevatedButton(
                       onPressed: () {
                         game.updateSettings(
-                          _mode, 
-                          _questions.toInt(), 
-                          _selectedCategory, // ✅ Pass actual category ID
-                          _timer.toInt(), 
+                          _mode, _questions.toInt(), _selectedCategory, _timer.toInt(), 
                           disableDifficulty ? "mixed" : _difficulty
                         );
                         Navigator.pop(context);
