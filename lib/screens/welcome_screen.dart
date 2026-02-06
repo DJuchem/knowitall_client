@@ -23,7 +23,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
   final _tvCodeController = TextEditingController();
-  String _selectedAvatar = "avatars/avatar_10.webp";
+  String _selectedAvatar = "avatars/avatar10.webp";
 
 String get _serverUrl {
   // HubConnectionBuilder.withUrl expects HTTP/HTTPS (it negotiates then upgrades to WS/WSS).
@@ -208,6 +208,9 @@ void _openAvatarSheet() {
         ? MemoryImage(base64Decode(_selectedAvatar.split(',')[1])) 
         : AssetImage(_getAssetPath(_selectedAvatar)) as ImageProvider;
 
+    // Get screen height to size logo dynamically
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return BaseScaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -237,10 +240,21 @@ void _openAvatarSheet() {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                
+                // --- MODIFIED LOGO SECTION ---
                 Hero(
                   tag: 'app_logo', 
-                  child: Image.asset(_getAssetPath(game.config.logoPath), height: 120, fit: BoxFit.contain)
+                  child: Image.asset(
+                    _getAssetPath(game.config.logoPath), 
+                    // Use 25% of screen height (approx 200-250px on phones)
+                    // This creates a large logo that scales with the device.
+                    height: screenHeight * 0.25, 
+                    width: double.infinity,
+                    fit: BoxFit.contain 
+                  )
                 ),
+                // -----------------------------
+
                 const SizedBox(height: 30),
 
                 // Glass Card
