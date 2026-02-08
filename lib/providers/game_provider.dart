@@ -51,7 +51,7 @@ class GameProvider extends ChangeNotifier {
 
   // --- SETTINGS ---
   String _colorScheme = "Default";
-  String _wallpaper = "assets/bg/background_default.png"; 
+  String _wallpaper = "assets/bg/background_default.webp"; 
   String _bgMusic = "assets/music/background-music.mp3";
   Brightness _brightness = Brightness.dark;
 
@@ -77,25 +77,29 @@ class GameProvider extends ChangeNotifier {
 
   final Map<String, String> musicOptions = {
     "KnowItAll": "assets/music/background-music.mp3",
+    "KnowItAll II": "assets/music/default.mp3",
     "Chill Lo-Fi": "assets/music/synth.mp3",
     "High Energy": "assets/music/dubstep.mp3",
     "Dreamy": "assets/music/dreams.mp3",
-    "Retro": "assets/music/terminal.mp3",
-    "Space": "assets/music/nebula.mp3",
-    "Nature": "assets/music/forest_ambient.mp3",
+    "Millionaire": "assets/music/millionaire1.mp3",
+    "Space": "assets/music/space.mp3",
+    "Funky": "assets/music/pink.mp3",
+    "Hell March": "assets/music/hellmarch.mp3",
+    "Super Metroid": "assets/music/metroid.mp3",
     "Classical": "assets/music/RondoAllegro.mp3",
+    "Jazz Fusion": "assets/music/DaveWecklBand.mp3",
   };
 
   final Map<String, String> wallpaperOptions = {
-    "Default": "assets/bg/background_default.png",
+    "KnowItAll": "assets/bg/background_default.webp",
     "Neon City": "assets/bg/cyberpunk.jpg",
     "Digital Rain": "assets/bg/matrix_rain.jpg",
     "Deep Galaxy": "assets/bg/galaxy.jpg",
     "Volcanic": "assets/bg/magma.jpg",
-    "Mystic Forest": "assets/bg/forest.jpg",
-    "Underwater": "assets/bg/underwater.jpg",
-    "Ancient Castle": "assets/bg/castle.jpg",
-    "Anime Style": "assets/bg/hentai6.jpg",
+    "Mystic Mountain": "assets/bg/dark.png",
+    
+    "Hentai": "assets/bg/hentai6.jpg",
+    "Hentai II": "assets/bg/hentai10.jpg",
     "Synthwave": "assets/bg/synth.jpg",
   };
 
@@ -139,17 +143,23 @@ class GameProvider extends ChangeNotifier {
     return "HK_${now}_${r.toRadixString(16).toUpperCase()}";
   }
 
-  Future<void> _loadUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    _myName = prefs.getString('username') ?? "Player";
-    _myAvatar = prefs.getString('avatar') ?? "assets/avatars/avatar_0.png";
-    if (prefs.containsKey('theme_scheme')) _colorScheme = prefs.getString('theme_scheme')!;
-    if (prefs.containsKey('theme_wallpaper')) _wallpaper = prefs.getString('theme_wallpaper')!;
-    if (prefs.containsKey('theme_music')) _bgMusic = prefs.getString('theme_music')!;
-    if (prefs.containsKey('theme_bright')) _brightness = prefs.getBool('theme_bright')! ? Brightness.dark : Brightness.light;
-    _hostKey = null;
-    notifyListeners();
-  }
+Future<void> _loadUser() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  _myName = prefs.getString('username') ?? "Player";
+  _myAvatar = prefs.getString('avatar') ?? "assets/avatars/avatar_0.png";
+
+  if (prefs.containsKey('theme_scheme')) _colorScheme = prefs.getString('theme_scheme')!;
+  if (prefs.containsKey('theme_wallpaper')) _wallpaper = prefs.getString('theme_wallpaper')!;
+  if (prefs.containsKey('theme_music')) _bgMusic = prefs.getString('theme_music')!;
+  if (prefs.containsKey('theme_bright')) _brightness = prefs.getBool('theme_bright')! ? Brightness.dark : Brightness.light;
+
+  // ✅ CRITICAL: keep hostKey stable (do NOT null it)
+  await _ensureHostKey();
+
+  notifyListeners();
+}
+
 
   void setPlayerInfo(String name, String avatar) {
     _myName = name;
@@ -160,6 +170,22 @@ class GameProvider extends ChangeNotifier {
     });
     notifyListeners();
   }
+
+  Future<void> _ensureHostKey() async {
+  if (_hostKey != null && _hostKey!.trim().isNotEmpty) return;
+
+  final prefs = await SharedPreferences.getInstance();
+  final existing = prefs.getString('host_key');
+
+  if (existing != null && existing.trim().isNotEmpty) {
+    _hostKey = existing.trim();
+    return;
+  }
+
+  _hostKey = _newHostKey();
+  await prefs.setString('host_key', _hostKey!);
+}
+
 
   void markChatAsRead() {
     if (_currentLobby != null) {
@@ -253,15 +279,25 @@ class GameProvider extends ChangeNotifier {
   }
 
   // --- SIGNALR & LOBBY ---
-  Future<void> linkTv(String tvCode) async {
-    final canon = tvCode.trim().toUpperCase();
-    if (canon.isEmpty) return;
-    _pendingTvCode = canon;
-    _hostKey = _newHostKey();
-    notifyListeners();
-    if (_hubConnection == null || _hubConnection!.state != HubConnectionState.Connected) return;
-    await _pairTvNow();
-  }
+Future<void> linkTv(String tvCode) async {
+  final canon = tvCode.trim().toUpperCase();
+  if (canon.isEmpty) return;
+
+  _pendingTvCode = canon;
+
+  // ✅ do NOT regenerate hostKey here
+  await _ensureHostKey();
+
+  notifyListeners();
+
+  if (_hubConnection == null || _hubConnection!.state != HubConnectionState.Connected) return;
+
+  await _pairTvNow();
+
+  // ✅ push theme right after pairing (TV may have missed earlier ThemeUpdate)
+  await syncTvTheme();
+}
+
 
   Future<void> _pairTvNow() async {
     if (_hubConnection == null) return;
@@ -360,8 +396,13 @@ class GameProvider extends ChangeNotifier {
   try {
     await _hubConnection!.start();
 
+    await _ensureHostKey();
+
     if (_pendingTvCode != null && _hostKey == null) _hostKey = _newHostKey();
-    if (_pendingTvCode != null) await _pairTvNow();
+if (_pendingTvCode != null) {
+  await _pairTvNow();
+  await syncTvTheme(); // ✅ immediately push theme to the TV
+}
   } catch (e) {
     // Critical: allow the UI to retry cleanly
     _errorMessage = e.toString();

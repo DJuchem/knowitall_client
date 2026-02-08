@@ -19,7 +19,7 @@
     html, body {
       margin: 0; padding: 0; width: 100vw; height: 100vh;
       background-color: var(--bg-dark);
-      background-image: url('assets/bg/cyberpunk.jpg');
+      background-image: url('assets/bg/background_default.webp');
       background-size: cover;
       background-position: center;
       color: white;
@@ -28,13 +28,19 @@
     }
 
     /* Dedicated overlay (always visible) */
-    #bgOverlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 18, 33, 0.80);
-      backdrop-filter: blur(6px);
-      z-index: 0;
-    }
+ /* Dedicated overlay (always visible) */
+#bgOverlay{
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+
+  /* wallpaper lives here (default) */
+  background-image: linear-gradient(rgba(15,18,33,0.80), rgba(15,18,33,0.80)),
+                    url('assets/bg/cyberpunk.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 
     /* App root above overlay */
     #appRoot {
@@ -49,11 +55,11 @@
     }
 
     /* Logo top-left */
-    #appLogo {
+#appLogo {
       position: absolute;
-      top: 24px;
-      left: 24px;
-      width: 220px;
+      top: 15px;
+      left: 20px;
+      width: 130px; /* Reduced from 220px */
       z-index: 50;
       filter: drop-shadow(0 0 10px rgba(0,0,0,0.55));
       opacity: 0.95;
@@ -151,7 +157,7 @@
     }
 
     /* Chat */
-    .chat-sidebar {
+   .chat-sidebar {
       flex: 1;
       min-width: 340px;
       background: rgba(0,0,0,0.30);
@@ -170,9 +176,32 @@
       border-bottom: 1px solid rgba(255,255,255,0.1);
       padding-bottom: 10px;
     }
-    #chatList { flex:1; overflow-y:auto; display:flex; flex-direction: column; gap: 10px; }
-    .chat-msg { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; display:flex; gap: 10px; align-items:center; font-size:14px; }
-    .chat-msg img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+    #chatList { flex:1; overflow-y:auto; display:flex; flex-direction: column; gap: 12px; }
+
+@keyframes msgSlide {
+        from { opacity: 0; transform: translateX(30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    .chat-msg { 
+      /* Gradient Background */
+      background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+      padding: 14px; 
+      border-radius: 12px; 
+      display:flex; 
+      gap: 12px; 
+      align-items:center; 
+      /* Larger Font */
+      font-size: 20px; 
+      border-left: 4px solid var(--primary); /* Accent Border */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      animation: msgSlide 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    .chat-msg img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border:1px solid rgba(255,255,255,0.3); }
+    .chat-author { color: var(--primary); font-weight: 900; margin-right: 8px; letter-spacing: 0.5px; }
+
+    
+    
     .chat-author { color: var(--primary); font-weight: bold; margin-right: 5px; }
 
     /* Question */
@@ -217,43 +246,42 @@
 
     audio { display:none; }
 
-    /* Audio unlock overlay (shown only when needed) */
-#audioGate {
-  position: fixed;
-  inset: 0;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  background: rgba(0,0,0,0.65);
-  backdrop-filter: blur(6px);
-}
-#audioGate .gateBox {
-  background: rgba(20,20,35,0.95);
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 18px;
-  padding: 22px 26px;
-  text-align: center;
-  min-width: 320px;
-  box-shadow: 0 25px 60px rgba(0,0,0,0.7);
-}
-#audioGate button {
-  margin-top: 14px;
-  border: none;
-  border-radius: 12px;
-  padding: 14px 18px;
-  font-size: 16px;
-  font-weight: 800;
-  cursor: pointer;
-  background: linear-gradient(90deg, var(--primary), var(--secondary));
-  color: #000;
-}
-#audioGate .hint {
-  opacity: 0.75;
-  font-size: 13px;
-  margin-top: 8px;
-}
-
+    /* Audio unlock overlay (must NOT be inside #setup) */
+    #audioGate {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+    }
+    #audioGate .gateBox {
+      background: rgba(20,20,35,0.95);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 18px;
+      padding: 22px 26px;
+      text-align: center;
+      min-width: 320px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+    }
+    #audioGate button {
+      margin-top: 14px;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: #000;
+    }
+    #audioGate .hint {
+      opacity: 0.75;
+      font-size: 13px;
+      margin-top: 8px;
+    }
 
     /* Debug panel */
     #debugBox {
@@ -267,7 +295,7 @@
       border: 1px solid rgba(255,255,255,0.15);
       border-radius: 12px;
       z-index: 99;
-      display: none; /* OFF by default */
+      display: none;
       flex-direction: column;
       overflow: hidden;
       backdrop-filter: blur(6px);
@@ -350,9 +378,9 @@
             <div id="mediaContainer" class="media-frame"></div>
 
             <!-- YouTube player: NOT fully invisible (helps on some TVs/browsers) -->
-            <div id="ytWrap" style="position:absolute; left:-9999px; top:-9999px; width:320px; height:180px;">
-              <div id="ytPlayer"></div>
-            </div>
+            <div id="ytWrap" style="position:fixed; bottom:0; right:0; width:320px; height:180px; opacity:0; pointer-events:none; z-index:-1;">
+  <div id="ytPlayer"></div>
+</div>
 
             <div id="questionText" class="q-text">Loading...</div>
             <div id="answersContainer" class="answers-grid"></div>
@@ -395,342 +423,312 @@
     </div>
   </div>
 
+  <!-- Audio Gate MUST be outside setup/game so it can always be clicked -->
+  <div id="audioGate">
+    <div class="gateBox">
+      <div style="font-size:18px; font-weight:900; letter-spacing:1px;">ENABLE AUDIO</div>
+      <div class="hint">Required by the TV browser to play music rounds.</div>
+      <button id="audioGateBtn">Tap to enable</button>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
   <script>
-    // -------------------------
-    // Debug (OFF by default; enable via ?debug=1)
-    // -------------------------
-    const DEBUG_ENABLED = new URLSearchParams(window.location.search).get("debug") === "1";
-    const dbgBox = document.getElementById("debugBox");
-    const dbgLogEl = document.getElementById("debugLog");
-    const debugLines = [];
+  // -------------------------
+  // Debug & Globals
+  // -------------------------
+  const DEBUG_ENABLED = new URLSearchParams(window.location.search).get("debug") === "1";
+  function log(msg) { if(DEBUG_ENABLED) console.log(`[TV] ${msg}`); }
 
-    if (DEBUG_ENABLED) dbgBox.style.display = "flex";
+  let globalPlayers = [];
+  let ytPlayer = null;
+  let ytReady = false;
+  let pendingMusicPayload = null;
+  
+  // State Flags
+  let isMusicRound = false; 
+  let isGameInMusicMode = false; 
 
-    function ts() {
-      const d = new Date();
-      const hh = (d.getHours() % 12) || 12;
-      const mm = String(d.getMinutes()).padStart(2,'0');
-      const ss = String(d.getSeconds()).padStart(2,'0');
-      const ap = d.getHours() >= 12 ? "PM" : "AM";
-      return `[${hh}:${mm}:${ss} ${ap}]`;
-    }
+  const bgMusic = document.getElementById('bgMusic');
+  const bgOverlay = document.getElementById('bgOverlay');
 
-    function log(msg) {
-      if (!DEBUG_ENABLED) return;
-      const line = `${ts()} ${msg}`;
-      debugLines.push(line);
-      if (debugLines.length > 400) debugLines.shift();
-      dbgLogEl.textContent = debugLines.join("\n");
-      dbgLogEl.scrollTop = dbgLogEl.scrollHeight;
-      console.log(line);
-    }
+  // -------------------------
+  // DOM Helpers
+  // -------------------------
+  function $(id) { return document.getElementById(id); }
+  function safeSetText(id, text) { const el = $(id); if (el) el.innerText = text ?? ""; }
+  function safeShow(id, display) { const el = $(id); if (el) el.style.display = display; }
 
-    if (DEBUG_ENABLED) {
-      document.getElementById("dbgCopy").onclick = async () => {
-        try { await navigator.clipboard.writeText(debugLines.join("\n")); } catch {}
-      };
-      document.getElementById("dbgClear").onclick = () => { debugLines.length = 0; dbgLogEl.textContent = ""; };
-      document.getElementById("dbgHide").onclick = () => { dbgBox.style.display = "none"; };
-    }
-
-    // -------------------------
-    // Globals
-    // -------------------------
-    let globalPlayers = [];
-    let ytPlayer = null;
-    let ytReady = false;
-    let pendingMusicPayload = null;
-    let isMusicRound = false;
-
-    const bgMusic = document.getElementById('bgMusic');
-
-    // -------------------------
-    // YouTube API
-    // -------------------------
-    function onYouTubeIframeAPIReady() {
-      log("YouTube API ready");
-
-      ytPlayer = new YT.Player('ytPlayer', {
-        height: '180',
-        width: '320',
-        playerVars: {
-          playsinline: 1,
-          autoplay: 1,
-          controls: 0,
-          rel: 0,
-          modestbranding: 1,
-          iv_load_policy: 3
-          // do NOT set mute:1
+  // -------------------------
+  // YouTube API
+  // -------------------------
+  function onYouTubeIframeAPIReady() {
+    ytPlayer = new YT.Player('ytPlayer', {
+      height: '180', width: '320',
+      playerVars: {
+        playsinline: 1, autoplay: 1, controls: 0,
+        disablekb: 1, fs: 0, rel: 0, modestbranding: 1,
+        iv_load_policy: 3
+      },
+      events: {
+        onReady: (event) => {
+          ytReady = true;
+          event.target.setVolume(100);
+          if (pendingMusicPayload) playMusicPayload(pendingMusicPayload);
         },
-        events: {
-          onReady: () => {
-            ytReady = true;
-            log("YouTube player READY");
-            if (pendingMusicPayload) {
-              const mp = pendingMusicPayload;
-              pendingMusicPayload = null;
-              playMusicPayload(mp);
-            }
-          },
-          onStateChange: (e) => {
-            // -1 unstarted, 0 ended, 1 playing, 2 paused, 3 buffering, 5 cued
-            log("YT state=" + (e && e.data));
-          },
-          onError: (e) => log("YouTube error: " + (e && e.data))
+        onStateChange: (event) => {
+          // ✅ CRITICAL FIX: Only force play if the round is actually active.
+          // Otherwise, when we try to stop it, this event fires and restarts it!
+          if ((event.data === 2 || event.data === 5) && isMusicRound) {
+             event.target.playVideo();
+          }
+        },
+        onError: (e) => {
+             // Retry once on error, but only if round is active
+             if ((e.data === 150 || e.data === 101) && isMusicRound) {
+                setTimeout(() => { 
+                    if(ytPlayer && ytPlayer.playVideo && isMusicRound) ytPlayer.playVideo(); 
+                }, 1000);
+             }
         }
-      });
+      }
+    });
+  }
+  window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+
+  function playMusicPayload(mediaPayload) {
+    if (!mediaPayload) return;
+    pendingMusicPayload = mediaPayload; 
+
+    if (!ytReady || !ytPlayer || typeof ytPlayer.loadVideoById !== 'function') {
+      return; 
     }
-    window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
-    // -------------------------
-    // QR / TV Code
-    // -------------------------
-    const tvCode = Math.random().toString(36).substring(2, 6).toUpperCase();
-    document.getElementById('tvCode').innerText = tvCode;
+    // 1. Parse "VIDEO_ID|START-END"
+    // Example: "dQw4w9WgXcQ|40-100"
+    const parts = String(mediaPayload).split('|');
+    const videoId = parts[0].trim();
+    let startSec = 0;
+    let endSec = undefined;
 
-    new QRCode(document.getElementById("qrcode-app"), {
-      text: "https://know-it-all.fun",
-      width: 140, height: 140,
-      colorDark: "#000000", colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.L
-    });
-
-    new QRCode(document.getElementById("qrcode-tv"), {
-      text: tvCode,
-      width: 140, height: 140,
-      colorDark: "#000000", colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.H
-    });
-
-    // -------------------------
-    // Connection
-    // -------------------------
-    const isProduction = window.location.hostname.includes("know-it-all.fun");
-    const serverUrl = isProduction
-      ? `${window.location.protocol === "https:" ? "https:" : "http:"}//${window.location.host}/ws`
-      : "http://localhost:5074/ws";
-
-    log(`TV started. tvCode=${tvCode}`);
-    log(`serverUrl=${serverUrl}`);
-
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl(serverUrl, { skipNegotiation: true, transport: signalR.HttpTransportType.WebSockets })
-      .withAutomaticReconnect()
-      .build();
-
-    async function start() {
-      try {
-        log("connection.start()…");
-        await connection.start();
-        log("SignalR started. connectionId=" + (connection.connectionId ?? "null"));
-        log(`Invoking RegisterTV(${tvCode})`);
-        await connection.invoke("RegisterTV", tvCode);
-        log("RegisterTV OK");
-      } catch (err) {
-        log("SignalR start/register failed: " + err);
-        setTimeout(start, 3000);
+    if (parts.length > 1) {
+      const range = parts[1].split('-');
+      // Parse integers (base 10) to ensure we get numbers
+      startSec = parseInt(range[0], 10) || 0; 
+      if (range.length > 1) {
+        endSec = parseInt(range[1], 10);
       }
     }
-    start();
 
-    // -------------------------
-    // View helpers
-    // -------------------------
-    function showOnly(viewId) {
-      document.getElementById('setup').style.display = 'none';
-      document.getElementById('game').style.display = 'flex';
+    try {
+      log(`YT Load: ${videoId} (${startSec}s - ${endSec || 'end'})`);
+      
+      // 2. Construct Load Object
+      // We explicitly check endSec to make sure it's a valid number
+      const loadParams = {
+        videoId: videoId,
+        startSeconds: startSec
+      };
+      if (endSec && !isNaN(endSec)) {
+        loadParams.endSeconds = endSec;
+      }
 
-      ['lobbyView','questionView','resultsView','gameOverView'].forEach(id => {
-        document.getElementById(id).style.display = (id === viewId) ? 'flex' : 'none';
-      });
-
-      log(`VIEW -> ${viewId}`);
-
-      // Leaving question view => stop YT
-      if (viewId !== 'questionView') {
-        try { if (ytPlayer && ytReady) ytPlayer.stopVideo(); } catch {}
-        if (bgMusic && bgMusic.src && !isMusicRound) {
-          bgMusic.play().catch(()=>{});
+      // 3. Load & Play
+      ytPlayer.loadVideoById(loadParams);
+      ytPlayer.setVolume(100);
+      ytPlayer.unMute();
+      
+      // 4. Safety Retry (for slow TVs)
+      setTimeout(() => {
+        if (isMusicRound && ytPlayer && ytPlayer.getPlayerState) {
+           const s = ytPlayer.getPlayerState();
+           // If unstarted (-1) or paused (2), kick it again
+           if (s === -1 || s === 2) ytPlayer.playVideo();
         }
-      } else {
-        if (bgMusic) bgMusic.pause();
+      }, 1500);
+
+    } catch (e) { log("YT Exception: " + e); }
+  }
+
+  // ✅ FIX: Added missing stop function
+  function stopYoutube() {
+    try {
+      if (ytPlayer && ytReady && typeof ytPlayer.stopVideo === 'function') {
+        ytPlayer.stopVideo();
+        if (ytPlayer.clearVideo) ytPlayer.clearVideo();
       }
+    } catch (e) {}
+  }
+
+  // -------------------------
+  // Wallpaper & Music Helpers
+  // -------------------------
+  function applyWallpaper(url) {
+    if (!url) return;
+    document.body.style.backgroundImage = `url('${url}')`;
+    if (bgOverlay) {
+      bgOverlay.style.backgroundImage = `linear-gradient(rgba(15,18,33,0.80), rgba(15,18,33,0.80)), url('${url}')`;
+      bgOverlay.style.backgroundSize = 'cover';
+      bgOverlay.style.backgroundPosition = 'center';
+      bgOverlay.style.backgroundRepeat = 'no-repeat';
     }
+  }
+  applyWallpaper('assets/bg/cyberpunk.jpg');
 
-    function showSetup() {
-      document.getElementById('game').style.display = 'none';
-      document.getElementById('setup').style.display = 'flex';
-      log("VIEW -> setup");
-    }
+  function manageBackgroundMusic(shouldPlay) {
+    if (!bgMusic || !bgMusic.src) return;
 
-    // -------------------------
-    // Asset helpers
-    // -------------------------
-    function fixAssetPath(path, fallback) {
-      const fb = fallback || "assets/avatars/avatar_0.png";
-      if (!path) return fb;
-      if (path.startsWith("http") || path.startsWith("data:")) return path;
-
-      let clean = path.replace(/^\//, "");
-      if (!clean.startsWith("assets/")) clean = "assets/" + clean;
-      clean = clean.replace(/^assets\/assets\//, "assets/");
-      return clean;
-    }
-
-    function handleAvatarError(img) {
-      img.onerror = null;
-      img.src = "assets/avatars/avatar_0.png";
-    }
-    window.handleAvatarError = handleAvatarError;
-
-    function normalizeName(n) {
-      return String(n || "").trim().toLowerCase();
-    }
-
-    function avatarFor(playerName) {
-      const key = normalizeName(playerName);
-      if (!key) return "assets/avatars/avatar_0.png";
-
-      const p = globalPlayers.find(x => normalizeName(x.name || x.Name) === key);
-      const av = p ? (p.avatar || p.Avatar) : null;
-      return fixAssetPath(av, "assets/avatars/avatar_0.png");
-    }
-
-    // -------------------------
-    // Music playback (YouTube)
-    // -------------------------
-    function forceAudiblePulse() {
-      if (!ytPlayer || !ytReady) return;
-      try { ytPlayer.unMute(); } catch {}
-      try { ytPlayer.setVolume(100); } catch {}
-      try { ytPlayer.playVideo(); } catch {}
-    }
-
-    function playMusicPayload(mediaPayload) {
-      if (!mediaPayload) return;
-
-      if (!ytReady || !ytPlayer) {
-        pendingMusicPayload = mediaPayload;
-        log("YT not ready -> queued music payload");
-        return;
-      }
-
-      let parts = String(mediaPayload).split('|');
-      let videoId = parts[0];
-      let startSec = 0;
-      if (parts.length > 1) {
-        let range = parts[1].split('-');
-        startSec = parseInt(range[0]) || 0;
-      }
-
-      try {
-        // hard stop/reset
-        try { ytPlayer.stopVideo(); } catch {}
-
-        // load & play
-        ytPlayer.loadVideoById({ videoId, startSeconds: startSec });
-        ytPlayer.playVideo();
-
-        // pulse unmute/volume several times (helps on some TV browsers)
-        forceAudiblePulse();
-        setTimeout(forceAudiblePulse, 150);
-        setTimeout(forceAudiblePulse, 500);
-        setTimeout(forceAudiblePulse, 1200);
-        setTimeout(forceAudiblePulse, 2500);
-
-        log(`YT play requested: ${videoId} @ ${startSec}s`);
-      } catch (e) {
-        log("YT play failed: " + e);
-      }
-    }
-
-    // -------------------------
-    // Hub events
-    // -------------------------
-    connection.on("TVRegistered", () => log("EVENT: TVRegistered"));
-    connection.on("tv_attached", (lobbyCode) => log("EVENT: tv_attached lobby=" + lobbyCode));
-    connection.on("error", (msg) => log("EVENT: error " + msg));
-
-    connection.on("ThemeUpdate", (data) => {
-      const keys = data ? Object.keys(data) : [];
-      log("EVENT: ThemeUpdate keys=" + keys.join(","));
-
-      if (data && data.wallpaper) {
-        const wp = fixAssetPath(data.wallpaper, "");
-        document.body.style.backgroundImage = `url('${wp}')`;
-      }
-
-      // lobby bg music
-      const enabled = data && data.musicEnabled === true;
-      const vol = (data && typeof data.volume === "number") ? Math.max(0, Math.min(1, data.volume)) : 0.5;
-
-      if (!enabled) {
-        bgMusic.pause();
-        bgMusic.removeAttribute("src");
-        bgMusic.load();
-        return;
-      }
-
-      if (!data || !data.music) return;
-
-      const newSrc = fixAssetPath(data.music, "");
-      if (!bgMusic.src || bgMusic.src.indexOf(newSrc) === -1) {
-        bgMusic.src = newSrc;
-      }
-      bgMusic.volume = vol;
-
-      // never play during question view or music rounds
-      const questionVisible = document.getElementById('questionView').style.display === 'flex';
-      if (questionVisible || isMusicRound) {
+    // ✅ FIX: If Game is in Music Mode, BG Music NEVER plays.
+    if (isGameInMusicMode) {
         bgMusic.pause();
         return;
-      }
+    }
 
-      bgMusic.play().catch(() => log("bgMusic blocked"));
+    if (shouldPlay) {
+        bgMusic.play().catch(() => {});
+    } else {
+        bgMusic.pause();
+    }
+  }
+
+  // -------------------------
+  // SignalR & Game Logic
+  // -------------------------
+  function scoreOf(p) {
+    if (!p) return 0;
+    const raw = p.score ?? p.Score ?? p.totalScore ?? p.TotalScore ?? 0;
+    return Number(raw) || 0;
+  }
+  function normalizeName(n) { return String(n || "").trim().toLowerCase(); }
+  
+  function fixAssetPath(path, fallback) {
+    const fb = fallback || "assets/avatars/avatar_0.png";
+    if (!path) return fb;
+    if (path.startsWith("http") || path.startsWith("data:")) return path;
+    let clean = path.replace(/^\//, "");
+    if (!clean.startsWith("assets/")) clean = "assets/" + clean;
+    return clean.replace(/^assets\/assets\//, "assets/");
+  }
+  window.handleAvatarError = function(img) { img.onerror = null; img.src = "assets/avatars/avatar_0.png"; };
+
+  function avatarFor(playerName) {
+    const key = normalizeName(playerName);
+    const p = globalPlayers.find(x => normalizeName(x.name || x.Name) === key);
+    return fixAssetPath(p ? (p.avatar || p.Avatar) : null, "assets/avatars/avatar_0.png");
+  }
+
+  // QR & Setup
+  function genNumericCode(len) {
+    let out = "";
+    for (let i = 0; i < len; i++) out += String(Math.floor(Math.random() * 10));
+    return out;
+  }
+  const tvCode = genNumericCode(4);
+  safeSetText('tvCode', tvCode);
+
+  if ($('qrcode-app')) new QRCode($('qrcode-app'), { text: "https://know-it-all.fun", width: 140, height: 140, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L });
+  if ($('qrcode-tv')) new QRCode($('qrcode-tv'), { text: tvCode, width: 140, height: 140, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+
+  // Connection
+  const isProduction = window.location.hostname.includes("know-it-all.fun");
+  const serverUrl = isProduction ? `${window.location.protocol}//${window.location.host}/ws` : "http://localhost:5074/ws";
+
+  const connection = new signalR.HubConnectionBuilder()
+    .withUrl(serverUrl, { skipNegotiation: true, transport: signalR.HttpTransportType.WebSockets })
+    .withAutomaticReconnect()
+    .build();
+
+  async function start() {
+    try {
+      await connection.start();
+      await connection.invoke("RegisterTV", tvCode);
+    } catch (err) { setTimeout(start, 3000); }
+  }
+  start();
+
+  // -------------------------
+  // View Controller
+  // -------------------------
+  function showOnly(viewId) {
+    safeShow('setup', 'none');
+    safeShow('game', 'flex');
+    ['lobbyView','questionView','resultsView','gameOverView'].forEach(id => {
+      safeShow(id, (id === viewId) ? 'flex' : 'none');
     });
 
-    connection.on("lobby_update", (state) => {
-      log("EVENT: lobby_update");
-      if (!state) return;
+    if (viewId !== 'questionView') {
+       stopYoutube();
+       // Only plays if NOT music mode
+       manageBackgroundMusic(true); 
+    }
+  }
 
-      if (state.started) return;
+  function showSetup() {
+    safeShow('game', 'none');
+    safeShow('setup', 'flex');
+    isGameInMusicMode = false; // Reset
+    manageBackgroundMusic(true);
+  }
 
-      showOnly('lobbyView');
+  // -------------------------
+  // Hub Events
+  // -------------------------
+  connection.on("ThemeUpdate", (data) => {
+    if (data && data.wallpaper) applyWallpaper(fixAssetPath(data.wallpaper, ""));
+    
+    if (bgMusic) {
+        if (data.musicEnabled === false) {
+            bgMusic.pause();
+        } else if (data.music) {
+            const src = fixAssetPath(data.music, "");
+            if (!bgMusic.src.includes(src)) bgMusic.src = src;
+            bgMusic.volume = (typeof data.volume === "number") ? data.volume : 0.5;
+            
+            // Try play (internally checks music mode)
+            if (!isMusicRound) manageBackgroundMusic(true);
+        }
+    }
+  });
 
-      const validCode =
-        state.lobbyCode || state.LobbyCode || state.code || state.Code || "ERR";
-      document.getElementById('lobbyCodeDisplay').innerText = validCode;
+  connection.on("lobby_update", (state) => {
+    if (!state || state.started) return;
+    showOnly('lobbyView');
+    
+    // ✅ FIX: Detect Music Mode to disable BG music completely
+    const mode = state.mode || state.Mode || "";
+    isGameInMusicMode = mode.toLowerCase().includes("music");
+    
+    if (isGameInMusicMode) {
+        manageBackgroundMusic(false); // Force Stop BG
+    }
 
-      globalPlayers = state.players || state.Players || [];
-      const grid = document.getElementById('playerGrid');
+    safeSetText('lobbyCodeDisplay', state.lobbyCode || state.code || "ERR");
+    globalPlayers = state.players || [];
+
+    const grid = $('playerGrid');
+    if (grid) {
       grid.innerHTML = '';
-
       globalPlayers.forEach(p => {
         const name = p.name || p.Name || "Player";
         const av = fixAssetPath(p.avatar || p.Avatar, "assets/avatars/avatar_0.png");
-        const isReady = (p.isReady === true) || (p.IsReady === true);
-        const score = p.score ?? p.Score ?? 0;
-
+        const isReady = p.isReady === true || p.IsReady === true;
         const card = document.createElement('div');
         card.className = `player-card ${isReady ? 'ready' : ''}`;
-        card.innerHTML = `
-          <img src="${av}" onerror="handleAvatarError(this)" class="avatar">
-          <div class="player-name">${name}</div>
-          <div style="font-size:12px; opacity:0.7;">${score} pts</div>
-        `;
+        card.innerHTML = `<img src="${av}" onerror="handleAvatarError(this)" class="avatar">
+                          <div class="player-name">${name}</div>
+                          <div style="font-size:12px; opacity:0.7;">${scoreOf(p)} pts</div>`;
         grid.appendChild(card);
       });
+    }
 
-      const chatList = document.getElementById('chatList');
+    const chatList = $('chatList');
+    if (chatList) {
       chatList.innerHTML = '';
-      const chatData = state.chat || state.Chat || [];
-      chatData.forEach(msg => {
-        const from = msg.from || msg.From || msg.sender || msg.Sender || "Unknown";
-        const text = msg.text || msg.Text || msg.message || msg.Message || "";
+      (state.chat || []).forEach(msg => {
+        const from = msg.from || msg.sender || "Unknown";
+        const text = msg.text || msg.message || "";
         const av = avatarFor(from);
-
         const div = document.createElement('div');
         div.className = 'chat-msg';
         div.innerHTML = `<img src="${av}" onerror="handleAvatarError(this)">
@@ -738,90 +736,77 @@
         chatList.appendChild(div);
       });
       chatList.scrollTop = chatList.scrollHeight;
-    });
+    }
+  });
 
-    function handleRound(data) {
-      showOnly('questionView');
+  function handleRound(data) {
+    showOnly('questionView');
+    
+    let q = data?.questionData;
+    if (!q && data?.quizData) q = data.quizData[data.questionIndex || 0];
+    if (!q) return;
 
-      // Stop lobby bg music for all questions (especially music)
-      if (bgMusic) bgMusic.pause();
+    if (data.players) globalPlayers = data.players;
 
-      // detect question payload
-      let q = data?.questionData || data?.QuestionData || null;
-      if (!q && data?.quizData && Array.isArray(data.quizData)) {
-        const idx = data.questionIndex ?? 0;
-        q = data.quizData[idx] || null;
-      }
-      if (!q) {
-        log("Round: missing question payload");
-        return;
-      }
-
-      // standings
-      const players = data.players || data.Players || globalPlayers;
-      if (players) globalPlayers = players;
-
-      const miniList = document.getElementById('miniStandingsList');
+    const miniList = $('miniStandingsList');
+    if (miniList) {
       miniList.innerHTML = '';
-      const sorted = [...globalPlayers].sort((a,b) => (b.score ?? b.Score ?? 0) - (a.score ?? a.Score ?? 0));
-      sorted.slice(0, 10).forEach((p, i) => {
-        const name = p.name || p.Name || "Player";
-        const score = p.score ?? p.Score ?? 0;
-        const av = fixAssetPath(p.avatar || p.Avatar, "assets/avatars/avatar_0.png");
-
-        const row = document.createElement('div');
-        row.className = 'mini-rank';
-        row.innerHTML = `<span style="opacity:0.5; width:20px;">#${i+1}</span>
-                         <img src="${av}" onerror="handleAvatarError(this)">
-                         <span class="player-name" style="width:120px;">${name}</span>
-                         <span class="score">${score}</span>`;
-        miniList.appendChild(row);
+      [...globalPlayers].sort((a,b) => scoreOf(b)-scoreOf(a)).slice(0,10).forEach((p,i) => {
+         const name = p.name || p.Name || "Player";
+         const av = fixAssetPath(p.avatar || p.Avatar, "assets/avatars/avatar_0.png");
+         const row = document.createElement('div');
+         row.className = 'mini-rank';
+         row.innerHTML = `<span style="opacity:0.5; width:20px;">#${i+1}</span>
+                          <img src="${av}" onerror="handleAvatarError(this)">
+                          <span class="player-name" style="width:120px;">${name}</span>
+                          <span class="score">${scoreOf(p)}</span>`;
+         miniList.appendChild(row);
       });
+    }
 
-      document.getElementById('questionText').innerText =
-        q.Question || q.question || "Question";
+    safeSetText('questionText', q.Question || q.question || "Question");
 
-      const qType = String(q.Type || q.type || "").toLowerCase();
-      const mediaPayload = q.MediaPayload || q.mediaPayload || "";
-      const mediaBox = document.getElementById('mediaContainer');
+    const qType = String(q.Type || q.type || "").toLowerCase();
+    const mediaPayload = q.MediaPayload || q.mediaPayload || "";
+    isMusicRound = qType.includes("music");
+    
+    // Ensure Music Mode flag is set if we are in a music round
+    if (isMusicRound) isGameInMusicMode = true; 
 
-      isMusicRound = qType.includes("music");
+    const mediaBox = $('mediaContainer');
 
-      if (isMusicRound && mediaPayload) {
-        mediaBox.style.display = 'none';
-        mediaBox.innerHTML = '';
+    if (isMusicRound && mediaPayload) {
+       manageBackgroundMusic(false); // STOP BG
+       if (mediaBox) mediaBox.style.display = 'none';
+       playMusicPayload(mediaPayload);
+    } else {
+       stopYoutube();
+       // PLAY BG (but manageBackgroundMusic will block if isGameInMusicMode is true)
+       manageBackgroundMusic(true); 
+       
+       const imgUrl = mediaPayload || q.Image || q.image;
+       if (mediaBox) {
+         if (imgUrl && String(imgUrl).startsWith("http")) {
+            mediaBox.style.display = 'block';
+            mediaBox.innerHTML = `<img src="${imgUrl}">`;
+         } else {
+            mediaBox.style.display = 'none';
+         }
+       }
+    }
 
-        // Force YT playback every round
-        playMusicPayload(mediaPayload);
-      } else {
-        try { if (ytPlayer && ytReady) ytPlayer.stopVideo(); } catch {}
-
-        const mediaUrl = mediaPayload || q.Image || q.image || "";
-        if (mediaUrl && String(mediaUrl).startsWith("http")) {
-          mediaBox.style.display = 'block';
-          mediaBox.innerHTML = `<img src="${mediaUrl}">`;
-        } else {
-          mediaBox.style.display = 'none';
-          mediaBox.innerHTML = '';
-        }
-      }
-
-      // answers (TV display only)
-      const container = document.getElementById('answersContainer');
+    const container = $('answersContainer');
+    if (container) {
       container.innerHTML = '';
-
       let answers = [];
-      const correct = q.CorrectAnswer || q.correctAnswer;
-      const incorrect = q.IncorrectAnswers || q.incorrectAnswers || [];
-
-      if (correct) answers.push(correct);
-      if (Array.isArray(incorrect)) answers.push(...incorrect);
-
+      const c = q.CorrectAnswer || q.correctAnswer;
+      const inc = q.IncorrectAnswers || q.incorrectAnswers || [];
+      if (c) answers.push(c);
+      if (Array.isArray(inc)) answers.push(...inc);
       for (let i = answers.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [answers[i], answers[j]] = [answers[j], answers[i]];
       }
-
       answers.forEach(ans => {
         const div = document.createElement('div');
         div.className = 'answer-box';
@@ -829,103 +814,96 @@
         container.appendChild(div);
       });
     }
+  }
 
-    connection.on("game_started", (data) => {
-      log("EVENT: game_started");
-      handleRound(data);
+  connection.on("game_started", (d) => handleRound(d));
+  connection.on("new_round", (d) => handleRound(d));
+
+  connection.on("question_results", (data) => {
+    showOnly('resultsView');
+    
+    // ✅ FIX: Force Stop YouTube immediately
+    isMusicRound = false; 
+    stopYoutube();
+    pendingMusicPayload = null;
+
+    // ✅ FIX: This will mute BG music if isGameInMusicMode is true
+    manageBackgroundMusic(true);
+
+    safeSetText('correctAnswerDisplay', data.correctAnswer || data.CorrectAnswer || "");
+
+    const results = (data.results || []).slice().sort((a,b) => scoreOf(b)-scoreOf(a));
+    results.forEach(r => {
+       const pName = normalizeName(r.name || r.Name);
+       const gp = globalPlayers.find(x => normalizeName(x.name||x.Name) === pName);
+       if (gp) {
+         const s = r.score ?? r.Score ?? gp.score;
+         gp.score = s; gp.Score = s; gp.totalScore = s;
+       }
     });
 
-    connection.on("new_round", (data) => {
-      log("EVENT: new_round");
-      handleRound(data);
-    });
-
-    connection.on("question_results", (data) => {
-      log("EVENT: question_results");
-      showOnly('resultsView');
-
-      const correct = data.correctAnswer || data.CorrectAnswer || "";
-      document.getElementById('correctAnswerDisplay').innerText = correct;
-
-      const lb = document.getElementById('leaderboard');
+    const lb = $('leaderboard');
+    if (lb) {
       lb.innerHTML = '';
-
-      const results = (data.results || data.Results || []).slice()
-        .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
-
-      // Resolve avatar by player name from last lobby_update
-      results.slice(0, 8).forEach((p, index) => {
-        const name = p.name || p.Name || "Player";
-        const score = p.score ?? 0;
-        const isCorrect = p.correct === true;
-        const earned = p.earned ?? 0;
-
+      results.slice(0,8).forEach((p, i) => {
+        const name = p.name || p.Name;
+        const correct = p.correct === true || p.Correct === true;
+        const earned = p.earned || p.Earned || 0;
         const av = avatarFor(name);
-
+        
         const row = document.createElement('div');
-        row.className = `lb-row ${index === 0 ? 'winner' : ''}`;
-
-        const statusIcon = isCorrect
+        row.className = `lb-row ${i===0?'winner':''}`;
+        const icon = correct 
           ? `<span style="color:#00ff00; font-size:24px; margin-right:15px;">✔ +${earned}</span>`
           : `<span style="color:#ff3333; font-size:24px; margin-right:15px;">✘</span>`;
-
-        row.innerHTML = `
-          <div style="display:flex; align-items:center;">
-            <span style="opacity:0.5; width:30px; font-size:20px;">#${index + 1}</span>
-            <img src="${av}" onerror="handleAvatarError(this)">
-            <span style="font-size: 28px; font-weight:bold;">${name}</span>
-          </div>
-          <div style="display:flex; align-items:center;">
-            ${statusIcon}
-            <span style="font-weight:900; font-size:32px;">${score}</span>
-          </div>
-        `;
+        
+        row.innerHTML = `<div style="display:flex; align-items:center;">
+                           <span style="opacity:0.5; width:30px; font-size:20px;">#${i+1}</span>
+                           <img src="${av}" onerror="handleAvatarError(this)">
+                           <span style="font-size: 28px; font-weight:bold;">${name}</span>
+                         </div>
+                         <div style="display:flex; align-items:center;">
+                           ${icon}
+                           <span style="font-weight:900; font-size:32px;">${scoreOf(p)}</span>
+                         </div>`;
         lb.appendChild(row);
       });
+    }
+  });
 
-      try { if (ytPlayer && ytReady) ytPlayer.stopVideo(); } catch {}
-      isMusicRound = false;
-    });
+  connection.on("game_over", () => {
+    showOnly('gameOverView');
+    stopYoutube();
+    manageBackgroundMusic(true);
 
-    connection.on("game_over", () => {
-      log("EVENT: game_over");
-      showOnly('gameOverView');
-
-      const podium = document.getElementById('podium');
+    const podium = $('podium');
+    if (podium) {
       podium.innerHTML = '';
-
-      const winners = [...globalPlayers]
-        .sort((a, b) => (b.score ?? b.Score ?? 0) - (a.score ?? a.Score ?? 0))
-        .slice(0, 3);
-
+      const winners = [...globalPlayers].sort((a,b) => scoreOf(b)-scoreOf(a)).slice(0,3);
       const order = [winners[1], winners[0], winners[2]].filter(Boolean);
       order.forEach(p => {
-        const name = p.name || p.Name || "Player";
-        const av = fixAssetPath(p.avatar || p.Avatar, "assets/avatars/avatar_0.png");
-        const rank = winners.indexOf(p) + 1;
-
-        const col = document.createElement('div');
-        col.className = `podium-column rank-${rank}`;
-        col.innerHTML = `
-          <div style="font-weight:bold; font-size:20px; margin-bottom:5px;">${name}</div>
-          <img src="${av}" onerror="handleAvatarError(this)" class="podium-avatar">
-          <div class="podium-block">${rank}</div>
-        `;
-        podium.appendChild(col);
+         const rank = winners.indexOf(p) + 1;
+         const av = fixAssetPath(p.avatar || p.Avatar, "assets/avatars/avatar_0.png");
+         const col = document.createElement('div');
+         col.className = `podium-column rank-${rank}`;
+         col.innerHTML = `<div style="font-weight:bold; font-size:20px; margin-bottom:5px;">${p.name||p.Name}</div>
+                          <img src="${av}" onerror="handleAvatarError(this)" class="podium-avatar">
+                          <div class="podium-block">${rank}</div>`;
+         podium.appendChild(col);
       });
-    });
+    }
+  });
 
-    connection.on("lobby_deleted", () => {
-      log("EVENT: lobby_deleted");
-      isMusicRound = false;
-      pendingMusicPayload = null;
-      try { if (ytPlayer && ytReady) ytPlayer.stopVideo(); } catch {}
-      if (bgMusic) bgMusic.pause();
-      showSetup();
-    });
-
-    // Default
+  connection.on("lobby_deleted", () => {
+    isMusicRound = false;
+    isGameInMusicMode = false;
+    pendingMusicPayload = null;
+    stopYoutube();
+    bgMusic.pause();
     showSetup();
+  });
+
+  showSetup();
   </script>
 </body>
 </html>

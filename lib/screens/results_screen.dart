@@ -127,10 +127,15 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 if (game.amIHost)
                   SizedBox(
                     width: double.infinity,
+                    height: 60, // ✅ INCREASED: Fixed height for a bigger button
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isLast ? Colors.redAccent : theme.colorScheme.primary, 
-                        foregroundColor: isLast ? Colors.white : theme.colorScheme.onPrimary
+                        foregroundColor: isLast ? Colors.white : theme.colorScheme.onPrimary,
+                        // ✅ INCREASED: Font size and icon size
+                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 1),
+                        iconSize: 28,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       icon: Icon(isLast ? Icons.flag : Icons.arrow_forward),
                       label: Text(isLast ? "FINISH GAME" : "NEXT QUESTION"),

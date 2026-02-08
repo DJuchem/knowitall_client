@@ -53,7 +53,7 @@ class QuizBotGUI:
 
     def run_bot(self, index, url, lobby_code):
         bot_name = f"Bot_{index}"
-        avatar = f"avatar_{index}.png"
+        avatar = f"avatar{index}.png"
         
         # Use a more robust configuration for large payloads
         connection = HubConnectionBuilder()\

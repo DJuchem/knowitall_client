@@ -123,152 +123,199 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
     final game = Provider.of<GameProvider>(context);
     final theme = Theme.of(context);
 
-    final bool disableDifficulty = _mode == "general-knowledge" && _selectedCategory.isNotEmpty;
+    final bool disableDifficulty =
+        _mode == "general-knowledge" && _selectedCategory.isNotEmpty;
 
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Drag Handle
-            Center(
-              child: Container(
-                width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("GAME SETTINGS", style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-              ],
-            ),
-            const Divider(),
-
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 16),
-                    _buildLabel("GAME MODE", theme),
-                    _buildDropdown(
-                      items: game.gameModes,
-                      value: _mode,
-                      theme: theme,
-                      onChange: (val) async {
-                        final next = val ?? "general-knowledge";
-                        setState(() => _mode = next);
-                        if (next == "music") {
-                          await _ensureMusicGenres(game);
-                        }
-                      },
-                    ),
-
-                    if (_mode == "general-knowledge") ...[
-                      const SizedBox(height: 16),
-                      _buildLabel("TOPIC", theme),
-                      if (_catsLoading) const LinearProgressIndicator(minHeight: 2),
-                      if (_catsError != null) Text(_catsError!, style: const TextStyle(color: Colors.red, fontSize: 12)),
-                      _buildDropdown(
-                        items: _categories,
-                        value: _selectedCategory,
-                        theme: theme,
-                        onChange: (val) => setState(() {
-                          _selectedCategory = val ?? "";
-                          if (_selectedCategory.isNotEmpty) _difficulty = "mixed";
-                        }),
-                      ),
-                    ],
-
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildLabel("QUESTIONS", theme),
-                        Text("${_questions.toInt()}",
-                            style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 18)),
-                      ],
-                    ),
-                    Slider(
-                      value: _questions,
-                      min: 5, max: 50, divisions: 9,
-                      onChanged: (v) => setState(() => _questions = v),
-                    ),
-
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildLabel("TIMER (SEC)", theme),
-                        Text("${_timer.toInt()}",
-                            style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 18)),
-                      ],
-                    ),
-                    Slider(
-                      value: _timer,
-                      min: 10, max: 60, divisions: 10,
-                      onChanged: (v) => setState(() => _timer = v),
-                    ),
-
-                    const SizedBox(height: 16),
-                    AnimatedOpacity(
-                      duration: const Duration(milliseconds: 300),
-                      opacity: disableDifficulty ? 0.4 : 1.0,
-                      child: IgnorePointer(
-                        ignoring: disableDifficulty,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildLabel(
-                              _mode == "music"
-                                  ? "GENRE"
-                                  : "DIFFICULTY ${disableDifficulty ? '(Auto-Mixed)' : ''}",
-                              theme,
-                            ),
-                            if (_mode == "music" && _genresLoading)
-                              const LinearProgressIndicator(minHeight: 2),
-                            if (_mode == "music" && _genresError != null)
-                              Text(_genresError!, style: const TextStyle(color: Colors.red, fontSize: 12)),
-                            _buildDropdown(
-                              items: _mode == "music"
-                                  ? _musicGenres
-                                  : const {"Mixed": "mixed", "Easy": "easy", "Medium": "medium", "Hard": "hard"},
-                              value: disableDifficulty ? "mixed" : _difficulty,
-                              theme: theme,
-                              onChange: (val) => setState(() => _difficulty = val ?? "mixed"),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          game.updateSettings(
-                            _mode,
-                            _questions.toInt(),
-                            _selectedCategory,
-                            _timer.toInt(),
-                            disableDifficulty ? "mixed" : _difficulty, // For music: this is genre
-                          );
-                          Navigator.pop(context);
-                        },
-                        child: const Text("UPDATE SETTINGS", style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    )
-                  ],
+    return Container(
+      // 2. FIX TRANSPARENCY: Set a specific background color here.
+      // Using scaffoldBackgroundColor usually gives the solid dark/light color of the app.
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor, 
+        // Optional: Add rounded corners to the top
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // Key to wrapping content size
+            children: [
+              // Drag Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-            ),
-          ],
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("GAME SETTINGS",
+                      style: theme.textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w900)),
+                  IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context)),
+                ],
+              ),
+              const Divider(),
+  
+              // 1. FIX HEIGHT: Changed Expanded to Flexible
+              Flexible( 
+                fit: FlexFit.loose,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 16),
+                      _buildLabel("GAME MODE", theme),
+                      _buildDropdown(
+                        items: game.gameModes,
+                        value: _mode,
+                        theme: theme,
+                        onChange: (val) async {
+                          final next = val ?? "general-knowledge";
+                          setState(() => _mode = next);
+                          if (next == "music") {
+                            await _ensureMusicGenres(game);
+                          }
+                        },
+                      ),
+  
+                      if (_mode == "general-knowledge") ...[
+                        const SizedBox(height: 16),
+                        _buildLabel("TOPIC", theme),
+                        if (_catsLoading)
+                          const LinearProgressIndicator(minHeight: 2),
+                        if (_catsError != null)
+                          Text(_catsError!,
+                              style: const TextStyle(color: Colors.red, fontSize: 12)),
+                        _buildDropdown(
+                          items: _categories,
+                          value: _selectedCategory,
+                          theme: theme,
+                          onChange: (val) => setState(() {
+                            _selectedCategory = val ?? "";
+                            if (_selectedCategory.isNotEmpty)
+                              _difficulty = "mixed";
+                          }),
+                        ),
+                      ],
+  
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildLabel("QUESTIONS", theme),
+                          Text("${_questions.toInt()}",
+                              style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18)),
+                        ],
+                      ),
+                      Slider(
+                        value: _questions,
+                        min: 5,
+                        max: 50,
+                        divisions: 9,
+                        onChanged: (v) => setState(() => _questions = v),
+                      ),
+  
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildLabel("TIMER (SEC)", theme),
+                          Text("${_timer.toInt()}",
+                              style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18)),
+                        ],
+                      ),
+                      Slider(
+                        value: _timer,
+                        min: 10,
+                        max: 60,
+                        divisions: 10,
+                        onChanged: (v) => setState(() => _timer = v),
+                      ),
+  
+                      const SizedBox(height: 16),
+                      AnimatedOpacity(
+                        duration: const Duration(milliseconds: 300),
+                        opacity: disableDifficulty ? 0.4 : 1.0,
+                        child: IgnorePointer(
+                          ignoring: disableDifficulty,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildLabel(
+                                _mode == "music"
+                                    ? "GENRE"
+                                    : "DIFFICULTY ${disableDifficulty ? '(Auto-Mixed)' : ''}",
+                                theme,
+                              ),
+                              if (_mode == "music" && _genresLoading)
+                                const LinearProgressIndicator(minHeight: 2),
+                              if (_mode == "music" && _genresError != null)
+                                Text(_genresError!,
+                                    style: const TextStyle(
+                                        color: Colors.red, fontSize: 12)),
+                              _buildDropdown(
+                                items: _mode == "music"
+                                    ? _musicGenres
+                                    : const {
+                                        "Mixed": "mixed",
+                                        "Easy": "easy",
+                                        "Medium": "medium",
+                                        "Hard": "hard"
+                                      },
+                                value: disableDifficulty ? "mixed" : _difficulty,
+                                theme: theme,
+                                onChange: (val) =>
+                                    setState(() => _difficulty = val ?? "mixed"),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+  
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            game.updateSettings(
+                              _mode,
+                              _questions.toInt(),
+                              _selectedCategory,
+                              _timer.toInt(),
+                              disableDifficulty
+                                  ? "mixed"
+                                  : _difficulty, // For music: this is genre
+                            );
+                            Navigator.pop(context);
+                          },
+                          child: const Text("UPDATE SETTINGS",
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      // Add a little bottom padding for scrolling space
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
