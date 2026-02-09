@@ -17,6 +17,7 @@ class LobbyScreen extends StatefulWidget {
 
 class _LobbyScreenState extends State<LobbyScreen> {
   int _prevPlayerCount = 0;
+  bool _isStarting = false; // 🟢 NEW: State to track loading
 
   @override
   void initState() {
@@ -184,8 +185,27 @@ class _LobbyScreenState extends State<LobbyScreen> {
                               backgroundColor: allReady ? Colors.green : Colors.grey[800], 
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
                             ),
-                            onPressed: allReady ? () => game.startGame() : null,
-                            child: Text(allReady ? "START GAME" : "WAITING ($readyCount/$playerCount)", style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 18)),
+                            // 🟢 UPDATE: Logic to handle loading state
+                            onPressed: (allReady && !_isStarting) ? () async {
+                              setState(() => _isStarting = true);
+                              try {
+                                await game.startGame();
+                              } catch (e) {
+                                if (mounted) {
+                                  setState(() => _isStarting = false);
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to start game")));
+                                }
+                              }
+                            } : null,
+                            // 🟢 UPDATE: Show Spinner if starting, otherwise show Text
+                            child: _isStarting 
+                              ? const SizedBox(
+                                  width: 24, 
+                                  height: 24, 
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
+                                )
+                              : Text(allReady ? "START GAME" : "WAITING ($readyCount/$playerCount)", 
+                                  style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 18)),
                           )
                         : ElevatedButton(
                             style: ElevatedButton.styleFrom(

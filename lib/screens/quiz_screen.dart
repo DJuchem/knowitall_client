@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:confetti/confetti.dart';
@@ -6,8 +7,6 @@ import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
 import '../theme/app_theme.dart';
-import 'dart:math';
-import 'package:flutter/foundation.dart'; 
 
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});
@@ -43,7 +42,6 @@ class _QuizScreenState extends State<QuizScreen> {
     final game = Provider.of<GameProvider>(context);
     if (game.appState != AppState.quiz) return;
 
-    // Defer processing to avoid build conflicts
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _processLobbyData(game);
     });
@@ -65,7 +63,6 @@ class _QuizScreenState extends State<QuizScreen> {
       try { _ytController!.pauseVideo(); } catch (_) {}
     }
 
-    // Non-music round: ensure lobby music resumes if enabled
     if (!type.toLowerCase().contains("music") || payload == null || payload.trim().isEmpty) {
       if (!game.isMusicPlaying && game.isMusicEnabled) {
         game.initMusic(); 
@@ -73,17 +70,13 @@ class _QuizScreenState extends State<QuizScreen> {
       return;
     }
 
-    // Stop music silently to prevent build crash
-    game.stopMusic(notify: false);
+    game.stopMusic(); // Stop BG music
 
     final raw = payload.trim();
     String videoId = raw;
-    
-    // ✅ PRINCIPLE APPLIED: Default defaults to 40s - 100s
     int startSec = 40;
     int? endSec = 100;
 
-    // Parse ID and timestamp (e.g. "videoId|10-20")
     if (raw.contains('|')) {
       final parts = raw.split('|');
       videoId = parts[0].trim();
@@ -93,20 +86,8 @@ class _QuizScreenState extends State<QuizScreen> {
           final ab = rangePart.split('-');
           final a = int.tryParse(ab[0].trim());
           final b = (ab.length > 1) ? int.tryParse(ab[1].trim()) : null;
-          
           if (a != null) startSec = a;
           if (b != null) endSec = b;
-          
-          // Randomize logic if range is too small/specific (optional, kept from your logic)
-          if (a != null && b != null) {
-             if (!(b > a && (b - a) <= 30)) {
-                // If wide range, pick random start? (Keeping your existing logic logic if desired, 
-                // or simpler: just use a and b)
-                // For safety, let's just trust the parsed values:
-                startSec = a;
-                endSec = b;
-             }
-          }
         } else {
           final s = int.tryParse(rangePart);
           if (s != null) startSec = s;
@@ -126,25 +107,20 @@ class _QuizScreenState extends State<QuizScreen> {
       );
     }
 
-    // Load video with calculated start/end
     _ytController!.loadVideoById(
       videoId: videoId,
       startSeconds: startSec.toDouble(),
       endSeconds: endSec?.toDouble(),
     );
 
-    // Stop timer logic (failsafe)
     final int questionSeconds = game.lobby?.timer ?? 30;
     int stopAfterSeconds = questionSeconds;
     
     if (endSec != null && endSec! > startSec) {
       final segLen = endSec! - startSec;
-      // If segment is shorter than question timer, stop early
-      // If segment is longer, stop when question ends
       stopAfterSeconds = (segLen < questionSeconds) ? segLen : questionSeconds;
     }
 
-    // Add small buffer to stop timer
     _mediaStopTimer = Timer(Duration(seconds: stopAfterSeconds + 1), () {
       if (!mounted || _ytController == null) return;
       _ytController!.pauseVideo();
@@ -177,7 +153,7 @@ class _QuizScreenState extends State<QuizScreen> {
       if (game.currentStreak >= 3) _confettiController.play();
 
       _initMedia(media, type, game);
-      startTimer();
+      startTimer(game); 
 
       if (mounted) {
         setState(() {
@@ -189,7 +165,7 @@ class _QuizScreenState extends State<QuizScreen> {
     }
   }
 
-  void startTimer() {
+  void startTimer(GameProvider game) {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       if (!mounted) return;
@@ -215,7 +191,7 @@ class _QuizScreenState extends State<QuizScreen> {
     try {
       await game.submitAnswer(answer, (game.lobby!.timer - _timeLeft), _internalIndex);
     } catch (_) {
-      debugPrint("Answer submission failed - Check WebSocket status.");
+      debugPrint("Answer submission failed.");
     }
   }
 
@@ -226,8 +202,8 @@ class _QuizScreenState extends State<QuizScreen> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         title: Text(game.amIHost ? "End Game?" : "Leave Game?"),
         content: Text(game.amIHost 
-            ? "This will end the game for everyone and return to the lobby." 
-            : "You will leave the game and return to the home screen."),
+            ? "This will end the game for everyone." 
+            : "You will leave the game."),
         actions: [
           TextButton(child: const Text("Cancel"), onPressed: () => Navigator.pop(context)),
           TextButton(
@@ -295,6 +271,7 @@ class _QuizScreenState extends State<QuizScreen> {
           SafeArea(
             child: Column(
               children: [
+                // --- TIMER ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                   child: Column(
@@ -313,39 +290,70 @@ class _QuizScreenState extends State<QuizScreen> {
                     ],
                   ),
                 ),
+                
                 const Spacer(),
+
+                // --- MEDIA AREA (GLASS) ---
                 GlassContainer(
                   margin: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      if (_ytController != null) ...[
-                        SizedBox(height: 1, width: 1, child: YoutubePlayer(controller: _ytController!)),
-                        const Icon(Icons.music_note, size: 80, color: Colors.white),
-                        const Text("Listen closely...", style: TextStyle(color: Colors.white70)),
-                        const SizedBox(height: 20),
-                      ] else if (_mediaUrl != null && !_mediaUrl!.contains('|') && _mediaUrl!.startsWith("http")) ...[
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          constraints: const BoxConstraints(maxHeight: 200),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              _mediaUrl!,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => const SizedBox(),
+                  // 🟢 FIX: Moved constraints to a child Container
+                  child: Container(
+                    constraints: const BoxConstraints(minHeight: 300, minWidth: double.infinity),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center, // Center vertically
+                      children: [
+                        // 1. MUSIC PLAYER (Youtube)
+                        if (_ytController != null) ...[
+                          // Invisible player
+                          SizedBox(height: 1, width: 1, child: YoutubePlayer(controller: _ytController!)),
+                          
+                          // ✨ FANCY WAVEFORM VISUALIZER ✨
+                          // 🟢 FIX: Wrapped in SizedBox to reserve space and prevent jitter
+                          SizedBox(
+                            height: 80, 
+                            child: Center(
+                              child: MusicVisualizer(
+                                color: game.themeColor, // TIES TO THEME!
+                                barCount: 20, 
+                              ),
                             ),
+                          ),
+
+                          const Text("Listen closely...", style: TextStyle(color: Colors.white70, letterSpacing: 1.5, fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 20),
+                        ] 
+                        // 2. IMAGE DISPLAY
+                        else if (_mediaUrl != null && !_mediaUrl!.contains('|') && _mediaUrl!.startsWith("http")) ...[
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            constraints: const BoxConstraints(maxHeight: 200),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                _mediaUrl!,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) => const SizedBox(),
+                              ),
+                            ),
+                          ),
+                        ],
+
+                        // 3. QUESTION TEXT
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Text(
+                            _questionText,
+                            style: TextStyle(fontSize: 22, color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ],
-                      Text(
-                        _questionText,
-                        style: TextStyle(fontSize: 22, color: theme.colorScheme.onSurface, fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
                 const Spacer(),
+
+                // --- ANSWERS ---
                 Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -369,6 +377,8 @@ class _QuizScreenState extends State<QuizScreen> {
               ],
             ),
           ),
+          
+          // --- CONFETTI ---
           Align(
             alignment: Alignment.topCenter,
             child: ConfettiWidget(
@@ -379,6 +389,111 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ✨ SUPER FANCY MUSIC VISUALIZER COMPONENT
+// ---------------------------------------------------------------------------
+class MusicVisualizer extends StatefulWidget {
+  final Color color;
+  final int barCount;
+
+  const MusicVisualizer({
+    Key? key,
+    required this.color,
+    this.barCount = 20,
+  }) : super(key: key);
+
+  @override
+  _MusicVisualizerState createState() => _MusicVisualizerState();
+}
+
+class _MusicVisualizerState extends State<MusicVisualizer> with TickerProviderStateMixin {
+  late List<double> values;
+  late Timer timer;
+
+  @override
+  void initState() {
+    super.initState();
+    values = List.generate(widget.barCount, (index) => Random().nextDouble());
+    // Update the visualizer rapidly to simulate audio frequency changes
+    timer = Timer.periodic(const Duration(milliseconds: 80), (timer) {
+      if (mounted) {
+        setState(() {
+          values = List.generate(widget.barCount, (index) => Random().nextDouble());
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: List.generate(widget.barCount, (index) {
+        return VisualizerBar(
+            value: values[index],
+            color: widget.color,
+            maxHeight: 60 // Max height of the waveform
+        );
+      }),
+    );
+  }
+}
+
+class VisualizerBar extends StatelessWidget {
+  final double value;
+  final Color color;
+  final double maxHeight;
+
+  const VisualizerBar({
+    Key? key,
+    required this.value,
+    required this.color,
+    required this.maxHeight,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // Determine height: base height + (random value * variance)
+    final double height = 10.0 + (value * maxHeight); 
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2.0),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutQuad,
+        width: 8,
+        height: height,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.8),
+          borderRadius: BorderRadius.circular(50),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.5),
+              blurRadius: 8,
+              spreadRadius: 1,
+            )
+          ],
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              color.withOpacity(0.4),
+              color,
+            ],
+          ),
+        ),
       ),
     );
   }
