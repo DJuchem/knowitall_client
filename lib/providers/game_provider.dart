@@ -63,6 +63,7 @@ class GameProvider extends ChangeNotifier {
   final Map<String, String> gameModes = const {
     "General Knowledge": "general-knowledge",
     "Math Calculations": "calculations",
+    "Images": "image",
     "Guess the Flag": "flags",
     "Country Capitals": "capitals",
     "Music Quiz": "music",

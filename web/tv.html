@@ -8,11 +8,12 @@
   <script src="https://www.youtube.com/iframe_api"></script>
 
   <style>
+    /* --- CORE THEME --- */
     :root {
       --bg-dark: #0F1221;
       --primary: #47C8FF;
       --secondary: #FF58CC;
-      --glass: rgba(20, 20, 35, 0.95);
+      --glass: rgba(20, 20, 35, 0.85);
       --glass-border: rgba(255, 255, 255, 0.15);
     }
 
@@ -27,66 +28,88 @@
       overflow: hidden;
     }
 
-    /* Dedicated overlay (always visible) */
- /* Dedicated overlay (always visible) */
-#bgOverlay{
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-
-  /* wallpaper lives here (default) */
-  background-image: linear-gradient(rgba(15,18,33,0.80), rgba(15,18,33,0.80)),
-                    url('assets/bg/cyberpunk.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-    /* App root above overlay */
-    #appRoot {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+    #bgOverlay{
+      position: fixed; inset: 0; z-index: 0;
+      background-image: linear-gradient(rgba(15,18,33,0.85), rgba(15,18,33,0.85)),
+                        url('assets/bg/cyberpunk.jpg');
+      background-size: cover; background-position: center; background-repeat: no-repeat;
     }
 
-    /* Logo top-left */
-#appLogo {
-      position: absolute;
-      top: 15px;
-      left: 20px;
-      width: 130px; /* Reduced from 220px */
-      z-index: 50;
-      filter: drop-shadow(0 0 10px rgba(0,0,0,0.55));
-      opacity: 0.95;
-      pointer-events: none;
+    #appRoot {
+      position: relative; width: 100%; height: 100%; z-index: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+
+    /* --- COOL EFFECTS: EDGE LIGHTING --- */
+    @property --angle {
+      syntax: '<angle>'; initial-value: 0deg; inherits: false;
+    }
+
+    @keyframes rotateBorder {
+      0% { --angle: 0deg; }
+      100% { --angle: 360deg; }
+    }
+
+    /* Standard Edge Light (Large Panels) */
+    .edge-light {
+      position: relative;
+      border: 3px solid transparent; 
+      border-radius: 32px;
+      background: 
+        linear-gradient(var(--glass), var(--glass)) padding-box, 
+        conic-gradient(from var(--angle), var(--primary), var(--secondary), var(--primary)) border-box;
+      animation: rotateBorder 4s linear infinite;
+      box-shadow: 0 0 40px rgba(71, 200, 255, 0.15);
+    }
+
+    /* Smaller Edge Light (for Answer Boxes / Cards) */
+    .edge-light-small {
+      position: relative;
+      border: 2px solid transparent; 
+      border-radius: 16px;
+      background: 
+        linear-gradient(rgba(255,255,255,0.05), rgba(255,255,255,0.05)) padding-box, 
+        conic-gradient(from var(--angle), var(--primary), var(--secondary), var(--primary)) border-box;
+      animation: rotateBorder 3s linear infinite reverse; /* Reverse spin for contrast */
+      box-shadow: 0 0 15px rgba(255, 88, 204, 0.2);
+    }
+
+    /* --- ANIMATIONS --- */
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+      100% { transform: translateY(0px); }
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes msgSlide {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* --- UI ELEMENTS --- */
+    #appLogo {
+      position: absolute; top: 20px; left: 20px; width: 140px; z-index: 50;
+      filter: drop-shadow(0 0 10px rgba(0,0,0,0.55)); opacity: 0.95; pointer-events: none;
     }
 
     .glass-panel {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: 32px;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.8);
-      padding: 40px;
-      text-align: center;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      border-radius: 32px; box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+      padding: 40px; text-align: center; backdrop-filter: blur(12px);
     }
 
     #setup, #game, #lobbyView, #questionView, #resultsView, #gameOverView {
-      width: 100%;
-      height: 100%;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      width: 100%; height: 100%; display: none;
+      flex-direction: column; align-items: center; justify-content: center;
     }
-
     #setup { display: flex; }
 
-    /* Setup & QR */
+    /* SETUP */
     .setup-container { display:flex; align-items:center; gap:80px; margin-top: 60px; }
     .code-box { text-align:right; }
     .tv-code-label { font-size:20px; color:var(--primary); letter-spacing:4px; font-weight:bold; text-transform:uppercase; margin-bottom:5px; }
@@ -95,132 +118,94 @@
     .qr-box { background:white; padding:15px; border-radius:20px; box-shadow: 0 0 40px rgba(71,200,255,0.3); }
     .qr-box img { display:block; }
 
-    /* Lobby */
+    /* LOBBY */
     #lobbyView { flex-direction: row; padding: 100px 60px 40px 60px; box-sizing:border-box; align-items: stretch; gap: 40px; }
     .lobby-left { flex: 3; display:flex; flex-direction: column; padding-right: 10px; }
     .lobby-header {
-      font-size: 36px;
-      font-weight: 800;
-      color: white;
-      margin-bottom: 30px;
-      letter-spacing: 2px;
-      text-align: left;
-      border-bottom: 2px solid rgba(255,255,255,0.1);
-      padding-bottom: 20px;
-      display:flex;
-      align-items: baseline;
-      gap: 12px;
+      font-size: 36px; font-weight: 800; color: white; margin-bottom: 30px;
+      letter-spacing: 2px; text-align: left; border-bottom: 2px solid rgba(255,255,255,0.1);
+      padding-bottom: 20px; display:flex; align-items: baseline; gap: 12px;
     }
-    .lobby-code { color: var(--primary); font-size: 48px; font-weight: 900; }
+    .lobby-code { color: var(--primary); font-size: 48px; font-weight: 900; text-shadow: 0 0 15px var(--primary); }
 
     .player-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 20px;
-      width: 100%;
-      align-content: start;
-      overflow-y: auto;
-      padding-right: 10px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 20px; width: 100%; align-content: start; overflow-y: auto; padding-right: 10px;
     }
     .player-card {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 20px;
-      padding: 20px;
-      display:flex;
-      flex-direction: column;
-      align-items:center;
+      /* Base style, JS adds edge-light-small on ready */
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px; padding: 20px; display:flex; flex-direction: column; align-items:center;
+      transition: transform 0.3s;
     }
     .player-card.ready {
-      border-color: var(--secondary);
-      background: rgba(255, 88, 204, 0.15);
-      box-shadow: 0 0 15px rgba(255, 88, 204, 0.3);
+      /* The edge light class handles the border now */
+      animation: float 4s ease-in-out infinite, rotateBorder 3s linear infinite reverse; 
     }
 
     .avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 3px solid rgba(255,255,255,0.2);
-      margin-bottom: 10px;
-      background: #222;
+      width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
+      border: 3px solid rgba(255,255,255,0.2); margin-bottom: 10px; background: #222;
     }
+    .player-name { font-weight: bold; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 
-    .player-name {
-      font-weight: bold;
-      font-size: 16px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 100%;
-    }
-
-    /* Chat */
-   .chat-sidebar {
-      flex: 1;
-      min-width: 340px;
-      background: rgba(0,0,0,0.30);
-      border-radius: 24px;
-      border: 1px solid rgba(255,255,255,0.1);
-      padding: 20px;
-      display:flex;
-      flex-direction: column;
+    /* CHAT */
+    .chat-sidebar {
+      flex: 1; min-width: 340px; 
+      /* Edge lighting applied via class in HTML */
+      padding: 20px; display:flex; flex-direction: column;
     }
     .chat-title {
-      text-align:center;
-      font-weight:bold;
-      color: var(--primary);
-      margin-bottom: 15px;
-      letter-spacing: 1px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      padding-bottom: 10px;
+      text-align:center; font-weight:bold; color: var(--primary); margin-bottom: 15px;
+      letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;
     }
     #chatList { flex:1; overflow-y:auto; display:flex; flex-direction: column; gap: 12px; }
 
-@keyframes msgSlide {
-        from { opacity: 0; transform: translateX(30px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-
     .chat-msg { 
-      /* Gradient Background */
       background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
-      padding: 14px; 
-      border-radius: 12px; 
-      display:flex; 
-      gap: 12px; 
-      align-items:center; 
-      /* Larger Font */
-      font-size: 20px; 
-      border-left: 4px solid var(--primary); /* Accent Border */
+      padding: 14px; border-radius: 12px; display:flex; gap: 12px; align-items:center; 
+      font-size: 20px; border-left: 4px solid var(--primary);
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
       animation: msgSlide 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
     .chat-msg img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border:1px solid rgba(255,255,255,0.3); }
     .chat-author { color: var(--primary); font-weight: 900; margin-right: 8px; letter-spacing: 0.5px; }
 
-    
-    
-    .chat-author { color: var(--primary); font-weight: bold; margin-right: 5px; }
-
-    /* Question */
+    /* QUESTION */
     #questionView { display:none; }
     .quiz-layout { display:flex; width: 100%; height: 100%; padding: 100px 40px 40px 40px; box-sizing:border-box; gap: 40px; }
     .main-q-area { flex:3; display:flex; flex-direction: column; align-items: center; justify-content:center; position: relative; }
     .side-standings { flex:1; background: rgba(0,0,0,0.30); border-radius: 24px; padding: 20px; overflow-y:auto; border:1px solid rgba(255,255,255,0.1); min-width:250px; }
-    .q-text { font-size: 36px; font-weight: 800; text-align:center; margin-bottom: 40px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    
+    .q-text { 
+      font-size: 42px; font-weight: 900; text-align:center; margin-bottom: 40px; 
+      text-shadow: 0 0 20px rgba(255,255,255,0.4); line-height: 1.2;
+    }
+    
     .media-frame { height: 250px; margin-bottom: 20px; display:none; }
-    .media-frame img { height: 100%; border-radius: 12px; }
+    .media-frame img { height: 100%; border-radius: 12px; box-shadow: 0 0 20px black; }
+    
     .answers-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 90%; }
-    .answer-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; font-size: 24px; font-weight: 600; text-align:center; }
+    
+    /* ANSWER BOX - Edge Lighting handled in JS or CSS class below */
+    .answer-box { 
+      /* Base style */
+      padding: 25px; font-size: 28px; font-weight: 700; text-align:center;
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+    .answer-box:hover { transform: scale(1.02); }
+
     .mini-rank { display:flex; align-items:center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size:14px; }
     .mini-rank img { width: 30px; height: 30px; border-radius: 50%; margin: 0 10px; object-fit: cover; }
     .mini-rank .score { margin-left:auto; font-weight: bold; color: var(--primary); }
 
-    /* Results */
+    /* RESULTS */
     #resultsView { display:none; }
-    .correct-display { font-size: 48px; color: var(--secondary); font-weight: 900; margin-bottom: 30px; text-shadow: 0 0 20px rgba(255, 88, 204, 0.5); }
+    .correct-display { 
+      font-size: 56px; color: var(--secondary); font-weight: 900; margin-bottom: 30px; 
+      text-shadow: 0 0 30px rgba(255, 88, 204, 0.6); animation: float 3s ease-in-out infinite;
+    }
     .lb-row {
       display:flex; align-items:center; padding: 15px 30px; margin-bottom: 12px;
       background: rgba(255,255,255,0.08); border-radius: 16px;
@@ -229,104 +214,34 @@
     }
     .lb-row.winner {
       background: linear-gradient(90deg, rgba(71,200,255,0.2), rgba(255,88,204,0.2));
-      border: 1px solid rgba(255,255,255,0.3);
-      transform: scale(1.02);
+      border: 1px solid rgba(255,255,255,0.3); transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255,88,204,0.3);
     }
     .lb-row img { width: 50px; height: 50px; border-radius: 50%; margin: 0 20px; object-fit: cover; border: 2px solid rgba(255,255,255,0.2); }
 
-    /* Game Over */
+    /* GAME OVER */
     #gameOverView { display:none; }
-    .podium-container { display:flex; align-items:flex-end; justify-content:center; gap: 20px; height: 400px; margin-top: 40px; }
+    .podium-container { display:flex; align-items:flex-end; justify-content:center; gap: 20px; height: 450px; margin-top: 40px; }
     .podium-column { display:flex; flex-direction: column; align-items:center; justify-content:flex-end; }
-    .podium-block { width: 120px; background: rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size: 40px; font-weight:bold; border-top-left-radius: 10px; border-top-right-radius: 10px; }
-    .rank-1 .podium-block { height: 300px; background: linear-gradient(to top, rgba(255,215,0,0.5), transparent); border-top: 4px solid gold; }
-    .rank-2 .podium-block { height: 200px; background: linear-gradient(to top, rgba(192,192,192,0.5), transparent); border-top: 4px solid silver; }
-    .rank-3 .podium-block { height: 150px; background: linear-gradient(to top, rgba(205,127,50,0.5), transparent); border-top: 4px solid #cd7f32; }
-    .podium-avatar { width: 100px; height: 100px; border-radius: 50%; margin-bottom: 15px; border: 3px solid white; object-fit: cover; }
+    .podium-block { width: 140px; background: rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size: 40px; font-weight:bold; border-top-left-radius: 15px; border-top-right-radius: 15px; }
+    
+    .rank-1 .podium-block { 
+      height: 320px; background: linear-gradient(to top, rgba(255,215,0,0.6), rgba(255,215,0,0.1)); 
+      border-top: 4px solid gold; box-shadow: 0 0 40px rgba(255,215,0,0.3);
+    }
+    .rank-2 .podium-block { height: 220px; background: linear-gradient(to top, rgba(192,192,192,0.6), rgba(192,192,192,0.1)); border-top: 4px solid silver; }
+    .rank-3 .podium-block { height: 160px; background: linear-gradient(to top, rgba(205,127,50,0.6), rgba(205,127,50,0.1)); border-top: 4px solid #cd7f32; }
+    
+    .podium-avatar { 
+      width: 120px; height: 120px; border-radius: 50%; margin-bottom: 15px; 
+      border: 4px solid white; object-fit: cover; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    }
+    .rank-1 .podium-avatar { width: 150px; height: 150px; border-color: gold; animation: float 3s infinite ease-in-out; }
 
+    /* Hide elements */
     audio { display:none; }
-
-    /* Audio unlock overlay (must NOT be inside #setup) */
-    #audioGate {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(6px);
-    }
-    #audioGate .gateBox {
-      background: rgba(20,20,35,0.95);
-      border: 1px solid rgba(255,255,255,0.18);
-      border-radius: 18px;
-      padding: 22px 26px;
-      text-align: center;
-      min-width: 320px;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.7);
-    }
-    #audioGate button {
-      margin-top: 14px;
-      border: none;
-      border-radius: 12px;
-      padding: 14px 18px;
-      font-size: 16px;
-      font-weight: 800;
-      cursor: pointer;
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
-      color: #000;
-    }
-    #audioGate .hint {
-      opacity: 0.75;
-      font-size: 13px;
-      margin-top: 8px;
-    }
-
-    /* Debug panel */
-    #debugBox {
-      position: fixed;
-      left: 20px;
-      bottom: 20px;
-      width: 520px;
-      max-width: 60vw;
-      height: 260px;
-      background: rgba(0,0,0,0.65);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 12px;
-      z-index: 99;
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-      backdrop-filter: blur(6px);
-    }
-    #debugHeader {
-      padding: 8px 10px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.85);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    #debugLog {
-      flex: 1;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-      font-size: 12px;
-      padding: 10px;
-      overflow: auto;
-      white-space: pre-wrap;
-      color: rgba(255,255,255,0.92);
-    }
-    .dbgBtn {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.10);
-      color: rgba(255,255,255,0.9);
-      padding: 4px 10px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 12px;
-    }
+    #ytWrap { position:fixed; bottom:0; right:0; width:320px; height:180px; opacity:0; pointer-events:none; z-index:-1; }
+    #debugBox { display:none; }
   </style>
 </head>
 
@@ -337,7 +252,7 @@
     <img id="appLogo" src="assets/logo2.png" onerror="this.style.display='none'">
 
     <div id="setup">
-      <div class="glass-panel" style="padding: 50px 80px;">
+      <div class="glass-panel edge-light" style="padding: 50px 80px;">
         <div class="setup-container">
           <div class="code-box">
             <div class="tv-code-label">TV CODE</div>
@@ -362,11 +277,12 @@
           <div class="lobby-header">
             <span>GAME LOBBY</span>
             <span style="opacity:0.55; font-size:24px;">CODE:</span>
-            <span id="lobbyCodeDisplay" class="lobby-code">----</span>
+            <span id="lobbyCodeDisplay" class="lobby-code edge-light" style="padding: 5px 20px; border-radius: 12px; margin-left: 10px;">----</span>
           </div>
           <div id="playerGrid" class="player-grid"></div>
         </div>
-        <div class="chat-sidebar">
+        
+        <div class="chat-sidebar edge-light">
           <div class="chat-title">CHAT</div>
           <div id="chatList"></div>
         </div>
@@ -376,16 +292,12 @@
         <div class="quiz-layout">
           <div class="main-q-area">
             <div id="mediaContainer" class="media-frame"></div>
-
-            <!-- YouTube player: NOT fully invisible (helps on some TVs/browsers) -->
             <div id="ytWrap" style="position:fixed; bottom:0; right:0; width:320px; height:180px; opacity:0; pointer-events:none; z-index:-1;">
-  <div id="ytPlayer"></div>
-</div>
-
+              <div id="ytPlayer"></div>
+            </div>
             <div id="questionText" class="q-text">Loading...</div>
             <div id="answersContainer" class="answers-grid"></div>
           </div>
-
           <div class="side-standings">
             <h4 style="margin:0 0 15px 0; text-align:center; color:var(--primary);">RANKING</h4>
             <div id="miniStandingsList"></div>
@@ -394,7 +306,7 @@
       </div>
 
       <div id="resultsView">
-        <div class="glass-panel" style="width: 80%; max-width: 1000px;">
+        <div class="glass-panel edge-light" style="width: 80%; max-width: 1000px;">
           <div style="opacity:0.75; letter-spacing:2px; font-weight:700; margin-bottom:10px;">CORRECT ANSWER</div>
           <div id="correctAnswerDisplay" class="correct-display"></div>
           <div id="leaderboard"></div>
@@ -409,7 +321,6 @@
 
     <audio id="bgMusic" loop></audio>
 
-    <!-- DEBUG -->
     <div id="debugBox">
       <div id="debugHeader">
         <span id="dbgTitle">DEBUG</span>
@@ -423,17 +334,7 @@
     </div>
   </div>
 
-  <!-- Audio Gate MUST be outside setup/game so it can always be clicked -->
-  <div id="audioGate">
-    <div class="gateBox">
-      <div style="font-size:18px; font-weight:900; letter-spacing:1px;">ENABLE AUDIO</div>
-      <div class="hint">Required by the TV browser to play music rounds.</div>
-      <button id="audioGateBtn">Tap to enable</button>
-    </div>
-  </div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
- <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
   <script>
   // -------------------------
   // Debug & Globals
@@ -449,13 +350,13 @@
   // State Flags
   let isMusicRound = false; 
   let isGameInMusicMode = false; 
+  
+  // ✅ FIX: Track the warm-up timer so we can kill it
+  let warmupTimeout = null;
 
   const bgMusic = document.getElementById('bgMusic');
   const bgOverlay = document.getElementById('bgOverlay');
 
-  // -------------------------
-  // DOM Helpers
-  // -------------------------
   function $(id) { return document.getElementById(id); }
   function safeSetText(id, text) { const el = $(id); if (el) el.innerText = text ?? ""; }
   function safeShow(id, display) { const el = $(id); if (el) el.style.display = display; }
@@ -475,11 +376,23 @@
         onReady: (event) => {
           ytReady = true;
           event.target.setVolume(100);
-          if (pendingMusicPayload) playMusicPayload(pendingMusicPayload);
+          
+          if (!pendingMusicPayload) {
+             // Silent Warm-up to wake TV Audio
+             event.target.mute();
+             event.target.playVideo();
+             
+             // ✅ SAVE TIMEOUT ID so we can cancel it if a song arrives
+             warmupTimeout = setTimeout(() => {
+                 event.target.pauseVideo();
+                 event.target.unMute();
+             }, 500);
+          } else {
+             playMusicPayload(pendingMusicPayload);
+          }
         },
         onStateChange: (event) => {
-          // ✅ CRITICAL FIX: Only force play if the round is actually active.
-          // Otherwise, when we try to stop it, this event fires and restarts it!
+          // Force play only if round active
           if ((event.data === 2 || event.data === 5) && isMusicRound) {
              event.target.playVideo();
           }
@@ -499,6 +412,13 @@
 
   function playMusicPayload(mediaPayload) {
     if (!mediaPayload) return;
+    
+    // ✅ CRITICAL FIX: Cancel any pending warm-up pause!
+    if (warmupTimeout) {
+        clearTimeout(warmupTimeout);
+        warmupTimeout = null;
+    }
+
     pendingMusicPayload = mediaPayload; 
 
     if (!ytReady || !ytPlayer || typeof ytPlayer.loadVideoById !== 'function') {
@@ -506,44 +426,36 @@
     }
 
     // 1. Parse "VIDEO_ID|START-END"
-    // Example: "dQw4w9WgXcQ|40-100"
     const parts = String(mediaPayload).split('|');
     const videoId = parts[0].trim();
-    let startSec = 0;
-    let endSec = undefined;
+    
+    // ✅ DEFAULTS: 40s - 100s
+    let startSec = 40;
+    let endSec = 100;
 
     if (parts.length > 1) {
       const range = parts[1].split('-');
-      // Parse integers (base 10) to ensure we get numbers
-      startSec = parseInt(range[0], 10) || 0; 
-      if (range.length > 1) {
-        endSec = parseInt(range[1], 10);
-      }
+      const s = parseInt(range[0], 10);
+      const e = parseInt(range[1], 10);
+      if (!isNaN(s)) startSec = s;
+      if (!isNaN(e)) endSec = e;
     }
 
     try {
-      log(`YT Load: ${videoId} (${startSec}s - ${endSec || 'end'})`);
-      
-      // 2. Construct Load Object
-      // We explicitly check endSec to make sure it's a valid number
       const loadParams = {
         videoId: videoId,
-        startSeconds: startSec
+        startSeconds: startSec,
+        endSeconds: endSec
       };
-      if (endSec && !isNaN(endSec)) {
-        loadParams.endSeconds = endSec;
-      }
 
-      // 3. Load & Play
       ytPlayer.loadVideoById(loadParams);
       ytPlayer.setVolume(100);
       ytPlayer.unMute();
       
-      // 4. Safety Retry (for slow TVs)
+      // Strict safety retry inside timeout
       setTimeout(() => {
         if (isMusicRound && ytPlayer && ytPlayer.getPlayerState) {
            const s = ytPlayer.getPlayerState();
-           // If unstarted (-1) or paused (2), kick it again
            if (s === -1 || s === 2) ytPlayer.playVideo();
         }
       }, 1500);
@@ -551,12 +463,11 @@
     } catch (e) { log("YT Exception: " + e); }
   }
 
-  // ✅ FIX: Added missing stop function
   function stopYoutube() {
     try {
       if (ytPlayer && ytReady && typeof ytPlayer.stopVideo === 'function') {
         ytPlayer.stopVideo();
-        if (ytPlayer.clearVideo) ytPlayer.clearVideo();
+        if (typeof ytPlayer.clearVideo === 'function') ytPlayer.clearVideo();
       }
     } catch (e) {}
   }
@@ -579,7 +490,7 @@
   function manageBackgroundMusic(shouldPlay) {
     if (!bgMusic || !bgMusic.src) return;
 
-    // ✅ FIX: If Game is in Music Mode, BG Music NEVER plays.
+    // Strict: If Game is in Music Mode, BG Music NEVER plays.
     if (isGameInMusicMode) {
         bgMusic.pause();
         return;
@@ -658,8 +569,8 @@
     });
 
     if (viewId !== 'questionView') {
+       // Leaving a question -> Stop YT and resume BG
        stopYoutube();
-       // Only plays if NOT music mode
        manageBackgroundMusic(true); 
     }
   }
@@ -695,13 +606,13 @@
     if (!state || state.started) return;
     showOnly('lobbyView');
     
-    // ✅ FIX: Detect Music Mode to disable BG music completely
+    // Check Music Mode
     const mode = state.mode || state.Mode || "";
     isGameInMusicMode = mode.toLowerCase().includes("music");
     
-    if (isGameInMusicMode) {
-        manageBackgroundMusic(false); // Force Stop BG
-    }
+    // Force Stop BG if music mode
+    if (isGameInMusicMode) manageBackgroundMusic(false);
+    else manageBackgroundMusic(true);
 
     safeSetText('lobbyCodeDisplay', state.lobbyCode || state.code || "ERR");
     globalPlayers = state.players || [];
@@ -714,7 +625,8 @@
         const av = fixAssetPath(p.avatar || p.Avatar, "assets/avatars/avatar_0.png");
         const isReady = p.isReady === true || p.IsReady === true;
         const card = document.createElement('div');
-        card.className = `player-card ${isReady ? 'ready' : ''}`;
+        // Add edge-light-small class if ready
+        card.className = `player-card ${isReady ? 'ready edge-light-small' : ''}`;
         card.innerHTML = `<img src="${av}" onerror="handleAvatarError(this)" class="avatar">
                           <div class="player-name">${name}</div>
                           <div style="font-size:12px; opacity:0.7;">${scoreOf(p)} pts</div>`;
@@ -809,7 +721,8 @@
       }
       answers.forEach(ans => {
         const div = document.createElement('div');
-        div.className = 'answer-box';
+        // Add edge-light-small to answers for effect
+        div.className = 'answer-box edge-light-small';
         div.innerText = ans;
         container.appendChild(div);
       });
@@ -820,14 +733,17 @@
   connection.on("new_round", (d) => handleRound(d));
 
   connection.on("question_results", (data) => {
-    showOnly('resultsView');
-    
-    // ✅ FIX: Force Stop YouTube immediately
+    // 1. Mark round as over immediately to stop YT auto-resume
     isMusicRound = false; 
-    stopYoutube();
     pendingMusicPayload = null;
 
-    // ✅ FIX: This will mute BG music if isGameInMusicMode is true
+    // 2. Stop YouTube
+    stopYoutube();
+
+    // 3. Show View
+    showOnly('resultsView');
+
+    // 4. RESUME BG MUSIC (User wanted this everywhere between rounds)
     manageBackgroundMusic(true);
 
     safeSetText('correctAnswerDisplay', data.correctAnswer || data.CorrectAnswer || "");
@@ -881,26 +797,29 @@
       podium.innerHTML = '';
       const winners = [...globalPlayers].sort((a,b) => scoreOf(b)-scoreOf(a)).slice(0,3);
       const order = [winners[1], winners[0], winners[2]].filter(Boolean);
+      
       order.forEach(p => {
          const rank = winners.indexOf(p) + 1;
-         const av = fixAssetPath(p.avatar || p.Avatar, "assets/avatars/avatar_0.png");
+         const av = fixAssetPath(p.avatar);
          const col = document.createElement('div');
          col.className = `podium-column rank-${rank}`;
-         col.innerHTML = `<div style="font-weight:bold; font-size:20px; margin-bottom:5px;">${p.name||p.Name}</div>
-                          <img src="${av}" onerror="handleAvatarError(this)" class="podium-avatar">
-                          <div class="podium-block">${rank}</div>`;
-         podium.appendChild(col);
+         
+         col.innerHTML = `
+            <div style="font-weight:bold; font-size:24px; margin-bottom:5px;">${p.name||p.Name}</div>
+            <img src="${av}" onerror="handleAvatarError(this)" class="podium-avatar">
+            <div class="podium-block">
+                <div>${rank}</div>
+            </div>
+            <div style="font-size:20px; font-weight:bold; margin-top:10px;">${scoreOf(p)} pts</div>
+         `;
+         pod.appendChild(col);
       });
     }
   });
 
   connection.on("lobby_deleted", () => {
-    isMusicRound = false;
-    isGameInMusicMode = false;
-    pendingMusicPayload = null;
-    stopYoutube();
-    bgMusic.pause();
-    showSetup();
+    isMusicRound = false; isGameInMusicMode = false;
+    stopYoutube(); bgMusic.pause(); showOnly('setup');
   });
 
   showSetup();

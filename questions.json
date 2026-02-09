@@ -1,0 +1,3902 @@
+[
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this monument.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Taj_Mahal_%28Edited%29.jpeg/960px-Taj_Mahal_%28Edited%29.jpeg",
+    "CorrectAnswer": "Taj Mahal",
+    "IncorrectAnswers": [
+      "Humayun's Tomb",
+      "The Red Fort",
+      "Lotus Temple"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What ancient site is this?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Machu_Picchu%2C_2023_%28012%29.jpg/960px-Machu_Picchu%2C_2023_%28012%29.jpg",
+    "CorrectAnswer": "Machu Picchu",
+    "IncorrectAnswers": [
+      "Chichen Itza",
+      "Petra",
+      "Tikal"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "This landmark is in which city?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Brandenburger_Tor_abends.jpg/960px-Brandenburger_Tor_abends.jpg",
+    "CorrectAnswer": "Berlin",
+    "IncorrectAnswers": [
+      "Munich",
+      "Vienna",
+      "Hamburg"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this rock formation.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/ULURU.jpg/960px-ULURU.jpg",
+    "CorrectAnswer": "Uluru",
+    "IncorrectAnswers": [
+      "Zion",
+      "Grand Canyon",
+      "Table Mountain"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "This formation is known as?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Stonehenge2007_07_30.jpg/960px-Stonehenge2007_07_30.jpg",
+    "CorrectAnswer": "Stonehenge",
+    "IncorrectAnswers": [
+      "Avebury",
+      "Carnac Stones",
+      "Callanish Stones"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this statue called?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Christ_the_Redeemer_-_Cristo_Redentor.jpg/960px-Christ_the_Redeemer_-_Cristo_Redentor.jpg",
+    "CorrectAnswer": "Christ the Redeemer",
+    "IncorrectAnswers": [
+      "Angel of the North",
+      "The Motherland Calls",
+      "Spring Temple Buddha"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Where can you find this?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Burj_Khalifa_%28worlds_tallest_building%29_and_the_Dubai_skyline_%2825781049892%29.jpg/960px-Burj_Khalifa_%28worlds_tallest_building%29_and_the_Dubai_skyline_%2825781049892%29.jpg",
+    "CorrectAnswer": "Dubai",
+    "IncorrectAnswers": [
+      "Riyadh",
+      "Doha",
+      "Kuwait City"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this iconic wall?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/The_Great_Wall_of_China_at_Jinshanling-edit.jpg/960px-The_Great_Wall_of_China_at_Jinshanling-edit.jpg",
+    "CorrectAnswer": "Great Wall of China",
+    "IncorrectAnswers": [
+      "Hadrian's Wall",
+      "Berlin Wall",
+      "Western Wall"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this mountain.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/View_of_Mount_Fuji_from_%C5%8Cwakudani_20211202.jpg/960px-View_of_Mount_Fuji_from_%C5%8Cwakudani_20211202.jpg",
+    "CorrectAnswer": "Mount Fuji",
+    "IncorrectAnswers": [
+      "Mount Everest",
+      "Kilimanjaro",
+      "Mount Rainier"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What famous landmark is this?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg/960px-Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg",
+    "CorrectAnswer": "Eiffel Tower",
+    "IncorrectAnswers": [
+      "Blackpool Tower",
+      "Tokyo Tower",
+      "CN Tower"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Identify this sign.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Hollywood_Sign_%28Zuschnitt%29.jpg/960px-Hollywood_Sign_%28Zuschnitt%29.jpg",
+    "CorrectAnswer": "Hollywood Sign",
+    "IncorrectAnswers": [
+      "Las Vegas Sign",
+      "Route 66",
+      "Broadway"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Where is this cathedral?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Saint_Basil%27s_Cathedral_in_Moscow.jpg/960px-Saint_Basil%27s_Cathedral_in_Moscow.jpg",
+    "CorrectAnswer": "Moscow",
+    "IncorrectAnswers": [
+      "St. Petersburg",
+      "Kiev",
+      "Warsaw"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this clock tower.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Elizabeth_Tower%2C_June_2022.jpg/960px-Elizabeth_Tower%2C_June_2022.jpg",
+    "CorrectAnswer": "Big Ben",
+    "IncorrectAnswers": [
+      "Spasskaya Tower",
+      "Zytglogge",
+      "Old Joe"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this bridge?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Golden_Gate_Bridge_as_seen_from_Battery_East.jpg/960px-Golden_Gate_Bridge_as_seen_from_Battery_East.jpg",
+    "CorrectAnswer": "Golden Gate Bridge",
+    "IncorrectAnswers": [
+      "Brooklyn Bridge",
+      "Tower Bridge",
+      "Sydney Harbour Bridge"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this temple complex.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Buddhist_monks_in_front_of_the_Angkor_Wat.jpg/960px-Buddhist_monks_in_front_of_the_Angkor_Wat.jpg",
+    "CorrectAnswer": "Angkor Wat",
+    "IncorrectAnswers": [
+      "Borobudur",
+      "Prambanan",
+      "Bagan"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this statue.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Front_view_of_Statue_of_Liberty_%28cropped%29.jpg/960px-Front_view_of_Statue_of_Liberty_%28cropped%29.jpg",
+    "CorrectAnswer": "Statue of Liberty",
+    "IncorrectAnswers": [
+      "Colossus of Rhodes",
+      "Mother Russia",
+      "Christ the Redeemer"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this ancient structure?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Pyramids of Giza",
+    "IncorrectAnswers": [
+      "Nubian Pyramids",
+      "Mayan Pyramids",
+      "Ziggurat of Ur"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Where is this located?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Colosseo_2020.jpg/960px-Colosseo_2020.jpg",
+    "CorrectAnswer": "Rome",
+    "IncorrectAnswers": [
+      "Athens",
+      "Cairo",
+      "Istanbul"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this structure.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Sydney_Australia._%2821339175489%29.jpg/960px-Sydney_Australia._%2821339175489%29.jpg",
+    "CorrectAnswer": "Sydney Opera House",
+    "IncorrectAnswers": [
+      "Lotus Temple",
+      "Burj Al Arab",
+      "Guggenheim Museum"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Where is this castle?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Schloss_Neuschwanstein_2013.jpg/960px-Schloss_Neuschwanstein_2013.jpg",
+    "CorrectAnswer": "Germany",
+    "IncorrectAnswers": [
+      "Austria",
+      "Switzerland",
+      "France"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this palace.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Buckingham_Palace_London_Morning_2020_01_%28cropped%29.jpg/960px-Buckingham_Palace_London_Morning_2020_01_%28cropped%29.jpg",
+    "CorrectAnswer": "Buckingham Palace",
+    "IncorrectAnswers": [
+      "Windsor Castle",
+      "Kensington Palace",
+      "Hampton Court"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this leaning tower?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Italy_-_Pisa_-_Leaning_Tower.jpg/960px-Italy_-_Pisa_-_Leaning_Tower.jpg",
+    "CorrectAnswer": "Leaning Tower of Pisa",
+    "IncorrectAnswers": [
+      "Tower of Bologna",
+      "Galata Tower",
+      "Tower of London"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Where is this ruin located?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Treasury_petra_crop.jpeg/960px-Treasury_petra_crop.jpeg",
+    "CorrectAnswer": "Jordan",
+    "IncorrectAnswers": [
+      "Egypt",
+      "Israel",
+      "Turkey"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this bridge?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Tower_Bridge_at_Dawn.jpg/960px-Tower_Bridge_at_Dawn.jpg",
+    "CorrectAnswer": "Tower Bridge",
+    "IncorrectAnswers": [
+      "London Bridge",
+      "Millennium Bridge",
+      "Westminster Bridge"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this waterfall.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/3Falls_Niagara.jpg/960px-3Falls_Niagara.jpg",
+    "CorrectAnswer": "Niagara Falls",
+    "IncorrectAnswers": [
+      "Victoria Falls",
+      "Iguazu Falls",
+      "Angel Falls"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this US monument?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Mount_Rushmore_detail_view_%28100MP%29.jpg/960px-Mount_Rushmore_detail_view_%28100MP%29.jpg",
+    "CorrectAnswer": "Mount Rushmore",
+    "IncorrectAnswers": [
+      "Crazy Horse",
+      "Lincoln Memorial",
+      "Stone Mountain"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this ancient circle?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Pantheon_Rom_1_cropped.jpg/960px-Pantheon_Rom_1_cropped.jpg",
+    "CorrectAnswer": "The Pantheon",
+    "IncorrectAnswers": [
+      "Parthenon",
+      "Colosseum",
+      "Forum"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this fortress.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Dawn_Charles_V_Palace_Alhambra_Granada_Andalusia_Spain.jpg/960px-Dawn_Charles_V_Palace_Alhambra_Granada_Andalusia_Spain.jpg",
+    "CorrectAnswer": "Alhambra",
+    "IncorrectAnswers": [
+      "Alcazar",
+      "Topkapi Palace",
+      "Red Fort"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this mountain range.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Himalayas_and_allied_ranges_NASA_Landsat_showing_the_eight_thousanders%2C_annotated_with_major_rivers.jpg/960px-Himalayas_and_allied_ranges_NASA_Landsat_showing_the_eight_thousanders%2C_annotated_with_major_rivers.jpg",
+    "CorrectAnswer": "Himalayas",
+    "IncorrectAnswers": [
+      "Andes",
+      "Alps",
+      "Rockies"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "This church is in which city?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/%CE%A3%CE%B1%CE%B3%CF%81%CE%AC%CE%B4%CE%B1_%CE%A6%CE%B1%CE%BC%CE%AF%CE%BB%CE%B9%CE%B1_2941.jpg/960px-%CE%A3%CE%B1%CE%B3%CF%81%CE%AC%CE%B4%CE%B1_%CE%A6%CE%B1%CE%BC%CE%AF%CE%BB%CE%B9%CE%B1_2941.jpg",
+    "CorrectAnswer": "Barcelona",
+    "IncorrectAnswers": [
+      "Madrid",
+      "Seville",
+      "Valencia"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What tower is this?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Space_Needle_2011-07-04.jpg/960px-Space_Needle_2011-07-04.jpg",
+    "CorrectAnswer": "Space Needle",
+    "IncorrectAnswers": [
+      "CN Tower",
+      "Sky Tower",
+      "Stratosphere"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Where is this canal?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/View_of_the_Grand_Canal_from_Rialto_to_Ca%27Foscari.jpg/960px-View_of_the_Grand_Canal_from_Rialto_to_Ca%27Foscari.jpg",
+    "CorrectAnswer": "Venice",
+    "IncorrectAnswers": [
+      "Amsterdam",
+      "Bruges",
+      "Suzhou"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this arch?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Arc_de_Triomphe%2C_Paris_21_October_2010.jpg/960px-Arc_de_Triomphe%2C_Paris_21_October_2010.jpg",
+    "CorrectAnswer": "Arc de Triomphe",
+    "IncorrectAnswers": [
+      "Marble Arch",
+      "Gateway Arch",
+      "Brandenburg Gate"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Where is the Blue Mosque?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Istanbul",
+    "IncorrectAnswers": [
+      "Mecca",
+      "Dubai",
+      "Cairo"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this white temple.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Wat_Rong_Khun_-_Chiang_Rai.jpg/960px-Wat_Rong_Khun_-_Chiang_Rai.jpg",
+    "CorrectAnswer": "Wat Rong Khun",
+    "IncorrectAnswers": [
+      "Grand Palace",
+      "Wat Arun",
+      "Angkor Wat"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this volcanic island.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/2011_Dimos_Thiras.png/960px-2011_Dimos_Thiras.png",
+    "CorrectAnswer": "Santorini",
+    "IncorrectAnswers": [
+      "Mykonos",
+      "Capri",
+      "Ibiza"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Identify this skyscraper.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Empire State Building",
+    "IncorrectAnswers": [
+      "Chrysler Building",
+      "Sears Tower",
+      "Flatiron Building"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this museum.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/en/thumb/4/42/Louvre_Pyramid.jpg/960px-Louvre_Pyramid.jpg",
+    "CorrectAnswer": "The Louvre",
+    "IncorrectAnswers": [
+      "Musee d'Orsay",
+      "British Museum",
+      "The Met"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this canyon?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Canyon_River_Tree_%28165872763%29.jpeg/960px-Canyon_River_Tree_%28165872763%29.jpeg",
+    "CorrectAnswer": "Grand Canyon",
+    "IncorrectAnswers": [
+      "Antelope Canyon",
+      "Bryce Canyon",
+      "Zion Canyon"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Where is this pyramid?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Chichen_Itza_3.jpg/960px-Chichen_Itza_3.jpg",
+    "CorrectAnswer": "Mexico",
+    "IncorrectAnswers": [
+      "Egypt",
+      "Peru",
+      "Guatemala"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this dam.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Ansel_Adams_-_National_Archives_79-AAB-01.jpg/960px-Ansel_Adams_-_National_Archives_79-AAB-01.jpg",
+    "CorrectAnswer": "Hoover Dam",
+    "IncorrectAnswers": [
+      "Three Gorges Dam",
+      "Aswan Dam",
+      "Glen Canyon Dam"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this golden temple?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/The_Golden_Temple_of_Amrithsar_7.jpg/960px-The_Golden_Temple_of_Amrithsar_7.jpg",
+    "CorrectAnswer": "Harmandir Sahib",
+    "IncorrectAnswers": [
+      "Wat Phra Kaew",
+      "Shwedagon Pagoda",
+      "Lotus Temple"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this twin tower.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Petronas_Towers_Logo.svg/960px-Petronas_Towers_Logo.svg.png",
+    "CorrectAnswer": "Petronas Towers",
+    "IncorrectAnswers": [
+      "Willis Tower",
+      "Taipei 101",
+      "Shanghai Tower"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Where is this square?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/New_york_times_square-terabass.jpg/960px-New_york_times_square-terabass.jpg",
+    "CorrectAnswer": "New York City",
+    "IncorrectAnswers": [
+      "London",
+      "Tokyo",
+      "Toronto"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this monastery.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Meteora%27s_monastery_2.jpg/960px-Meteora%27s_monastery_2.jpg",
+    "CorrectAnswer": "Meteora",
+    "IncorrectAnswers": [
+      "Mont Saint-Michel",
+      "Tiger's Nest",
+      "Sumela Monastery"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this ancient city?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Classic_view_of_Acropolis.jpg/960px-Classic_view_of_Acropolis.jpg",
+    "CorrectAnswer": "Acropolis",
+    "IncorrectAnswers": [
+      "Delphi",
+      "Olympia",
+      "Knossos"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Where is this library?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Long_Room_Interior%2C_Trinity_College_Dublin%2C_Ireland_-_Diliff.jpg/960px-Long_Room_Interior%2C_Trinity_College_Dublin%2C_Ireland_-_Diliff.jpg",
+    "CorrectAnswer": "Dublin",
+    "IncorrectAnswers": [
+      "Oxford",
+      "Cambridge",
+      "London"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this colorful mountain.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Monta%C3%B1aarcoirisperuabanto.jpg/960px-Monta%C3%B1aarcoirisperuabanto.jpg",
+    "CorrectAnswer": "Vinicunca",
+    "IncorrectAnswers": [
+      "Zhangye Danxia",
+      "Landmannalaugar",
+      "Painted Hills"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this opera house.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Wiener_Staatsoper_Front.jpg/960px-Wiener_Staatsoper_Front.jpg",
+    "CorrectAnswer": "Vienna State Opera",
+    "IncorrectAnswers": [
+      "La Scala",
+      "Metropolitan Opera",
+      "Royal Opera House"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Who painted this?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/960px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg",
+    "CorrectAnswer": "Leonardo da Vinci",
+    "IncorrectAnswers": [
+      "Raphael",
+      "Michelangelo",
+      "Donatello"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this painting.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/960px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg",
+    "CorrectAnswer": "The Starry Night",
+    "IncorrectAnswers": [
+      "Night Watch",
+      "Cafe Terrace at Night",
+      "Sunflowers"
+    ]
+  },
+  {
+    "Category": "Landmarks",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this tower?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Tokyo_Tower_2023.jpg/960px-Tokyo_Tower_2023.jpg",
+    "CorrectAnswer": "Tokyo Tower",
+    "IncorrectAnswers": [
+      "Eiffel Tower",
+      "Canton Tower",
+      "Seoul Tower"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "This fresco is located where?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Michelangelo_-_Creation_of_Adam_%28cropped%29.jpg/960px-Michelangelo_-_Creation_of_Adam_%28cropped%29.jpg",
+    "CorrectAnswer": "Sistine Chapel",
+    "IncorrectAnswers": [
+      "Louvre Museum",
+      "Uffizi Gallery",
+      "St. Peter's Basilica"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this style of art.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Abstract",
+    "IncorrectAnswers": [
+      "Impressionism",
+      "Realism",
+      "Baroque"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Who painted 'American Gothic'?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Grant_Wood_-_American_Gothic_-_Google_Art_Project.jpg/960px-Grant_Wood_-_American_Gothic_-_Google_Art_Project.jpg",
+    "CorrectAnswer": "Grant Wood",
+    "IncorrectAnswers": [
+      "Edward Hopper",
+      "Andrew Wyeth",
+      "Norman Rockwell"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this surrealist work.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "The Persistence of Memory",
+    "IncorrectAnswers": [
+      "The Elephants",
+      "The Son of Man",
+      "Golconda"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who is the artist?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg/960px-Edvard_Munch%2C_1893%2C_The_Scream%2C_oil%2C_tempera_and_pastel_on_cardboard%2C_91_x_73_cm%2C_National_Gallery_of_Norway.jpg",
+    "CorrectAnswer": "Edvard Munch",
+    "IncorrectAnswers": [
+      "Gustav Klimt",
+      "Egon Schiele",
+      "Vincent van Gogh"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is the title of this work?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg/960px-Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg",
+    "CorrectAnswer": "The Birth of Venus",
+    "IncorrectAnswers": [
+      "Primavera",
+      "Venus of Urbino",
+      "The Three Graces"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "This wave is by which artist?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunami_by_hokusai_19th_century.jpg/960px-Tsunami_by_hokusai_19th_century.jpg",
+    "CorrectAnswer": "Hokusai",
+    "IncorrectAnswers": [
+      "Hiroshige",
+      "Utamaro",
+      "Kuniyoshi"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Who painted 'The Girl with a Pearl Earring'?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/1665_Girl_with_a_Pearl_Earring.jpg/960px-1665_Girl_with_a_Pearl_Earring.jpg",
+    "CorrectAnswer": "Johannes Vermeer",
+    "IncorrectAnswers": [
+      "Rembrandt",
+      "Frans Hals",
+      "Jan Steen"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Who painted the ceiling of the Sistine Chapel?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Sistine_Chapel_ceiling_02_%28brightened%29.jpg/960px-Sistine_Chapel_ceiling_02_%28brightened%29.jpg",
+    "CorrectAnswer": "Michelangelo",
+    "IncorrectAnswers": [
+      "Da Vinci",
+      "Raphael",
+      "Botticelli"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this sculpture.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/%27David%27_by_Michelangelo_Fir_JBU004.jpg/960px-%27David%27_by_Michelangelo_Fir_JBU004.jpg",
+    "CorrectAnswer": "David",
+    "IncorrectAnswers": [
+      "The Thinker",
+      "Discobolus",
+      "Venus de Milo"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who created 'The Thinker'?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Le_Penseur_by_Rodin_%28Kunsthalle_Bielefeld%29_2014-04-10.JPG/960px-Le_Penseur_by_Rodin_%28Kunsthalle_Bielefeld%29_2014-04-10.JPG",
+    "CorrectAnswer": "Auguste Rodin",
+    "IncorrectAnswers": [
+      "Michelangelo",
+      "Bernini",
+      "Donatello"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this street art.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Banksy",
+    "IncorrectAnswers": [
+      "Shepard Fairey",
+      "Keith Haring",
+      "Basquiat"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who painted 'Water Lilies'?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Reflections_of_Clouds_on_the_Water-Lily_Pond.jpg/960px-Reflections_of_Clouds_on_the_Water-Lily_Pond.jpg",
+    "CorrectAnswer": "Claude Monet",
+    "IncorrectAnswers": [
+      "Manet",
+      "Renoir",
+      "Degas"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this pointillist painting.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/A_Sunday_on_La_Grande_Jatte%2C_Georges_Seurat%2C_1884.jpg/960px-A_Sunday_on_La_Grande_Jatte%2C_Georges_Seurat%2C_1884.jpg",
+    "CorrectAnswer": "A Sunday Afternoon on the Island of La Grande Jatte",
+    "IncorrectAnswers": [
+      "The Starry Night",
+      "The Scream",
+      "Impression, Sunrise"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What style is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Cubism",
+    "IncorrectAnswers": [
+      "Surrealism",
+      "Impressionism",
+      "Realism"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who is the artist of 'The Kiss'?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/The_Kiss_-_Gustav_Klimt_-_Google_Cultural_Institute.jpg/960px-The_Kiss_-_Gustav_Klimt_-_Google_Cultural_Institute.jpg",
+    "CorrectAnswer": "Gustav Klimt",
+    "IncorrectAnswers": [
+      "Egon Schiele",
+      "Oskar Kokoschka",
+      "Marc Chagall"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who painted 'Guernica'?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Pablo Picasso",
+    "IncorrectAnswers": [
+      "Salvador Dali",
+      "Joan Miro",
+      "Frida Kahlo"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this soup can art.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Campbell%27s_Soup_Cans_by_Andy_Warhol.jpg/960px-Campbell%27s_Soup_Cans_by_Andy_Warhol.jpg",
+    "CorrectAnswer": "Andy Warhol",
+    "IncorrectAnswers": [
+      "Roy Lichtenstein",
+      "Jasper Johns",
+      "Jackson Pollock"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who painted 'The Last Supper'?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/The_Last_Supper_-_Leonardo_Da_Vinci_-_High_Resolution_32x16.jpg/960px-The_Last_Supper_-_Leonardo_Da_Vinci_-_High_Resolution_32x16.jpg",
+    "CorrectAnswer": "Leonardo da Vinci",
+    "IncorrectAnswers": [
+      "Michelangelo",
+      "Raphael",
+      "Tintoretto"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who painted 'The Night Watch'?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/La_ronda_de_noche%2C_por_Rembrandt_van_Rijn.jpg/960px-La_ronda_de_noche%2C_por_Rembrandt_van_Rijn.jpg",
+    "CorrectAnswer": "Rembrandt",
+    "IncorrectAnswers": [
+      "Vermeer",
+      "Rubens",
+      "Van Dyck"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this Frida Kahlo painting.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Self-Portrait",
+    "IncorrectAnswers": [
+      "The Two Fridas",
+      "The Broken Column",
+      "Diego and I"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Who painted this ballerina?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Edgar Degas",
+    "IncorrectAnswers": [
+      "Monet",
+      "Manet",
+      "Renoir"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who is the artist?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Edward Hopper",
+    "IncorrectAnswers": [
+      "Grant Wood",
+      "Norman Rockwell",
+      "Andrew Wyeth"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this melting clock painting.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "The Persistence of Memory",
+    "IncorrectAnswers": [
+      "Time Transfixed",
+      "The Treachery of Images",
+      "Golconda"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this artist.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Haringpalladium_%28cropped%29.jpg/960px-Haringpalladium_%28cropped%29.jpg",
+    "CorrectAnswer": "Keith Haring",
+    "IncorrectAnswers": [
+      "Basquiat",
+      "Banksy",
+      "Warhol"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What movement is this?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Monet_-_Impression%2C_Sunrise.jpg/960px-Monet_-_Impression%2C_Sunrise.jpg",
+    "CorrectAnswer": "Impressionism",
+    "IncorrectAnswers": [
+      "Expressionism",
+      "Surrealism",
+      "Romanticism"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this ancient sculpture?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Front_views_of_the_Venus_de_Milo.jpg/960px-Front_views_of_the_Venus_de_Milo.jpg",
+    "CorrectAnswer": "Venus de Milo",
+    "IncorrectAnswers": [
+      "Winged Victory",
+      "Laocoon",
+      "David"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this Gothic painting.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Grant_Wood_-_American_Gothic_-_Google_Art_Project.jpg/960px-Grant_Wood_-_American_Gothic_-_Google_Art_Project.jpg",
+    "CorrectAnswer": "American Gothic",
+    "IncorrectAnswers": [
+      "Whistler's Mother",
+      "The Son of Man",
+      "Nighthawks"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Who painted sunflowers?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Vincent_Willem_van_Gogh_127.jpg/960px-Vincent_Willem_van_Gogh_127.jpg",
+    "CorrectAnswer": "Vincent van Gogh",
+    "IncorrectAnswers": [
+      "Monet",
+      "Gauguin",
+      "Cezanne"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this Renaissance artist.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Raffaello_Sanzio.jpg/960px-Raffaello_Sanzio.jpg",
+    "CorrectAnswer": "Raphael",
+    "IncorrectAnswers": [
+      "Michelangelo",
+      "Da Vinci",
+      "Titian"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this pop art.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Roy Lichtenstein",
+    "IncorrectAnswers": [
+      "Andy Warhol",
+      "Keith Haring",
+      "Jasper Johns"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who painted 'The School of Athens'?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/%22The_School_of_Athens%22_by_Raffaello_Sanzio_da_Urbino.jpg/960px-%22The_School_of_Athens%22_by_Raffaello_Sanzio_da_Urbino.jpg",
+    "CorrectAnswer": "Raphael",
+    "IncorrectAnswers": [
+      "Michelangelo",
+      "Da Vinci",
+      "Botticelli"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this sculpture.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Victoire_de_Samothrace_-_Musee_du_Louvre_-_20190812.jpg/960px-Victoire_de_Samothrace_-_Musee_du_Louvre_-_20190812.jpg",
+    "CorrectAnswer": "Winged Victory of Samothrace",
+    "IncorrectAnswers": [
+      "Venus de Milo",
+      "The Thinker",
+      "David"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What art tool is this?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Palette_and_painting_knives.jpg/960px-Palette_and_painting_knives.jpg",
+    "CorrectAnswer": "Palette Knife",
+    "IncorrectAnswers": [
+      "Brush",
+      "Easel",
+      "Canvas"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who painted 'Liberty Leading the People'?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/La_Libert%C3%A9_guidant_le_peuple_-_Eug%C3%A8ne_Delacroix_-_Mus%C3%A9e_du_Louvre_Peintures_RF_129_-_apr%C3%A8s_restauration_2024.jpg/960px-La_Libert%C3%A9_guidant_le_peuple_-_Eug%C3%A8ne_Delacroix_-_Mus%C3%A9e_du_Louvre_Peintures_RF_129_-_apr%C3%A8s_restauration_2024.jpg",
+    "CorrectAnswer": "Eugene Delacroix",
+    "IncorrectAnswers": [
+      "Gericault",
+      "David",
+      "Ingres"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this painting.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/The_Garden_of_earthly_delights.jpg/960px-The_Garden_of_earthly_delights.jpg",
+    "CorrectAnswer": "The Garden of Earthly Delights",
+    "IncorrectAnswers": [
+      "The Last Judgment",
+      "The Haywain",
+      "The Tower of Babel"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who is the artist?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Jackson_Pollock%27s_passport_%28cropped%29.jpg/603px-Jackson_Pollock%27s_passport_%28cropped%29.jpg",
+    "CorrectAnswer": "Jackson Pollock",
+    "IncorrectAnswers": [
+      "Mark Rothko",
+      "Willem de Kooning",
+      "Franz Kline"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this object?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/StateLibQld_1_102016_Interior_of_Brisbane_Technical_College_Signwriting_class%2C_ca._1900.jpg/960px-StateLibQld_1_102016_Interior_of_Brisbane_Technical_College_Signwriting_class%2C_ca._1900.jpg",
+    "CorrectAnswer": "Easel",
+    "IncorrectAnswers": [
+      "Canvas",
+      "Palette",
+      "Brush"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this artist.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Jean-Michel_Basquiat_passport_%28cropped%29.jpg",
+    "CorrectAnswer": "Jean-Michel Basquiat",
+    "IncorrectAnswers": [
+      "Keith Haring",
+      "Andy Warhol",
+      "Banksy"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who painted 'The Wanderer above the Sea of Fog'?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Caspar_David_Friedrich_-_Wanderer_above_the_Sea_of_Fog.jpeg/960px-Caspar_David_Friedrich_-_Wanderer_above_the_Sea_of_Fog.jpeg",
+    "CorrectAnswer": "Caspar David Friedrich",
+    "IncorrectAnswers": [
+      "Turner",
+      "Constable",
+      "Blake"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this portrait.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Whistlers_Mother_high_res.jpg/960px-Whistlers_Mother_high_res.jpg",
+    "CorrectAnswer": "Whistler's Mother",
+    "IncorrectAnswers": [
+      "American Gothic",
+      "Mona Lisa",
+      "The Girl with a Pearl Earring"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who sculpted 'The Pieta'?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Pieta_de_Michelangelo_-_Vaticano.jpg/960px-Pieta_de_Michelangelo_-_Vaticano.jpg",
+    "CorrectAnswer": "Michelangelo",
+    "IncorrectAnswers": [
+      "Donatello",
+      "Bernini",
+      "Rodin"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Identify this big cat.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Bengal_tiger_%28Panthera_tigris_tigris%29_female_3_crop.jpg/960px-Bengal_tiger_%28Panthera_tigris_tigris%29_female_3_crop.jpg",
+    "CorrectAnswer": "Tiger",
+    "IncorrectAnswers": [
+      "Lion",
+      "Leopard",
+      "Jaguar"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this art movement.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/La_ronda_de_noche%2C_por_Rembrandt_van_Rijn.jpg/960px-La_ronda_de_noche%2C_por_Rembrandt_van_Rijn.jpg",
+    "CorrectAnswer": "Baroque",
+    "IncorrectAnswers": [
+      "Renaissance",
+      "Rococo",
+      "Neoclassicism"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Neolithic_chisels_4100-2700_BC.jpg/960px-Neolithic_chisels_4100-2700_BC.jpg",
+    "CorrectAnswer": "Chisel",
+    "IncorrectAnswers": [
+      "Hammer",
+      "Brush",
+      "Palette"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this material?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Vermeer-view-of-delft.jpg/960px-Vermeer-view-of-delft.jpg",
+    "CorrectAnswer": "Oil Paint",
+    "IncorrectAnswers": [
+      "Acrylic",
+      "Watercolor",
+      "Gouache"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What animal is this?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/African_Bush_Elephant.jpg/960px-African_Bush_Elephant.jpg",
+    "CorrectAnswer": "Elephant",
+    "IncorrectAnswers": [
+      "Rhino",
+      "Hippo",
+      "Buffalo"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What bird is this?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Toucans_%28Ramphastidae%29.jpg/960px-Toucans_%28Ramphastidae%29.jpg",
+    "CorrectAnswer": "Toucan",
+    "IncorrectAnswers": [
+      "Hornbill",
+      "Parrot",
+      "Macaw"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Who is the artist?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Georgia_O%27Keeffe_MET_DP230868.jpg/960px-Georgia_O%27Keeffe_MET_DP230868.jpg",
+    "CorrectAnswer": "Georgia O'Keeffe",
+    "IncorrectAnswers": [
+      "Frida Kahlo",
+      "Mary Cassatt",
+      "Tamara de Lempicka"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Who painted 'The Son of Man'?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Rene Magritte",
+    "IncorrectAnswers": [
+      "Salvador Dali",
+      "Max Ernst",
+      "Giorgio de Chirico"
+    ]
+  },
+  {
+    "Category": "Art",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this painting.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Las_Meninas%2C_by_Diego_Vel%C3%A1zquez%2C_from_Prado_in_Google_Earth.jpg/960px-Las_Meninas%2C_by_Diego_Vel%C3%A1zquez%2C_from_Prado_in_Google_Earth.jpg",
+    "CorrectAnswer": "Las Meninas",
+    "IncorrectAnswers": [
+      "The Night Watch",
+      "The Third of May 1808",
+      "The Burial of the Count of Orgaz"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "This pattern belongs to?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Plains_Zebra_Equus_quagga_cropped.jpg/938px-Plains_Zebra_Equus_quagga_cropped.jpg",
+    "CorrectAnswer": "Zebra",
+    "IncorrectAnswers": [
+      "Giraffe",
+      "Okapi",
+      "Lemur"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this marine animal?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Amphiprion_ocellaris_%28Clown_anemonefish%29_by_Nick_Hobgood.jpg/960px-Amphiprion_ocellaris_%28Clown_anemonefish%29_by_Nick_Hobgood.jpg",
+    "CorrectAnswer": "Clownfish",
+    "IncorrectAnswers": [
+      "Goldfish",
+      "Pufferfish",
+      "Angelfish"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this reptile.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Chamaeleonidae-01.jpg/960px-Chamaeleonidae-01.jpg",
+    "CorrectAnswer": "Chameleon",
+    "IncorrectAnswers": [
+      "Iguana",
+      "Gecko",
+      "Monitor Lizard"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "This eye belongs to?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Cat",
+    "IncorrectAnswers": [
+      "Dog",
+      "Fox",
+      "Wolf"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What animal is this close-up of?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Giraffe_Mikumi_National_Park.jpg/960px-Giraffe_Mikumi_National_Park.jpg",
+    "CorrectAnswer": "Giraffe",
+    "IncorrectAnswers": [
+      "Leopard",
+      "Cheetah",
+      "Hyena"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this bear.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Polar Bear",
+    "IncorrectAnswers": [
+      "Grizzly Bear",
+      "Panda",
+      "Brown Bear"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What insect is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Monarch Butterfly",
+    "IncorrectAnswers": [
+      "Moth",
+      "Dragonfly",
+      "Ladybug"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Identify this dog breed.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Golden_Retriever_Dukedestiny01_drvd.jpg/652px-Golden_Retriever_Dukedestiny01_drvd.jpg",
+    "CorrectAnswer": "Golden Retriever",
+    "IncorrectAnswers": [
+      "Labrador",
+      "Beagle",
+      "Poodle"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this marsupial?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Forester_kangaroo_%28Macropus_giganteus_tasmaniensis%29_juvenile_hopping_Esk_Valley.jpg/960px-Forester_kangaroo_%28Macropus_giganteus_tasmaniensis%29_juvenile_hopping_Esk_Valley.jpg",
+    "CorrectAnswer": "Kangaroo",
+    "IncorrectAnswers": [
+      "Wallaby",
+      "Koala",
+      "Wombat"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this sea creature.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Octopus2.jpg/960px-Octopus2.jpg",
+    "CorrectAnswer": "Octopus",
+    "IncorrectAnswers": [
+      "Squid",
+      "Cuttlefish",
+      "Jellyfish"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this shark.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Hammerhead Shark",
+    "IncorrectAnswers": [
+      "Great White Shark",
+      "Tiger Shark",
+      "Bull Shark"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Giant Panda",
+    "IncorrectAnswers": [
+      "Polar Bear",
+      "Black Bear",
+      "Grizzly Bear"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What bird is this?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Aptenodytes_forsteri_-Snow_Hill_Island%2C_Antarctica_-adults_and_juvenile-8.jpg/872px-Aptenodytes_forsteri_-Snow_Hill_Island%2C_Antarctica_-adults_and_juvenile-8.jpg",
+    "CorrectAnswer": "Penguin",
+    "IncorrectAnswers": [
+      "Puffin",
+      "Seagull",
+      "Albatross"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this rodent.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Hydrochoeris_hydrochaeris_in_Brazil_in_Petr%C3%B3polis%2C_Rio_de_Janeiro%2C_Brazil_09.jpg/960px-Hydrochoeris_hydrochaeris_in_Brazil_in_Petr%C3%B3polis%2C_Rio_de_Janeiro%2C_Brazil_09.jpg",
+    "CorrectAnswer": "Capybara",
+    "IncorrectAnswers": [
+      "Beaver",
+      "Guinea Pig",
+      "Hamster"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What animal is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Red Panda",
+    "IncorrectAnswers": [
+      "Raccoon",
+      "Fox",
+      "Lemur"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this cat.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Leopard",
+    "IncorrectAnswers": [
+      "Cheetah",
+      "Jaguar",
+      "Cougar"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this owl.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Snowy Owl",
+    "IncorrectAnswers": [
+      "Barn Owl",
+      "Great Horned Owl",
+      "Tawny Owl"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What insect is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Honey Bee",
+    "IncorrectAnswers": [
+      "Wasp",
+      "Hornet",
+      "Fly"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this bird.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Kingfisher",
+    "IncorrectAnswers": [
+      "Hummingbird",
+      "Woodpecker",
+      "Blue Jay"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/020_The_lion_king_Snyggve_in_the_Serengeti_National_Park_Photo_by_Giles_Laurent.jpg/960px-020_The_lion_king_Snyggve_in_the_Serengeti_National_Park_Photo_by_Giles_Laurent.jpg",
+    "CorrectAnswer": "Lion",
+    "IncorrectAnswers": [
+      "Tiger",
+      "Leopard",
+      "Cheetah"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this predator.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Eurasian_wolf_2.jpg/960px-Eurasian_wolf_2.jpg",
+    "CorrectAnswer": "Wolf",
+    "IncorrectAnswers": [
+      "Coyote",
+      "Fox",
+      "Jackal"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this reptile.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Turtle",
+    "IncorrectAnswers": [
+      "Tortoise",
+      "Terrapin",
+      "Crab"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this whale.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Killerwhales_jumping.jpg/960px-Killerwhales_jumping.jpg",
+    "CorrectAnswer": "Orca",
+    "IncorrectAnswers": [
+      "Blue Whale",
+      "Humpback Whale",
+      "Sperm Whale"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What bird is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Peacock",
+    "IncorrectAnswers": [
+      "Pheasant",
+      "Turkey",
+      "Grouse"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this amphibian?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Axolotl_ganz.jpg/960px-Axolotl_ganz.jpg",
+    "CorrectAnswer": "Axolotl",
+    "IncorrectAnswers": [
+      "Salamander",
+      "Newt",
+      "Frog"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this farm animal.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Cow",
+    "IncorrectAnswers": [
+      "Horse",
+      "Sheep",
+      "Goat"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this primate.",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Gorille_des_plaines_de_l%27ouest_%C3%A0_l%27Espace_Zoologique.jpg/960px-Gorille_des_plaines_de_l%27ouest_%C3%A0_l%27Espace_Zoologique.jpg",
+    "CorrectAnswer": "Gorilla",
+    "IncorrectAnswers": [
+      "Chimpanzee",
+      "Orangutan",
+      "Baboon"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Frog",
+    "IncorrectAnswers": [
+      "Toad",
+      "Newt",
+      "Salamander"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this?",
+    "MediaPayload": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Duck-billed_platypus_%28Ornithorhynchus_anatinus%29_Scottsdale.jpg/960px-Duck-billed_platypus_%28Ornithorhynchus_anatinus%29_Scottsdale.jpg",
+    "CorrectAnswer": "Platypus",
+    "IncorrectAnswers": [
+      "Beaver",
+      "Otter",
+      "Echidna"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this arachnid.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Tarantula",
+    "IncorrectAnswers": [
+      "Black Widow",
+      "Scorpion",
+      "Wolf Spider"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What animal is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Pangolin",
+    "IncorrectAnswers": [
+      "Armadillo",
+      "Anteater",
+      "Aardvark"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Dolphin",
+    "IncorrectAnswers": [
+      "Shark",
+      "Whale",
+      "Porpoise"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this animal.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Horse",
+    "IncorrectAnswers": [
+      "Donkey",
+      "Mule",
+      "Zebra"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Identify this Japanese food.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Sushi",
+    "IncorrectAnswers": [
+      "Ramen",
+      "Tempura",
+      "Udon"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Komodo Dragon",
+    "IncorrectAnswers": [
+      "Iguana",
+      "Monitor Lizard",
+      "Crocodile"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Swan",
+    "IncorrectAnswers": [
+      "Duck",
+      "Goose",
+      "Pelican"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this jellyfish.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Jellyfish",
+    "IncorrectAnswers": [
+      "Squid",
+      "Octopus",
+      "Coral"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Tapir",
+    "IncorrectAnswers": [
+      "Pig",
+      "Boar",
+      "Anteater"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this insect.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Ladybug",
+    "IncorrectAnswers": [
+      "Beetle",
+      "Ant",
+      "Fly"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this crab.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Hermit Crab",
+    "IncorrectAnswers": [
+      "King Crab",
+      "Fiddler Crab",
+      "Lobster"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Squirrel",
+    "IncorrectAnswers": [
+      "Chipmunk",
+      "Rat",
+      "Mouse"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this deer.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Moose",
+    "IncorrectAnswers": [
+      "Elk",
+      "Reindeer",
+      "Caribou"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What dish is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Pizza",
+    "IncorrectAnswers": [
+      "Lasagna",
+      "Calzone",
+      "Pasta"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Rabbit",
+    "IncorrectAnswers": [
+      "Hare",
+      "Guinea Pig",
+      "Hamster"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this bird.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Flamingo",
+    "IncorrectAnswers": [
+      "Stork",
+      "Heron",
+      "Crane"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this bat.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Fruit Bat",
+    "IncorrectAnswers": [
+      "Vampire Bat",
+      "Microbat",
+      "Flying Squirrel"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this fish.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Pufferfish",
+    "IncorrectAnswers": [
+      "Lionfish",
+      "Angelfish",
+      "Tuna"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What animal is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Narwhal",
+    "IncorrectAnswers": [
+      "Beluga",
+      "Dolphin",
+      "Walrus"
+    ]
+  },
+  {
+    "Category": "Animals",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this animal.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Sloth",
+    "IncorrectAnswers": [
+      "Koala",
+      "Monkey",
+      "Lemur"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this pastry?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Croissant",
+    "IncorrectAnswers": [
+      "Bagel",
+      "Donut",
+      "Pretzel"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this Mexican dish.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Tacos",
+    "IncorrectAnswers": [
+      "Burrito",
+      "Quesadilla",
+      "Enchilada"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this Indian bread.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Naan",
+    "IncorrectAnswers": [
+      "Roti",
+      "Pita",
+      "Tortilla"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this snack?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Pretzel",
+    "IncorrectAnswers": [
+      "Bagel",
+      "Donut",
+      "Churro"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this Spanish dish?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Paella",
+    "IncorrectAnswers": [
+      "Risotto",
+      "Jambalaya",
+      "Biryani"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this noodle soup.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Ramen",
+    "IncorrectAnswers": [
+      "Pho",
+      "Laksa",
+      "Miso Soup"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this sweet treat?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Macaron",
+    "IncorrectAnswers": [
+      "Cookie",
+      "Cupcake",
+      "Muffin"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this fast food item.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Hamburger",
+    "IncorrectAnswers": [
+      "Hot Dog",
+      "Sandwich",
+      "Taco"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What fruit is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Strawberry",
+    "IncorrectAnswers": [
+      "Raspberry",
+      "Cherry",
+      "Apple"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this dessert.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Cheesecake",
+    "IncorrectAnswers": [
+      "Pie",
+      "Tart",
+      "Brownie"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this Middle Eastern dish?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Falafel",
+    "IncorrectAnswers": [
+      "Hummus",
+      "Kebab",
+      "Shawarma"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this dish?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Pad Thai",
+    "IncorrectAnswers": [
+      "Chow Mein",
+      "Lo Mein",
+      "Fried Rice"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this salad.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Caesar Salad",
+    "IncorrectAnswers": [
+      "Greek Salad",
+      "Cobb Salad",
+      "Garden Salad"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this dip.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Guacamole",
+    "IncorrectAnswers": [
+      "Salsa",
+      "Hummus",
+      "Queso"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this vegetable.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Broccoli",
+    "IncorrectAnswers": [
+      "Cauliflower",
+      "Spinach",
+      "Kale"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this Korean dish?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Kimchi",
+    "IncorrectAnswers": [
+      "Bibimbap",
+      "Bulgogi",
+      "Tteokbokki"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this French dish.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Ratatouille",
+    "IncorrectAnswers": [
+      "Coq au Vin",
+      "Beef Bourguignon",
+      "Souffle"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Chocolate",
+    "IncorrectAnswers": [
+      "Candy",
+      "Cake",
+      "Cookie"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this fruit.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Pineapple",
+    "IncorrectAnswers": [
+      "Mango",
+      "Banana",
+      "Apple"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this drink?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Latte",
+    "IncorrectAnswers": [
+      "Espresso",
+      "Tea",
+      "Juice"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this breakfast item.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Pancakes",
+    "IncorrectAnswers": [
+      "Waffles",
+      "French Toast",
+      "Crepes"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this soup.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Tomato Soup",
+    "IncorrectAnswers": [
+      "Chicken Soup",
+      "Mushroom Soup",
+      "Onion Soup"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this bread.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Baguette",
+    "IncorrectAnswers": [
+      "Ciabatta",
+      "Sourdough",
+      "Rye"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this Italian dessert?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Tiramisu",
+    "IncorrectAnswers": [
+      "Cannoli",
+      "Gelato",
+      "Panna Cotta"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Ice Cream",
+    "IncorrectAnswers": [
+      "Yogurt",
+      "Sorbet",
+      "Pudding"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this dumplings.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Dim Sum",
+    "IncorrectAnswers": [
+      "Gyoza",
+      "Pierogi",
+      "Ravioli"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this food.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "French Fries",
+    "IncorrectAnswers": [
+      "Potato Chips",
+      "Hash Browns",
+      "Tater Tots"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this cheese.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Swiss Cheese",
+    "IncorrectAnswers": [
+      "Cheddar",
+      "Mozzarella",
+      "Brie"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this drink?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Matcha",
+    "IncorrectAnswers": [
+      "Green Tea",
+      "Black Tea",
+      "Oolong"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What vegetable is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Carrot",
+    "IncorrectAnswers": [
+      "Potato",
+      "Turnip",
+      "Radish"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this fruit?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Watermelon",
+    "IncorrectAnswers": [
+      "Melon",
+      "Pumpkin",
+      "Cucumber"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this seafood.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Shrimp Cocktail",
+    "IncorrectAnswers": [
+      "Lobster",
+      "Crab",
+      "Oysters"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this Vietnamese soup?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Pho",
+    "IncorrectAnswers": [
+      "Ramen",
+      "Udon",
+      "Miso"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this nut.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Almond",
+    "IncorrectAnswers": [
+      "Peanut",
+      "Cashew",
+      "Walnut"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this Turkish dish.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Baklava",
+    "IncorrectAnswers": [
+      "Delight",
+      "Halva",
+      "Kunafa"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this pasta.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Spaghetti",
+    "IncorrectAnswers": [
+      "Penne",
+      "Fusilli",
+      "Ravioli"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this cake.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Cupcake",
+    "IncorrectAnswers": [
+      "Muffin",
+      "Brownie",
+      "Cookie"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this condiment?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Ketchup",
+    "IncorrectAnswers": [
+      "Mustard",
+      "Mayo",
+      "Relish"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this breakfast.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Eggs Benedict",
+    "IncorrectAnswers": [
+      "Omelette",
+      "Scrambled Eggs",
+      "Fried Eggs"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this British dish?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Fish and Chips",
+    "IncorrectAnswers": [
+      "Pie and Mash",
+      "Roast Dinner",
+      "Bangers and Mash"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this cocktail?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Mojito",
+    "IncorrectAnswers": [
+      "Margarita",
+      "Martini",
+      "Daiquiri"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What fruit is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Banana",
+    "IncorrectAnswers": [
+      "Plantain",
+      "Corn",
+      "Zucchini"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this spice.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Cinnamon",
+    "IncorrectAnswers": [
+      "Nutmeg",
+      "Clove",
+      "Ginger"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Popcorn",
+    "IncorrectAnswers": [
+      "Chips",
+      "Nachos",
+      "Pretzels"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this berry.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Blueberry",
+    "IncorrectAnswers": [
+      "Blackberry",
+      "Raspberry",
+      "Grape"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this Greek dish.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Moussaka",
+    "IncorrectAnswers": [
+      "Souvlaki",
+      "Gyro",
+      "Spanakopita"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this Japanese snack?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Onigiri",
+    "IncorrectAnswers": [
+      "Sushi",
+      "Mochi",
+      "Tempura"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What instrument is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Electric Guitar",
+    "IncorrectAnswers": [
+      "Bass Guitar",
+      "Acoustic Guitar",
+      "Ukulele"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this brass instrument.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Saxophone",
+    "IncorrectAnswers": [
+      "Trumpet",
+      "Trombone",
+      "Clarinet"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Harp",
+    "IncorrectAnswers": [
+      "Lyre",
+      "Lute",
+      "Zither"
+    ]
+  },
+  {
+    "Category": "Food",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this drink.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Orange Juice",
+    "IncorrectAnswers": [
+      "Apple Juice",
+      "Lemonade",
+      "Soda"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this string instrument.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Violin",
+    "IncorrectAnswers": [
+      "Cello",
+      "Viola",
+      "Double Bass"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Piano",
+    "IncorrectAnswers": [
+      "Organ",
+      "Harpsichord",
+      "Synthesizer"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this woodwind.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Flute",
+    "IncorrectAnswers": [
+      "Clarinet",
+      "Oboe",
+      "Recorder"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Drum Kit",
+    "IncorrectAnswers": [
+      "Percussion",
+      "Cymbals",
+      "Bongo"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this instrument.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Trumpet",
+    "IncorrectAnswers": [
+      "Trombone",
+      "Tuba",
+      "French Horn"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this percussion instrument.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Djembe",
+    "IncorrectAnswers": [
+      "Bongo",
+      "Conga",
+      "Snare Drum"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this drum set component.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Snare Drum",
+    "IncorrectAnswers": [
+      "Bass Drum",
+      "Tom-Tom",
+      "Cymbal"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What instrument is being played?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Bagpipes",
+    "IncorrectAnswers": [
+      "Accordion",
+      "Didgeridoo",
+      "Harmonica"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Acoustic Guitar",
+    "IncorrectAnswers": [
+      "Electric Guitar",
+      "Banjo",
+      "Mandolin"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this instrument.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Cello",
+    "IncorrectAnswers": [
+      "Violin",
+      "Double Bass",
+      "Viola"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Ukulele",
+    "IncorrectAnswers": [
+      "Guitar",
+      "Banjo",
+      "Mandolin"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this keyboard.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Accordion",
+    "IncorrectAnswers": [
+      "Piano",
+      "Organ",
+      "Melodica"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What instrument is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Microphone",
+    "IncorrectAnswers": [
+      "Speaker",
+      "Amp",
+      "Headphones"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this string instrument.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Banjo",
+    "IncorrectAnswers": [
+      "Guitar",
+      "Ukulele",
+      "Mandolin"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this brass instrument.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Trombone",
+    "IncorrectAnswers": [
+      "Trumpet",
+      "Tuba",
+      "French Horn"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Clarinet",
+    "IncorrectAnswers": [
+      "Flute",
+      "Oboe",
+      "Bassoon"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this instrument.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "French Horn",
+    "IncorrectAnswers": [
+      "Trumpet",
+      "Tuba",
+      "Trombone"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Bongos",
+    "IncorrectAnswers": [
+      "Congas",
+      "Djembe",
+      "Tabla"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this electronic instrument.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Synthesizer",
+    "IncorrectAnswers": [
+      "Piano",
+      "Organ",
+      "Keytar"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this large instrument?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Double Bass",
+    "IncorrectAnswers": [
+      "Cello",
+      "Violin",
+      "Viola"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Sitar",
+    "IncorrectAnswers": [
+      "Guitar",
+      "Lute",
+      "Banjo"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Harmonica",
+    "IncorrectAnswers": [
+      "Kazoo",
+      "Whistle",
+      "Recorder"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Tuba",
+    "IncorrectAnswers": [
+      "Trumpet",
+      "Trombone",
+      "Sousaphone"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this wind instrument.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Oboe",
+    "IncorrectAnswers": [
+      "Clarinet",
+      "Flute",
+      "Bassoon"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Xylophone",
+    "IncorrectAnswers": [
+      "Marimba",
+      "Vibraphone",
+      "Glockenspiel"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this instrument.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Bass Guitar",
+    "IncorrectAnswers": [
+      "Electric Guitar",
+      "Acoustic Guitar",
+      "Double Bass"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this percussion.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Tambourine",
+    "IncorrectAnswers": [
+      "Maracas",
+      "Castanets",
+      "Triangle"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Didgeridoo",
+    "IncorrectAnswers": [
+      "Alphorn",
+      "Vuvuzela",
+      "Pipe"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Maracas",
+    "IncorrectAnswers": [
+      "Shakers",
+      "Tambourine",
+      "Castanets"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Triangle",
+    "IncorrectAnswers": [
+      "Bell",
+      "Chime",
+      "Gong"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this instrument.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Mandolin",
+    "IncorrectAnswers": [
+      "Guitar",
+      "Ukulele",
+      "Lute"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Gong",
+    "IncorrectAnswers": [
+      "Cymbal",
+      "Bell",
+      "Drum"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Pan Flute",
+    "IncorrectAnswers": [
+      "Harmonica",
+      "Recorder",
+      "Ocarina"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Koto",
+    "IncorrectAnswers": [
+      "Shamisen",
+      "Biwa",
+      "Guzheng"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Recorder",
+    "IncorrectAnswers": [
+      "Flute",
+      "Clarinet",
+      "Whistle"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Cowbell",
+    "IncorrectAnswers": [
+      "Triangle",
+      "Woodblock",
+      "Agogo"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Lute",
+    "IncorrectAnswers": [
+      "Guitar",
+      "Mandolin",
+      "Oud"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Music Stand",
+    "IncorrectAnswers": [
+      "Easel",
+      "Tripod",
+      "Podium"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Baton",
+    "IncorrectAnswers": [
+      "Stick",
+      "Wand",
+      "Rod"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Metronome",
+    "IncorrectAnswers": [
+      "Tuner",
+      "Timer",
+      "Clock"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Amplifier",
+    "IncorrectAnswers": [
+      "Speaker",
+      "Subwoofer",
+      "Monitor"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Turntable",
+    "IncorrectAnswers": [
+      "CD Player",
+      "Cassette Deck",
+      "Radio"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Headphones",
+    "IncorrectAnswers": [
+      "Earbuds",
+      "Speaker",
+      "Mic"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Mic Stand",
+    "IncorrectAnswers": [
+      "Tripod",
+      "Light Stand",
+      "Pole"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What planet is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "The Moon",
+    "IncorrectAnswers": [
+      "Mercury",
+      "Venus",
+      "Mars"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Which planet has these rings?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Saturn",
+    "IncorrectAnswers": [
+      "Jupiter",
+      "Uranus",
+      "Neptune"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this planet.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Jupiter",
+    "IncorrectAnswers": [
+      "Saturn",
+      "Mars",
+      "Neptune"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this celestial object?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Pillars of Creation",
+    "IncorrectAnswers": [
+      "Crab Nebula",
+      "Andromeda Galaxy",
+      "Black Hole"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Vinyl Record",
+    "IncorrectAnswers": [
+      "CD",
+      "Cassette",
+      "Tape"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this star.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "The Sun",
+    "IncorrectAnswers": [
+      "Proxima Centauri",
+      "Sirius",
+      "Betelgeuse"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Mixing Console",
+    "IncorrectAnswers": [
+      "Synthesizer",
+      "Computer",
+      "Amplifier"
+    ]
+  },
+  {
+    "Category": "Instruments",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Cassette Tape",
+    "IncorrectAnswers": [
+      "Vinyl",
+      "CD",
+      "8-Track"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this dwarf planet.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Pluto",
+    "IncorrectAnswers": [
+      "Eris",
+      "Ceres",
+      "Haumea"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this red planet?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Mars",
+    "IncorrectAnswers": [
+      "Venus",
+      "Mercury",
+      "Jupiter"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this galaxy.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Andromeda Galaxy",
+    "IncorrectAnswers": [
+      "Milky Way",
+      "Triangulum Galaxy",
+      "Whirlpool Galaxy"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What phenomenon is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Aurora Borealis",
+    "IncorrectAnswers": [
+      "Solar Flare",
+      "Comet Tail",
+      "Supernova"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Nebula",
+    "IncorrectAnswers": [
+      "Galaxy",
+      "Star Cluster",
+      "Black Hole"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this object?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Earth",
+    "IncorrectAnswers": [
+      "Mars",
+      "Venus",
+      "Neptune"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this vehicle.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Space Shuttle",
+    "IncorrectAnswers": [
+      "Apollo 11",
+      "Falcon 9",
+      "Soyuz"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this object.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Asteroid",
+    "IncorrectAnswers": [
+      "Comet",
+      "Meteor",
+      "Planet"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Astronaut",
+    "IncorrectAnswers": [
+      "Pilot",
+      "Diver",
+      "Soldier"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "ISS",
+    "IncorrectAnswers": [
+      "Mir",
+      "Skylab",
+      "Tiangong"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Black Hole",
+    "IncorrectAnswers": [
+      "Neutron Star",
+      "Supernova",
+      "Quasar"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Name this phenomenon.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Solar Eclipse",
+    "IncorrectAnswers": [
+      "Lunar Eclipse",
+      "Full Moon",
+      "New Moon"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this planet.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Venus",
+    "IncorrectAnswers": [
+      "Mars",
+      "Mercury",
+      "Earth"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What galaxy is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Milky Way",
+    "IncorrectAnswers": [
+      "Andromeda",
+      "Triangulum",
+      "Sombrero"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Supernova",
+    "IncorrectAnswers": [
+      "Black Hole",
+      "Nebula",
+      "Star"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "Identify this object.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Rocket",
+    "IncorrectAnswers": [
+      "Plane",
+      "Missile",
+      "Drone"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Craters",
+    "IncorrectAnswers": [
+      "Valleys",
+      "Mountains",
+      "Lakes"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this constellation.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Orion",
+    "IncorrectAnswers": [
+      "Ursa Major",
+      "Cassiopeia",
+      "Scorpius"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this phenomenon.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Meteor Shower",
+    "IncorrectAnswers": [
+      "Comet",
+      "Asteroid",
+      "Aurora"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this object.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Satellite",
+    "IncorrectAnswers": [
+      "Station",
+      "Probe",
+      "Rocket"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this moon.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Europa",
+    "IncorrectAnswers": [
+      "Titan",
+      "Io",
+      "Ganymede"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Comet",
+    "IncorrectAnswers": [
+      "Asteroid",
+      "Meteor",
+      "Star"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this rover.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Mars Rover",
+    "IncorrectAnswers": [
+      "Lunar Rover",
+      "Moon Buggy",
+      "Voyager"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this planet.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Neptune",
+    "IncorrectAnswers": [
+      "Uranus",
+      "Saturn",
+      "Jupiter"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Telescope",
+    "IncorrectAnswers": [
+      "Microscope",
+      "Binoculars",
+      "Camera"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this moon.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Titan",
+    "IncorrectAnswers": [
+      "Europa",
+      "Io",
+      "Callisto"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Solar Panel",
+    "IncorrectAnswers": [
+      "Antenna",
+      "Radiator",
+      "Mirror"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this planet.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Uranus",
+    "IncorrectAnswers": [
+      "Neptune",
+      "Saturn",
+      "Jupiter"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this telescope.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Hubble",
+    "IncorrectAnswers": [
+      "James Webb",
+      "Spitzer",
+      "Chandra"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Space Suit",
+    "IncorrectAnswers": [
+      "Flight Suit",
+      "Wetsuit",
+      "Hazmat Suit"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this object.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Meteorite",
+    "IncorrectAnswers": [
+      "Meteor",
+      "Asteroid",
+      "Rock"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this nebula.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Horsehead Nebula",
+    "IncorrectAnswers": [
+      "Crab Nebula",
+      "Eagle Nebula",
+      "Orion Nebula"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "What is this theory?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Big Bang",
+    "IncorrectAnswers": [
+      "String Theory",
+      "Multiverse",
+      "Evolution"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Observatory",
+    "IncorrectAnswers": [
+      "Planetarium",
+      "Laboratory",
+      "Factory"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Full Moon",
+    "IncorrectAnswers": [
+      "Crescent Moon",
+      "New Moon",
+      "Gibbous Moon"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Capsule",
+    "IncorrectAnswers": [
+      "Shuttle",
+      "Station",
+      "Rocket"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this star.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Sirius",
+    "IncorrectAnswers": [
+      "Polaris",
+      "Betelgeuse",
+      "Rigel"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this phase.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Crescent Moon",
+    "IncorrectAnswers": [
+      "Full Moon",
+      "Half Moon",
+      "New Moon"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Name this event.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Lunar Eclipse",
+    "IncorrectAnswers": [
+      "Solar Eclipse",
+      "Solstice",
+      "Equinox"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "Identify this planet.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Mercury",
+    "IncorrectAnswers": [
+      "Mars",
+      "Venus",
+      "Pluto"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Easy",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Stars",
+    "IncorrectAnswers": [
+      "Planets",
+      "Meteors",
+      "Satellites"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Medium",
+    "Question": "What is this?",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Space Debris",
+    "IncorrectAnswers": [
+      "Asteroid Belt",
+      "Meteor Shower",
+      "Star Cluster"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this mission.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Apollo 11",
+    "IncorrectAnswers": [
+      "Apollo 13",
+      "Gemini 4",
+      "Mercury 7"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Name this probe.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Voyager",
+    "IncorrectAnswers": [
+      "Pioneer",
+      "New Horizons",
+      "Cassini"
+    ]
+  },
+  {
+    "Category": "Space",
+    "Type": "image",
+    "Difficulty": "Hard",
+    "Question": "Identify this constellation.",
+    "MediaPayload": "https://placehold.co/600x400/000000/FFF?text=Image+Not+Found",
+    "CorrectAnswer": "Ursa Major",
+    "IncorrectAnswers": [
+      "Ursa Minor",
+      "Orion",
+      "Leo"
+    ]
+  }
+]

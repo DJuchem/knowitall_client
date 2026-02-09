@@ -43,7 +43,7 @@ class _QuizScreenState extends State<QuizScreen> {
     final game = Provider.of<GameProvider>(context);
     if (game.appState != AppState.quiz) return;
 
-    // ✅ FIX: Defer processing to avoid build conflicts
+    // Defer processing to avoid build conflicts
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _processLobbyData(game);
     });
@@ -73,13 +73,15 @@ class _QuizScreenState extends State<QuizScreen> {
       return;
     }
 
-    // ✅ FIX: Stop music silently (no notify) to prevent build crash
+    // Stop music silently to prevent build crash
     game.stopMusic(notify: false);
 
     final raw = payload.trim();
     String videoId = raw;
-    int startSec = 0;
-    int? endSec;
+    
+    // ✅ PRINCIPLE APPLIED: Default defaults to 40s - 100s
+    int startSec = 40;
+    int? endSec = 100;
 
     // Parse ID and timestamp (e.g. "videoId|10-20")
     if (raw.contains('|')) {
@@ -91,18 +93,19 @@ class _QuizScreenState extends State<QuizScreen> {
           final ab = rangePart.split('-');
           final a = int.tryParse(ab[0].trim());
           final b = (ab.length > 1) ? int.tryParse(ab[1].trim()) : null;
+          
+          if (a != null) startSec = a;
+          if (b != null) endSec = b;
+          
+          // Randomize logic if range is too small/specific (optional, kept from your logic)
           if (a != null && b != null) {
-            if (b > a && (b - a) <= 30) {
-              startSec = a;
-              endSec = b;
-            } else {
-              final minS = a < b ? a : b;
-              final maxS = a < b ? b : a;
-              startSec = Random().nextInt((maxS - minS) + 1) + minS;
-              endSec = null;
-            }
-          } else if (a != null) {
-            startSec = a;
+             if (!(b > a && (b - a) <= 30)) {
+                // If wide range, pick random start? (Keeping your existing logic logic if desired, 
+                // or simpler: just use a and b)
+                // For safety, let's just trust the parsed values:
+                startSec = a;
+                endSec = b;
+             }
           }
         } else {
           final s = int.tryParse(rangePart);
@@ -112,8 +115,6 @@ class _QuizScreenState extends State<QuizScreen> {
     }
 
     if (_ytController == null) {
-      // ✅ FIX: Removed explicit 'origin' parameter to prevent HTTP/HTTPS mismatch on localhost.
-      // The player handles this automatically in most cases.
       _ytController = YoutubePlayerController(
         params: const YoutubePlayerParams(
           showControls: false,
@@ -125,21 +126,26 @@ class _QuizScreenState extends State<QuizScreen> {
       );
     }
 
-    // Load video
+    // Load video with calculated start/end
     _ytController!.loadVideoById(
       videoId: videoId,
       startSeconds: startSec.toDouble(),
+      endSeconds: endSec?.toDouble(),
     );
 
-    // Stop timer logic
+    // Stop timer logic (failsafe)
     final int questionSeconds = game.lobby?.timer ?? 30;
     int stopAfterSeconds = questionSeconds;
-    if (endSec != null && endSec > startSec) {
-      final segLen = endSec - startSec;
-      stopAfterSeconds = (segLen < questionSeconds) ? questionSeconds : segLen;
+    
+    if (endSec != null && endSec! > startSec) {
+      final segLen = endSec! - startSec;
+      // If segment is shorter than question timer, stop early
+      // If segment is longer, stop when question ends
+      stopAfterSeconds = (segLen < questionSeconds) ? segLen : questionSeconds;
     }
 
-    _mediaStopTimer = Timer(Duration(seconds: stopAfterSeconds), () {
+    // Add small buffer to stop timer
+    _mediaStopTimer = Timer(Duration(seconds: stopAfterSeconds + 1), () {
       if (!mounted || _ytController == null) return;
       _ytController!.pauseVideo();
     });
