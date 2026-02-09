@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/lobby_data.dart';
 import '../theme/app_theme.dart';
+import '../services/auth_service.dart';
 
 class GameConfig {
   String appTitle;
@@ -29,6 +30,7 @@ class GameProvider extends ChangeNotifier {
   final AudioPlayer _sfxPlayer = AudioPlayer();
   final GameConfig config = GameConfig();
   Completer<void>? _lobbyCompleter;
+  int _myUserId = 0; // Store User ID after login
 
   // --- OPTION B (PAIRING) ---
   String? _hostKey;
@@ -58,6 +60,10 @@ class GameProvider extends ChangeNotifier {
   bool _isMusicEnabled = false; 
   bool _isPlaying = false;
   double _volume = 0.5;
+
+  final AuthService _authService = AuthService();
+  String? _authToken;
+  bool get isLoggedIn => _authToken != null;
 
   // --- DATA ---
   final Map<String, String> gameModes = const {
@@ -144,8 +150,71 @@ class GameProvider extends ChangeNotifier {
     return "HK_${now}_${r.toRadixString(16).toUpperCase()}";
   }
 
+
+Future<void> login(String loginIdentifier, String password) async {
+    try {
+      // Pass username/email to service
+      final data = await _authService.login(loginIdentifier, password);
+      
+      _myUserId = data['userId']; // 🟢 Capture ID
+      _authToken = data['token'];
+      _myName = data['username'];
+      _myAvatar = data['avatar'];
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', _authToken!);
+      await prefs.setString('username', _myName);
+      await prefs.setString('avatar', _myAvatar);
+      await prefs.setInt('user_id', _myUserId); // 🟢 Save ID
+      
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+
+Future<void> updateAvatarOnServer(String newAvatarPath) async {
+    if (!isLoggedIn) return; // Guests don't save to server
+    
+    try {
+      await _authService.updateAvatar(_myUserId, newAvatarPath);
+      // Update local state
+      _myAvatar = newAvatarPath;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('avatar', _myAvatar);
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Avatar update failed: $e");
+    }
+  }
+
+  Future<Map<String, dynamic>> getMyStats() async {
+    if (_myUserId == 0) return {};
+    return await _authService.getUserStats(_myUserId);
+  }
+
+
+  Future<void> register(String username, String email, String password, String avatar) async {
+    await _authService.register(username, email, password, avatar);
+  }
+
+  void logout() async {
+    _authToken = null;
+    _myName = "Guest";
+    _myAvatar = "assets/avatars/avatar_0.png";
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    
+    notifyListeners();
+  }
+
+
 Future<void> _loadUser() async {
   final prefs = await SharedPreferences.getInstance();
+  _authToken = prefs.getString('auth_token'); // Check if logged in
+  _myUserId = prefs.getInt('user_id') ?? 0; // 🟢 Load ID
 
   _myName = prefs.getString('username') ?? "Player";
   _myAvatar = prefs.getString('avatar') ?? "assets/avatars/avatar_0.png";
@@ -448,33 +517,37 @@ if (_pendingTvCode != null) {
   }
 
   // Lobby actions
-  Future<void> createLobby(String name, String avatar, String mode, int qCount, String cat, int timer, String diff, String customCode) async {
+ Future<void> createLobby(String name, String avatar, String mode, int qCount, String cat, int timer, String diff, String customCode) async {
     if (_hubConnection == null) return;
     _myName = name;
     
-    // ✅ FIX: Check mode before playing music
-    if (mode.toLowerCase() == "music") {
-      stopMusic();
-    } else {
-      initMusic();
-    }
+    if (mode.toLowerCase() == "music") stopMusic(); else initMusic();
 
     _lobbyCompleter = Completer<void>();
-    await _hubConnection!.invoke("CreateGame", args: <Object>[name, avatar, mode, qCount, cat, timer, diff, customCode, _hostKey ?? ""]);
+    
+    // 🟢 PASS _myUserId (will be 0 if guest, which is fine)
+    await _hubConnection!.invoke("CreateGame", args: <Object>[
+      name, avatar, mode, qCount, cat, timer, diff, customCode, _hostKey ?? "", _myUserId
+    ]);
+    
     await _lobbyCompleter!.future.timeout(const Duration(seconds: 5), onTimeout: () => null);
     if (_currentLobby != null) { _appState = AppState.lobby; await syncTvTheme(); notifyListeners(); }
   }
 
-  Future<void> joinLobby(String code, String name, String avatar) async {
+ Future<void> joinLobby(String code, String name, String avatar) async {
     if (_hubConnection == null) return;
     _myName = name;
     initMusic();
     _lobbyCompleter = Completer<void>();
-    await _hubConnection!.invoke("JoinGame", args: <Object>[code, name, avatar, false, _hostKey ?? ""]);
+    
+    // 🟢 PASS _myUserId
+    await _hubConnection!.invoke("JoinGame", args: <Object>[
+      code, name, avatar, false, _hostKey ?? "", _myUserId
+    ]);
+    
     await _lobbyCompleter!.future.timeout(const Duration(seconds: 5), onTimeout: () => null);
     if (_currentLobby != null) {
       _appState = AppState.lobby;
-      // ✅ FIX: Check mode on join
       if (_currentLobby?.mode.toLowerCase() == "music") stopMusic();
       await syncTvTheme();
       notifyListeners();
