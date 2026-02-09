@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import '../providers/game_provider.dart';
+import '../widgets/game_mode_sheet.dart'; // 🟢 Ensure this file exists
 
 class LobbySettingsSheet extends StatefulWidget {
   const LobbySettingsSheet({super.key});
@@ -22,7 +23,7 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
   String? _catsError;
   Map<String, String> _categories = {"Any Category": ""};
 
-  // --- Music Genres (server tags; sent via existing difficulty field) ---
+  // --- Music Genres ---
   bool _genresLoading = false;
   String? _genresError;
   Map<String, String> _musicGenres = const {"Mixed": "mixed", "Pop": "pop"};
@@ -91,7 +92,7 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
       try { conn = g.hubConnection; } catch (_) {}
       if (conn == null) { try { conn = g.connection; } catch (_) {} }
       if (conn == null) { try { conn = g.hub; } catch (_) {} }
-      if (conn == null) throw Exception("No SignalR connection found on GameProvider (hubConnection/connection/hub).");
+      if (conn == null) throw Exception("No SignalR connection found.");
 
       final dynamic resp = await conn.invoke("GetMusicGenres");
       final List<String> genres = (resp is List) ? resp.map((e) => e.toString()).toList() : <String>[];
@@ -123,49 +124,37 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
     final game = Provider.of<GameProvider>(context);
     final theme = Theme.of(context);
 
-    final bool disableDifficulty =
-        _mode == "general-knowledge" && _selectedCategory.isNotEmpty;
+    final bool disableDifficulty = _mode == "general-knowledge" && _selectedCategory.isNotEmpty;
 
     return Container(
-      // 2. FIX TRANSPARENCY: Set a specific background color here.
-      // Using scaffoldBackgroundColor usually gives the solid dark/light color of the app.
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor, 
-        // Optional: Add rounded corners to the top
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
           child: Column(
-            mainAxisSize: MainAxisSize.min, // Key to wrapping content size
+            mainAxisSize: MainAxisSize.min, 
             children: [
               // Drag Handle
               Center(
                 child: Container(
-                  width: 40,
-                  height: 4,
+                  width: 40, height: 4,
                   margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(color: Colors.grey.withOpacity(0.3), borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("GAME SETTINGS",
-                      style: theme.textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w900)),
-                  IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context)),
+                  Text("GAME SETTINGS", style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
                 ],
               ),
               const Divider(),
   
-              // 1. FIX HEIGHT: Changed Expanded to Flexible
               Flexible( 
                 fit: FlexFit.loose,
                 child: SingleChildScrollView(
@@ -174,35 +163,22 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
                     children: [
                       const SizedBox(height: 16),
                       _buildLabel("GAME MODE", theme),
-                      _buildDropdown(
-                        items: game.gameModes,
-                        value: _mode,
-                        theme: theme,
-                        onChange: (val) async {
-                          final next = val ?? "general-knowledge";
-                          setState(() => _mode = next);
-                          if (next == "music") {
-                            await _ensureMusicGenres(game);
-                          }
-                        },
-                      ),
+                      
+                      // 🟢 REPLACED DROPDOWN WITH VISUAL SELECTOR
+                      _buildModeSelector(context, theme, game),
   
                       if (_mode == "general-knowledge") ...[
                         const SizedBox(height: 16),
                         _buildLabel("TOPIC", theme),
-                        if (_catsLoading)
-                          const LinearProgressIndicator(minHeight: 2),
-                        if (_catsError != null)
-                          Text(_catsError!,
-                              style: const TextStyle(color: Colors.red, fontSize: 12)),
+                        if (_catsLoading) const LinearProgressIndicator(minHeight: 2),
+                        if (_catsError != null) Text(_catsError!, style: const TextStyle(color: Colors.red, fontSize: 12)),
                         _buildDropdown(
                           items: _categories,
                           value: _selectedCategory,
                           theme: theme,
                           onChange: (val) => setState(() {
                             _selectedCategory = val ?? "";
-                            if (_selectedCategory.isNotEmpty)
-                              _difficulty = "mixed";
+                            if (_selectedCategory.isNotEmpty) _difficulty = "mixed";
                           }),
                         ),
                       ],
@@ -212,18 +188,11 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _buildLabel("QUESTIONS", theme),
-                          Text("${_questions.toInt()}",
-                              style: TextStyle(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18)),
+                          Text("${_questions.toInt()}", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 18)),
                         ],
                       ),
                       Slider(
-                        value: _questions,
-                        min: 5,
-                        max: 50,
-                        divisions: 9,
+                        value: _questions, min: 5, max: 50, divisions: 9,
                         onChanged: (v) => setState(() => _questions = v),
                       ),
   
@@ -232,18 +201,11 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _buildLabel("TIMER (SEC)", theme),
-                          Text("${_timer.toInt()}",
-                              style: TextStyle(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18)),
+                          Text("${_timer.toInt()}", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 18)),
                         ],
                       ),
                       Slider(
-                        value: _timer,
-                        min: 10,
-                        max: 60,
-                        divisions: 10,
+                        value: _timer, min: 10, max: 60, divisions: 10,
                         onChanged: (v) => setState(() => _timer = v),
                       ),
   
@@ -257,30 +219,16 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _buildLabel(
-                                _mode == "music"
-                                    ? "GENRE"
-                                    : "DIFFICULTY ${disableDifficulty ? '(Auto-Mixed)' : ''}",
+                                _mode == "music" ? "GENRE" : "DIFFICULTY ${disableDifficulty ? '(Auto-Mixed)' : ''}",
                                 theme,
                               ),
-                              if (_mode == "music" && _genresLoading)
-                                const LinearProgressIndicator(minHeight: 2),
-                              if (_mode == "music" && _genresError != null)
-                                Text(_genresError!,
-                                    style: const TextStyle(
-                                        color: Colors.red, fontSize: 12)),
+                              if (_mode == "music" && _genresLoading) const LinearProgressIndicator(minHeight: 2),
+                              if (_mode == "music" && _genresError != null) Text(_genresError!, style: const TextStyle(color: Colors.red, fontSize: 12)),
                               _buildDropdown(
-                                items: _mode == "music"
-                                    ? _musicGenres
-                                    : const {
-                                        "Mixed": "mixed",
-                                        "Easy": "easy",
-                                        "Medium": "medium",
-                                        "Hard": "hard"
-                                      },
+                                items: _mode == "music" ? _musicGenres : const {"Mixed": "mixed", "Easy": "easy", "Medium": "medium", "Hard": "hard"},
                                 value: disableDifficulty ? "mixed" : _difficulty,
                                 theme: theme,
-                                onChange: (val) =>
-                                    setState(() => _difficulty = val ?? "mixed"),
+                                onChange: (val) => setState(() => _difficulty = val ?? "mixed"),
                               ),
                             ],
                           ),
@@ -289,26 +237,18 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
   
                       const SizedBox(height: 32),
                       SizedBox(
-                        width: double.infinity,
-                        height: 56,
+                        width: double.infinity, height: 56,
                         child: ElevatedButton(
                           onPressed: () {
                             game.updateSettings(
-                              _mode,
-                              _questions.toInt(),
-                              _selectedCategory,
-                              _timer.toInt(),
-                              disableDifficulty
-                                  ? "mixed"
-                                  : _difficulty, // For music: this is genre
+                              _mode, _questions.toInt(), _selectedCategory, _timer.toInt(),
+                              disableDifficulty ? "mixed" : _difficulty,
                             );
                             Navigator.pop(context);
                           },
-                          child: const Text("UPDATE SETTINGS",
-                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          child: const Text("UPDATE SETTINGS", style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ),
-                      // Add a little bottom padding for scrolling space
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -316,6 +256,49 @@ class _LobbySettingsSheetState extends State<LobbySettingsSheet> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // 🟢 NEW: VISUAL MODE SELECTOR BUTTON FOR SETTINGS SHEET
+  Widget _buildModeSelector(BuildContext context, ThemeData theme, GameProvider game) {
+    final modeData = GameModeSheet.getModeDetails(_mode);
+    final textColor = theme.colorScheme.onSurface;
+    
+    return InkWell(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          builder: (ctx) => GameModeSheet(
+            currentMode: _mode,
+            onModeSelected: (newMode) async {
+              setState(() => _mode = newMode);
+              if (newMode == "music") {
+                await _ensureMusicGenres(game);
+              }
+            },
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: theme.inputDecorationTheme.fillColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: (modeData['color'] as Color).withOpacity(0.6), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Image.asset(modeData['asset'], width: 32, height: 32, errorBuilder: (_,__,___) => Icon(modeData['icon'], color: modeData['color'], size: 32)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(modeData['label'], style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16)),
+            ),
+            Icon(Icons.swap_vert, color: theme.colorScheme.primary),
+          ],
         ),
       ),
     );

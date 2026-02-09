@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
+import '../widgets/game_mode_sheet.dart'; // 🟢 Ensure this file exists
 import '../theme/app_theme.dart';
 
 class CreateGameScreen extends StatefulWidget {
@@ -71,7 +72,6 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
       if (!mounted) return;
       setState(() {
         _categories = map;
-        // Reset if selected category no longer exists
         if (!_categories.containsValue(_selectedCategory)) _selectedCategory = "";
       });
     } catch (e) {
@@ -88,14 +88,9 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
 
-    // ✅ LOGIC: If a specific category is chosen, disable Difficulty to ensure we get enough questions.
-    // _selectedCategory == "" means "Any Category" (API allows filtering difficulty freely).
-    // _selectedCategory != "" means a specific topic (API might run out of questions if we filter too hard).
     final bool disableDifficulty = _selectedCategory.isNotEmpty; 
 
-    // ✅ Force "mixed" if disabled to prevent UI from showing "Hard" while actually being disabled
     if (disableDifficulty && _difficulty != "mixed") {
-      // Defer state update to next frame to avoid build collisions or just rely on render logic
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if(mounted) setState(() => _difficulty = "mixed");
       });
@@ -119,19 +114,15 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
             child: ConstrainedBox(
-              // ✅ WIDER LAYOUT
               constraints: const BoxConstraints(maxWidth: 1000),
               child: GlassContainer(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildLabel("GAME MODE", textColor),
-                    _buildDropdown(
-                      items: game.gameModes, 
-                      value: _selectedMode,
-                      textColor: textColor,
-                      onChange: (val) => setState(() => _selectedMode = val ?? "general-knowledge"),
-                    ),
+                    
+                    // 🟢 REPLACED DROPDOWN WITH VISUAL SELECTOR
+                    _buildModeSelector(context, textColor),
 
                     if (_selectedMode == "general-knowledge") ...[
                       const SizedBox(height: 16),
@@ -144,7 +135,6 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                         textColor: textColor,
                         onChange: (val) => setState(() {
                            _selectedCategory = val ?? "";
-                           // If we pick a category, reset difficulty to mixed immediately
                            if (_selectedCategory.isNotEmpty) _difficulty = "mixed";
                         }),
                       ),
@@ -165,7 +155,6 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                       onChanged: (v) => setState(() => _questionCount = v.toInt()),
                     ),
 
-                    // ✅ GRAYED OUT DIFFICULTY SECTION
                     AnimatedOpacity(
                       duration: const Duration(milliseconds: 300),
                       opacity: disableDifficulty ? 0.4 : 1.0,
@@ -217,7 +206,7 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                             await game.createLobby(
                               game.myName, game.myAvatar, _selectedMode,
                               _questionCount, _selectedCategory, 30, 
-                              disableDifficulty ? "mixed" : _difficulty, // Force mixed if disabled
+                              disableDifficulty ? "mixed" : _difficulty,
                               _customCodeController.text.trim().toUpperCase(),
                             );
                           } catch (e) {
@@ -234,6 +223,51 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // 🟢 NEW: VISUAL MODE SELECTOR BUTTON
+  Widget _buildModeSelector(BuildContext context, Color textColor) {
+    final modeData = GameModeSheet.getModeDetails(_selectedMode);
+    
+    return InkWell(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          builder: (ctx) => GameModeSheet(
+            currentMode: _selectedMode,
+            onModeSelected: (newMode) => setState(() => _selectedMode = newMode),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: (modeData['color'] as Color).withOpacity(0.5), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            // Icon or Image
+            Image.asset(modeData['asset'], width: 32, height: 32, errorBuilder: (_,__,___) => Icon(modeData['icon'], color: modeData['color'], size: 32)),
+            const SizedBox(width: 16),
+            // Text
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(modeData['label'], style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text("Tap to change", style: TextStyle(color: textColor.withOpacity(0.5), fontSize: 12)),
+                ],
+              ),
+            ),
+            Icon(Icons.keyboard_arrow_up_rounded, color: textColor.withOpacity(0.5)),
+          ],
         ),
       ),
     );
