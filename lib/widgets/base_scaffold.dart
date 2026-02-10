@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
+import 'app_quick_menu.dart';
 
 class BaseScaffold extends StatelessWidget {
   final Widget body;
@@ -9,6 +10,9 @@ class BaseScaffold extends StatelessWidget {
   final PreferredSizeWidget? appBar;
   final VoidCallback? onSettingsTap;
 
+  // ✅ NEW: unified quick menu button on all screens by default
+  final bool showQuickMenu;
+
   const BaseScaffold({
     super.key,
     required this.body,
@@ -16,74 +20,82 @@ class BaseScaffold extends StatelessWidget {
     this.extendBodyBehindAppBar = false,
     this.appBar,
     this.onSettingsTap,
+    this.showQuickMenu = true,
   });
 
-
-String _ensureAssetKey(String raw) {
-  if (raw.isEmpty) return raw;
-  if (raw.startsWith("data:") || raw.startsWith("http")) return raw;
-  var p = raw;
-  if (p.startsWith("/")) p = p.substring(1);
-  if (!p.startsWith("assets/")) p = "assets/$p";
-  return p;
-}
+  String _ensureAssetKey(String raw) {
+    if (raw.isEmpty) return raw;
+    if (raw.startsWith("data:") || raw.startsWith("http")) return raw;
+    var p = raw;
+    if (p.startsWith("/")) p = p.substring(1);
+    if (!p.startsWith("assets/")) p = "assets/$p";
+    return p;
+  }
 
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
-    
-    // ✅ FIX: Smart Asset Path Handling
+
     String bgPath = _ensureAssetKey(game.wallpaper);
-    // If it doesn't start with assets/ and isn't a web url/data uri, add assets/
-    if (!bgPath.startsWith("assets/") && !bgPath.startsWith("http") && !bgPath.startsWith("data:")) {
+    if (!bgPath.startsWith("assets/") &&
+        !bgPath.startsWith("http") &&
+        !bgPath.startsWith("data:")) {
       bgPath = "assets/$bgPath";
     }
-    // (Optional) If your asset keys in pubspec don't include 'assets/', adjust accordingly.
-    // But usually in Flutter, the key IS 'assets/foo.png'.
+
+    final effectiveAppBar =
+        appBar ??
+        (showSettings
+            ? AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                iconTheme: const IconThemeData(color: Colors.white),
+                actions: [
+                  if (showQuickMenu)
+                    const AppQuickMenuButton(iconColor: Colors.white),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12.0),
+                    child: IconButton(
+                      icon: const Icon(Icons.settings, size: 28),
+                      onPressed: onSettingsTap,
+                    ),
+                  ),
+                ],
+              )
+            : (showQuickMenu
+                  ? AppBar(
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      iconTheme: const IconThemeData(color: Colors.white),
+                      actions: const [
+                        AppQuickMenuButton(iconColor: Colors.white),
+                      ],
+                    )
+                  : null));
 
     return Scaffold(
-      extendBodyBehindAppBar: extendBodyBehindAppBar || appBar != null,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Fallback color
-      appBar: appBar ?? (showSettings
-          ? AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              iconTheme: IconThemeData(color: Colors.white),
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: IconButton(
-                    icon: const Icon(Icons.settings, size: 30),
-                    onPressed: onSettingsTap, 
-                  ),
-                )
-              ],
-            )
-          : null),
+      extendBodyBehindAppBar: extendBodyBehindAppBar || effectiveAppBar != null,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: effectiveAppBar,
       body: Stack(
         children: [
-          // Background Image
           Positioned.fill(
             child: Image.asset(
               bgPath,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) {
-                // Fail silently to background color
-                return Container(color: Theme.of(context).scaffoldBackgroundColor);
-              },
+              errorBuilder: (_, __, ___) =>
+                  Container(color: Theme.of(context).scaffoldBackgroundColor),
             ),
           ),
-          // Dark Overlay for readability
           Positioned.fill(
-            child: Container(color: Colors.black.withOpacity(0.7)),
+            child: Container(color: Colors.black.withOpacity(0.70)),
           ),
-          // Content
           SafeArea(
-            top: !extendBodyBehindAppBar && appBar == null,
+            top: !extendBodyBehindAppBar && effectiveAppBar == null,
             child: body,
           ),
         ],
-      ),  
+      ),
     );
   }
 }

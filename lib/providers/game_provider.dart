@@ -8,16 +8,29 @@ import '../models/lobby_data.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 
+// 🟢 MODEL: Rich Game Mode Definition
+class GameModeDefinition {
+  final String id;
+  final String label;
+  final String asset;
+  final IconData icon;
+  final Color color;
+
+  const GameModeDefinition({
+    required this.id,
+    required this.label,
+    required this.asset,
+    required this.icon,
+    required this.color,
+  });
+}
+
 class GameConfig {
   String appTitle;
   String logoPath;
-  List<String> enabledModes;
-
   GameConfig({
     this.appTitle = "KNOW IT ALL",
-    // ✅ FIX: No 'assets/' prefix here. The UI adds it safely.
     this.logoPath = "logo2.png", 
-    this.enabledModes = const ["general-knowledge", "calculations", "flags", "music"],
   });
 }
 
@@ -29,25 +42,25 @@ class GameProvider extends ChangeNotifier {
   final AudioPlayer _musicPlayer = AudioPlayer();
   final AudioPlayer _sfxPlayer = AudioPlayer();
   final GameConfig config = GameConfig();
+  final AuthService _authService = AuthService();
+  
   Completer<void>? _lobbyCompleter;
-  int _myUserId = 0; // Store User ID after login
-
-  // --- OPTION B (PAIRING) ---
+  
+  // --- USER DATA ---
+  int _myUserId = 0; 
+  String? _authToken;
+  String _myName = "Player";
+  String _myAvatar = "assets/avatars/avatar_0.png";
+  
+  // --- PAIRING ---
   String? _hostKey;
-  String get hostKey => _hostKey ?? "";
+  String? _pendingTvCode;
 
   // --- STATE ---
   AppState _appState = AppState.welcome;
   LobbyData? _currentLobby;
   Map<String, dynamic>? _lastResults;
   String? _errorMessage;
-
-  String? _pendingTvCode;
-  String? get pendingTvCode => _pendingTvCode;
-
-  String _myName = "Player";
-  String _myAvatar = "assets/avatars/avatar_0.png";
-
   int _currentStreak = 0;
   int _lastChatReadIndex = 0;
 
@@ -56,32 +69,28 @@ class GameProvider extends ChangeNotifier {
   String _wallpaper = "assets/bg/background_default.webp"; 
   String _bgMusic = "assets/music/background-music.mp3";
   Brightness _brightness = Brightness.dark;
-
   bool _isMusicEnabled = false; 
   bool _isPlaying = false;
   double _volume = 0.5;
 
-  final AuthService _authService = AuthService();
-  String? _authToken;
-  bool get isLoggedIn => _authToken != null;
+  // 🟢 1. MASTER MODE LIST (Fixes "Missing Modes")
+  final List<GameModeDefinition> availableModes = [
+    GameModeDefinition(id: "general-knowledge", label: "General Knowledge", asset: "assets/modes/general.png", icon: Icons.school_rounded, color: Colors.blueAccent),
+    GameModeDefinition(id: "music", label: "Music Quiz", asset: "assets/modes/music.png", icon: Icons.music_note_rounded, color: Colors.pinkAccent),
+    GameModeDefinition(id: "calculations", label: "Math Chaos", asset: "assets/modes/math.png", icon: Icons.calculate_rounded, color: Colors.orangeAccent),
+    GameModeDefinition(id: "image", label: "Images", asset: "assets/modes/image.png", icon: Icons.image_rounded, color: Colors.purpleAccent),
+    GameModeDefinition(id: "flags", label: "Guess the Flag", asset: "assets/modes/flags.png", icon: Icons.flag_rounded, color: Colors.redAccent),
+    GameModeDefinition(id: "capitals", label: "Capitals", asset: "assets/modes/capitals.png", icon: Icons.location_city_rounded, color: Colors.deepPurpleAccent),
+    GameModeDefinition(id: "odd_one_out", label: "Odd One Out", asset: "assets/modes/odd.png", icon: Icons.rule_rounded, color: Colors.greenAccent),
+    GameModeDefinition(id: "fill_in_the_blank", label: "Fill The Blank", asset: "assets/modes/fill.png", icon: Icons.text_fields_rounded, color: Colors.tealAccent),
+    GameModeDefinition(id: "true_false", label: "True / False", asset: "assets/modes/tf.png", icon: Icons.check_circle_outline, color: Colors.cyanAccent),
+    GameModeDefinition(id: "population", label: "Population", asset: "assets/modes/pop.png", icon: Icons.groups_rounded, color: Colors.indigoAccent),
+    GameModeDefinition(id: "star_trek", label: "Star Trek", asset: "assets/modes/startrek.png", icon: Icons.rocket_launch_rounded, color: Colors.blueGrey),
+    GameModeDefinition(id: "kpop", label: "K-Pop", asset: "assets/modes/kpop.png", icon: Icons.queue_music_rounded, color: Colors.pink),
+    GameModeDefinition(id: "thai_culture", label: "Thai Culture", asset: "assets/modes/thai.png", icon: Icons.temple_buddhist_rounded, color: Colors.amber),
+  ];
 
-  // --- DATA ---
-  final Map<String, String> gameModes = const {
-    "General Knowledge": "general-knowledge",
-    "Math Calculations": "calculations",
-    "Images": "image",
-    "Guess the Flag": "flags",
-    "Country Capitals": "capitals",
-    "Music Quiz": "music",
-    "Odd One Out": "odd_one_out",
-    "Fill In The Blank": "fill_in_the_blank",
-    "True / False": "true_false",
-    "Population": "population",
-    "Star Trek": "star_trek",
-    "K-Pop": "kpop",
-    "Thai Culture": "thai_culture",
-  };
-
+  // 🟢 2. CONFIG OPTIONS (Fixes "Undefined Getter" errors)
   final Map<String, String> musicOptions = {
     "KnowItAll": "assets/music/background-music.mp3",
     "KnowItAll II": "assets/music/default.mp3",
@@ -104,11 +113,18 @@ class GameProvider extends ChangeNotifier {
     "Deep Galaxy": "assets/bg/galaxy.jpg",
     "Volcanic": "assets/bg/magma.jpg",
     "Mystic Mountain": "assets/bg/dark.png",
-    
     "Hentai": "assets/bg/hentai6.jpg",
     "Hentai II": "assets/bg/hentai10.jpg",
     "Synthwave": "assets/bg/synth.jpg",
   };
+
+  // Helper to find mode details
+  GameModeDefinition getMode(String id) {
+    return availableModes.firstWhere(
+      (m) => m.id == id, 
+      orElse: () => availableModes.first
+    );
+  }
 
   // --- GETTERS ---
   AppState get appState => _appState;
@@ -117,12 +133,12 @@ class GameProvider extends ChangeNotifier {
   String? get error => _errorMessage;
   String get myName => _myName;
   String get myAvatar => _myAvatar;
+  int get myUserId => _myUserId;
+  bool get isLoggedIn => _authToken != null;
   bool get amIHost => _currentLobby != null && _currentLobby!.host.trim().toLowerCase() == _myName.trim().toLowerCase();
-  String get currentScheme => _colorScheme;
   
-  // ✅ FIX: Restored themeColor getter that was causing errors
+  String get currentScheme => _colorScheme;
   Color get themeColor => AppTheme.schemes[_colorScheme]?.primary ?? const Color(0xFFE91E63);
-
   String get wallpaper => _wallpaper;
   String get currentMusic => _bgMusic;
   bool get isMusicEnabled => _isMusicEnabled;
@@ -130,6 +146,8 @@ class GameProvider extends ChangeNotifier {
   int get currentStreak => _currentStreak;
   Brightness get brightness => _brightness;
   int get unreadCount => _currentLobby == null ? 0 : (_currentLobby!.chat.length - _lastChatReadIndex).clamp(0, 99);
+  String get hostKey => _hostKey ?? "";
+  String? get pendingTvCode => _pendingTvCode;
 
   GameProvider() {
     _loadUser();
@@ -137,26 +155,37 @@ class GameProvider extends ChangeNotifier {
 
   // --- METHODS ---
 
-  // ✅ FIX: Restored setAppState method that was missing
   void setAppState(AppState s) {
     if (_appState == s) return;
     _appState = s;
     notifyListeners();
   }
 
-  String _newHostKey() {
-    final now = DateTime.now().microsecondsSinceEpoch;
-    final r = Random.secure().nextInt(1 << 30);
-    return "HK_${now}_${r.toRadixString(16).toUpperCase()}";
+  Future<void> _loadUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    _authToken = prefs.getString('auth_token');
+    _myUserId = prefs.getInt('user_id') ?? 0; 
+    _myName = prefs.getString('username') ?? "Player";
+    _myAvatar = prefs.getString('avatar') ?? "assets/avatars/avatar_0.png";
+
+    if (_authToken != null && _myUserId == 0) {
+       logout(); // Call regular logout, don't await void
+       return;
+    }
+
+    if (prefs.containsKey('theme_scheme')) _colorScheme = prefs.getString('theme_scheme')!;
+    if (prefs.containsKey('theme_wallpaper')) _wallpaper = prefs.getString('theme_wallpaper')!;
+    if (prefs.containsKey('theme_music')) _bgMusic = prefs.getString('theme_music')!;
+    if (prefs.containsKey('theme_bright')) _brightness = prefs.getBool('theme_bright')! ? Brightness.dark : Brightness.light;
+
+    await _ensureHostKey();
+    notifyListeners();
   }
 
-
-Future<void> login(String loginIdentifier, String password) async {
+  Future<void> login(String loginIdentifier, String password) async {
     try {
-      // Pass username/email to service
       final data = await _authService.login(loginIdentifier, password);
-      
-      _myUserId = data['userId']; // 🟢 Capture ID from API
+      _myUserId = data['userId'] ?? data['UserId'] ?? 0;
       _authToken = data['token'];
       _myName = data['username'];
       _myAvatar = data['avatar'];
@@ -165,8 +194,6 @@ Future<void> login(String loginIdentifier, String password) async {
       await prefs.setString('auth_token', _authToken!);
       await prefs.setString('username', _myName);
       await prefs.setString('avatar', _myAvatar);
-      
-      // ✅ CRITICAL FIX: Save User ID persistently
       await prefs.setInt('user_id', _myUserId); 
       
       notifyListeners();
@@ -175,65 +202,25 @@ Future<void> login(String loginIdentifier, String password) async {
     }
   }
 
+  void logout() async {
+    _authToken = null;
+    _myUserId = 0;
+    _myName = "Guest";
+    _myAvatar = "assets/avatars/avatar_0.png";
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('user_id');
+    notifyListeners();
+  }
 
-Future<void> updateAvatarOnServer(String newAvatarPath) async {
-    if (!isLoggedIn) return; // Guests don't save to server
-    
-    try {
-      await _authService.updateAvatar(_myUserId, newAvatarPath);
-      // Update local state
-      _myAvatar = newAvatarPath;
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('avatar', _myAvatar);
-      notifyListeners();
-    } catch (e) {
-      debugPrint("Avatar update failed: $e");
-    }
+  Future<void> register(String username, String email, String password, String avatar) async {
+    await _authService.register(username, email, password, avatar);
   }
 
   Future<Map<String, dynamic>> getMyStats() async {
     if (_myUserId == 0) return {};
     return await _authService.getUserStats(_myUserId);
   }
-
-
-  Future<void> register(String username, String email, String password, String avatar) async {
-    await _authService.register(username, email, password, avatar);
-  }
-
-  void logout() async {
-    _authToken = null;
-    _myName = "Guest";
-    _myAvatar = "assets/avatars/avatar_0.png";
-    
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
-    
-    notifyListeners();
-  }
-
-
-Future<void> _loadUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    _authToken = prefs.getString('auth_token'); // Check if logged in
-    
-    // ✅ CRITICAL FIX: Load User ID so we are not "Guest" (0)
-    _myUserId = prefs.getInt('user_id') ?? 0; 
-
-    _myName = prefs.getString('username') ?? "Player";
-    _myAvatar = prefs.getString('avatar') ?? "assets/avatars/avatar_0.png";
-
-    if (prefs.containsKey('theme_scheme')) _colorScheme = prefs.getString('theme_scheme')!;
-    if (prefs.containsKey('theme_wallpaper')) _wallpaper = prefs.getString('theme_wallpaper')!;
-    if (prefs.containsKey('theme_music')) _bgMusic = prefs.getString('theme_music')!;
-    if (prefs.containsKey('theme_bright')) _brightness = prefs.getBool('theme_bright')! ? Brightness.dark : Brightness.light;
-
-    // ✅ Keep hostKey stable (do NOT null it)
-    await _ensureHostKey();
-
-    notifyListeners();
-  }
-
 
   void setPlayerInfo(String name, String avatar) {
     _myName = name;
@@ -245,38 +232,41 @@ Future<void> _loadUser() async {
     notifyListeners();
   }
 
-  Future<void> _ensureHostKey() async {
-  if (_hostKey != null && _hostKey!.trim().isNotEmpty) return;
-
-  final prefs = await SharedPreferences.getInstance();
-  final existing = prefs.getString('host_key');
-
-  if (existing != null && existing.trim().isNotEmpty) {
-    _hostKey = existing.trim();
-    return;
-  }
-
-  _hostKey = _newHostKey();
-  await prefs.setString('host_key', _hostKey!);
-}
-
-
-  void markChatAsRead() {
-    if (_currentLobby != null) {
-      _lastChatReadIndex = _currentLobby!.chat.length;
+  Future<void> updateAvatarOnServer(String newAvatarPath) async {
+    if (!isLoggedIn) return;
+    try {
+      await _authService.updateAvatar(_myUserId, newAvatarPath);
+      _myAvatar = newAvatarPath;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('avatar', _myAvatar);
       notifyListeners();
+    } catch (e) {
+      debugPrint("Avatar update failed: $e");
     }
   }
 
-  // --- AUDIO LOGIC ---
+  String _newHostKey() {
+    final now = DateTime.now().microsecondsSinceEpoch;
+    final r = Random.secure().nextInt(1 << 30);
+    return "HK_${now}_${r.toRadixString(16).toUpperCase()}";
+  }
+
+  Future<void> _ensureHostKey() async {
+    if (_hostKey != null && _hostKey!.trim().isNotEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString('host_key');
+    if (existing != null && existing.trim().isNotEmpty) {
+      _hostKey = existing.trim();
+      return;
+    }
+    _hostKey = _newHostKey();
+    await prefs.setString('host_key', _hostKey!);
+  }
+
   Future<void> initMusic() async {
     if (!_isMusicEnabled) return;
-    
-    // ✅ FIX: Never auto-play lobby music if we are in Music Quiz Mode
     if (_currentLobby?.mode.toLowerCase() == "music") return;
-
     if (_isPlaying && _musicPlayer.state == PlayerState.playing) return;
-    
     try {
       await _musicPlayer.setReleaseMode(ReleaseMode.loop);
       await _musicPlayer.setVolume(_volume);
@@ -286,27 +276,20 @@ Future<void> _loadUser() async {
       _isPlaying = true;
       notifyListeners();
     } catch (e) {
-      debugPrint("Audio Error: $e");
       _isPlaying = false;
       notifyListeners();
     }
   }
 
   Future<void> stopMusic({bool notify = true}) async {
-    try {
-      await _musicPlayer.stop();
-    } catch (_) {}
+    try { await _musicPlayer.stop(); } catch (_) {}
     _isPlaying = false;
     if (notify) notifyListeners();
   }
 
   void toggleMusic(bool enable) {
     _isMusicEnabled = enable;
-    if (enable) {
-      initMusic();
-    } else {
-      stopMusic();
-    }
+    if (enable) initMusic(); else stopMusic();
     notifyListeners();
   }
 
@@ -314,7 +297,6 @@ Future<void> _loadUser() async {
     _bgMusic = track;
     SharedPreferences.getInstance().then((prefs) => prefs.setString('theme_music', track));
     if (_isMusicEnabled) {
-      // Restart music with new track (unless in music quiz mode)
       stopMusic();
       initMusic();
     }
@@ -337,157 +319,94 @@ Future<void> _loadUser() async {
     } catch (_) {}
   }
 
+  // 🟢 3. THEME UPDATE METHOD (Fixes "Undefined Method" error)
   void updateTheme({String? scheme, String? bg, Brightness? brightness}) {
     if (scheme != null) _colorScheme = scheme;
     if (bg != null) _wallpaper = bg;
     if (brightness != null) _brightness = brightness;
-
     SharedPreferences.getInstance().then((prefs) {
       prefs.setString('theme_scheme', _colorScheme);
       prefs.setString('theme_wallpaper', _wallpaper);
       prefs.setBool('theme_bright', _brightness == Brightness.dark);
     });
-
     if (_currentLobby != null) syncTvTheme();
     notifyListeners();
   }
 
   // --- SIGNALR & LOBBY ---
-Future<void> linkTv(String tvCode) async {
-  final canon = tvCode.trim().toUpperCase();
-  if (canon.isEmpty) return;
-
-  _pendingTvCode = canon;
-
-  // ✅ do NOT regenerate hostKey here
-  await _ensureHostKey();
-
-  notifyListeners();
-
-  if (_hubConnection == null || _hubConnection!.state != HubConnectionState.Connected) return;
-
-  await _pairTvNow();
-
-  // ✅ push theme right after pairing (TV may have missed earlier ThemeUpdate)
-  await syncTvTheme();
-}
-
-
-  Future<void> _pairTvNow() async {
-    if (_hubConnection == null) return;
-    try {
-      await _hubConnection!.invoke("PairTV", args: <Object>[_pendingTvCode!, _hostKey!]);
-      _errorMessage = null;
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = "TV pairing failed: $e";
-      notifyListeners();
-    }
-  }
-
-  Future<void> syncTvTheme() async {
-    if (_hubConnection == null || _currentLobby == null) return;
-    try {
-      await _hubConnection!.invoke("SyncTheme", args: <Object>[_currentLobby!.code, _wallpaper, _bgMusic, _isMusicEnabled, _volume]);
-    } catch (_) {}
-  }
-
   Future<void> connect(String url) async {
-  // If we already have a live connection, do nothing
-  if (_hubConnection != null && _hubConnection!.state == HubConnectionState.Connected) {
-    return;
-  }
-
-  // If we have a dead connection object, drop it so a clean retry is possible
-  if (_hubConnection != null && _hubConnection!.state != HubConnectionState.Connected) {
-    try { await _hubConnection!.stop(); } catch (_) {}
-    _hubConnection = null;
-  }
-
-  _hubConnection = HubConnectionBuilder()
-      .withUrl(url)
-      .withAutomaticReconnect()
-      .build();
-
-  // (Re)register handlers
-  _hubConnection!.on("game_created", _handleLobbyUpdate);
-  _hubConnection!.on("game_joined", _handleLobbyUpdate);
-  _hubConnection!.on("lobby_update", _handleLobbyUpdate);
-  _hubConnection!.on("error", (args) {
-    _errorMessage = args?[0]?.toString();
-    notifyListeners();
-  });
-
-  _hubConnection!.on("game_started", (args) {
-    if (args == null || args.isEmpty) return;
-    _handleLobbyUpdate(args);
-    _appState = AppState.quiz;
-    _currentStreak = 0;
-    if ((_currentLobby?.mode ?? "").toLowerCase() == "music") {
-      stopMusic(notify: false);
+    if (_hubConnection != null && _hubConnection!.state == HubConnectionState.Connected) return;
+    if (_hubConnection != null) {
+      try { await _hubConnection!.stop(); } catch (_) {}
+      _hubConnection = null;
     }
-    notifyListeners();
-  });
+    _hubConnection = HubConnectionBuilder().withUrl(url).withAutomaticReconnect().build();
 
-  _hubConnection!.on("new_round", (args) {
-    if (args == null || args.isEmpty) return;
-    final map = args[0] as Map<String, dynamic>;
-    _handleLobbyUpdate(args);
-    if (_currentLobby != null) _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
-    _appState = AppState.quiz;
-    notifyListeners();
-  });
+    _hubConnection!.on("game_created", _handleLobbyUpdate);
+    _hubConnection!.on("game_joined", _handleLobbyUpdate);
+    _hubConnection!.on("lobby_update", _handleLobbyUpdate);
+    _hubConnection!.on("error", (args) { _errorMessage = args?[0]?.toString(); notifyListeners(); });
 
-  _hubConnection!.on("question_results", (args) {
-    if (args == null || args.isEmpty) return;
-    _lastResults = args[0] as Map<String, dynamic>;
-    _handleStreakUpdate(_lastResults);
-    _appState = AppState.results;
-    notifyListeners();
-  });
+    _hubConnection!.on("game_started", (args) {
+      if (args == null || args.isEmpty) return;
+      _handleLobbyUpdate(args);
+      _appState = AppState.quiz;
+      _currentStreak = 0;
+      if ((_currentLobby?.mode ?? "").toLowerCase() == "music") stopMusic(notify: false);
+      notifyListeners();
+    });
 
-  
+    _hubConnection!.on("new_round", (args) {
+      if (args == null || args.isEmpty) return;
+      final map = args[0] as Map<String, dynamic>;
+      _handleLobbyUpdate(args);
+      if (_currentLobby != null) _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
+      _appState = AppState.quiz;
+      notifyListeners();
+    });
 
-  _hubConnection!.on("game_over", (_) {
-    _appState = AppState.gameOver;
-    playSfx("gameover");
-    notifyListeners();
-  });
+    _hubConnection!.on("question_results", (args) {
+      if (args == null || args.isEmpty) return;
+      _lastResults = args[0] as Map<String, dynamic>;
+      _handleStreakUpdate(_lastResults);
+      _appState = AppState.results;
+      notifyListeners();
+    });
 
-  _hubConnection!.on("lobby_deleted", (_) {
-    _appState = AppState.welcome;
-    _currentLobby = null;
-    _hostKey = null;
-    notifyListeners();
-  });
+    _hubConnection!.on("game_over", (_) {
+      _appState = AppState.gameOver;
+      playSfx("gameover");
+      notifyListeners();
+    });
 
-  _hubConnection!.on("game_reset", (_) {
-    _appState = AppState.lobby;
-    _currentStreak = 0;
-    notifyListeners();
-  });
+    _hubConnection!.on("lobby_deleted", (_) {
+      _appState = AppState.welcome;
+      _currentLobby = null;
+      _hostKey = null;
+      notifyListeners();
+    });
 
-  try {
-    await _hubConnection!.start();
+    _hubConnection!.on("game_reset", (_) {
+      _appState = AppState.lobby;
+      _currentStreak = 0;
+      notifyListeners();
+    });
 
-    await _ensureHostKey();
-
-    if (_pendingTvCode != null && _hostKey == null) _hostKey = _newHostKey();
-if (_pendingTvCode != null) {
-  await _pairTvNow();
-  await syncTvTheme(); // ✅ immediately push theme to the TV
-}
-  } catch (e) {
-    // Critical: allow the UI to retry cleanly
-    _errorMessage = e.toString();
-    try { await _hubConnection!.stop(); } catch (_) {}
-    _hubConnection = null;
-    notifyListeners();
-    rethrow;
+    try {
+      await _hubConnection!.start();
+      await _ensureHostKey();
+      if (_pendingTvCode != null) {
+        await _pairTvNow();
+        await syncTvTheme();
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      try { await _hubConnection!.stop(); } catch (_) {}
+      _hubConnection = null;
+      notifyListeners();
+      rethrow;
+    }
   }
-}
-
-
 
   void _handleStreakUpdate(Map<String, dynamic>? results) {
     if (results == null) return;
@@ -520,35 +439,27 @@ if (_pendingTvCode != null) {
     }
   }
 
-  // Lobby actions
- Future<void> createLobby(String name, String avatar, String mode, int qCount, String cat, int timer, String diff, String customCode) async {
+  // LOBBY ACTIONS
+  Future<void> createLobby(String name, String avatar, String mode, int qCount, String cat, int timer, String diff, String customCode) async {
     if (_hubConnection == null) return;
     _myName = name;
-    
     if (mode.toLowerCase() == "music") stopMusic(); else initMusic();
-
     _lobbyCompleter = Completer<void>();
-    
-    // 🟢 PASS _myUserId (will be 0 if guest, which is fine)
     await _hubConnection!.invoke("CreateGame", args: <Object>[
       name, avatar, mode, qCount, cat, timer, diff, customCode, _hostKey ?? "", _myUserId
     ]);
-    
     await _lobbyCompleter!.future.timeout(const Duration(seconds: 5), onTimeout: () => null);
     if (_currentLobby != null) { _appState = AppState.lobby; await syncTvTheme(); notifyListeners(); }
   }
 
- Future<void> joinLobby(String code, String name, String avatar) async {
+  Future<void> joinLobby(String code, String name, String avatar) async {
     if (_hubConnection == null) return;
     _myName = name;
     initMusic();
     _lobbyCompleter = Completer<void>();
-    
-    // 🟢 PASS _myUserId
     await _hubConnection!.invoke("JoinGame", args: <Object>[
       code, name, avatar, false, _hostKey ?? "", _myUserId
     ]);
-    
     await _lobbyCompleter!.future.timeout(const Duration(seconds: 5), onTimeout: () => null);
     if (_currentLobby != null) {
       _appState = AppState.lobby;
@@ -574,4 +485,44 @@ if (_pendingTvCode != null) {
   Future<void> resetToLobby() async { if (_currentLobby != null) await _hubConnection!.invoke("ResetToLobby", args: <Object>[_currentLobby!.code]); }
   Future<void> toggleReady(bool isReady) async { if (_currentLobby != null) await _hubConnection!.invoke("ToggleReady", args: <Object>[_currentLobby!.code, isReady]); }
   Future<void> sendChat(String msg) async { if (_currentLobby != null) await _hubConnection!.invoke("PostChat", args: <Object>[_currentLobby!.code, msg]); }
+  
+  void markChatAsRead() {
+    if (_currentLobby != null) {
+      _lastChatReadIndex = _currentLobby!.chat.length;
+      notifyListeners();
+    }
+  }
+
+  // TV Pairing
+  Future<void> linkTv(String tvCode) async {
+    final canon = tvCode.trim().toUpperCase();
+    if (canon.isEmpty) return;
+    _pendingTvCode = canon;
+    await _ensureHostKey();
+    notifyListeners();
+    if (_hubConnection != null && _hubConnection!.state == HubConnectionState.Connected) {
+      await _pairTvNow();
+      await syncTvTheme();
+    }
+  }
+
+  Future<void> _pairTvNow() async {
+    if (_hubConnection == null) return;
+    try {
+      await _hubConnection!.invoke("PairTV", args: <Object>[_pendingTvCode!, _hostKey!]);
+      _errorMessage = null;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = "TV pairing failed: $e";
+      notifyListeners();
+    }
+  }
+
+  // 🟢 4. SYNC METHOD (Fixes "Undefined Method" error)
+  Future<void> syncTvTheme() async {
+    if (_hubConnection == null || _currentLobby == null) return;
+    try {
+      await _hubConnection!.invoke("SyncTheme", args: <Object>[_currentLobby!.code, _wallpaper, _bgMusic, _isMusicEnabled, _volume]);
+    } catch (_) {}
+  }
 }

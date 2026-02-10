@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/game_provider.dart';
 
 class GameModeSheet extends StatelessWidget {
   final String currentMode;
@@ -10,79 +12,11 @@ class GameModeSheet extends StatelessWidget {
     required this.onModeSelected
   }) : super(key: key);
 
-  // ✅ CONFIG: Map your mode keys to Display Names, Asset Images, and Fallback Icons
-  static final List<Map<String, dynamic>> modes = [
-    {
-      "id": "general-knowledge",
-      "label": "General Knowledge",
-      "asset": "assets/modes/general.png",
-      "icon": Icons.school_rounded,
-      "color": Colors.blueAccent
-    },
-    {
-      "id": "music",
-      "label": "Music Quiz",
-      "asset": "assets/modes/music.png",
-      "icon": Icons.music_note_rounded,
-      "color": Colors.pinkAccent
-    },
-    {
-      "id": "calculations",
-      "label": "Math Chaos",
-      "asset": "assets/modes/math.png",
-      "icon": Icons.calculate_rounded,
-      "color": Colors.orangeAccent
-    },
-    {
-      "id": "flags",
-      "label": "Guess the Flag",
-      "asset": "assets/modes/flags.png",
-      "icon": Icons.flag_rounded,
-      "color": Colors.redAccent
-    },
-    {
-      "id": "capitals",
-      "label": "Capitals",
-      "asset": "assets/modes/capitals.png",
-      "icon": Icons.location_city_rounded,
-      "color": Colors.purpleAccent
-    },
-    {
-      "id": "odd_one_out",
-      "label": "Odd One Out",
-      "asset": "assets/modes/odd.png",
-      "icon": Icons.rule_rounded,
-      "color": Colors.greenAccent
-    },
-    {
-      "id": "fill_in_the_blank",
-      "label": "Fill The Blank",
-      "asset": "assets/modes/fill.png",
-      "icon": Icons.text_fields_rounded,
-      "color": Colors.tealAccent
-    },
-    {
-      "id": "true_false",
-      "label": "True / False",
-      "asset": "assets/modes/tf.png",
-      "icon": Icons.check_circle_outline,
-      "color": Colors.cyanAccent
-    },
-    {
-      "id": "population",
-      "label": "Population",
-      "asset": "assets/modes/pop.png",
-      "icon": Icons.groups_rounded,
-      "color": Colors.indigoAccent
-    },
-  ];
-
-  static Map<String, dynamic> getModeDetails(String id) {
-    return modes.firstWhere((m) => m["id"] == id, orElse: () => modes.first);
-  }
-
   @override
   Widget build(BuildContext context) {
+    // 🟢 READ FROM PROVIDER (Single Source of Truth)
+    final modes = Provider.of<GameProvider>(context, listen: false).availableModes;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
       decoration: BoxDecoration(
@@ -115,32 +49,33 @@ class GameModeSheet extends StatelessWidget {
               ),
               itemBuilder: (ctx, i) {
                 final mode = modes[i];
-                final isSelected = mode["id"] == currentMode;
+                final isSelected = mode.id == currentMode;
                 
                 return GestureDetector(
                   onTap: () {
-                    onModeSelected(mode["id"]);
+                    onModeSelected(mode.id);
                     Navigator.pop(context);
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     decoration: BoxDecoration(
                       color: isSelected 
-                          ? (mode["color"] as Color).withOpacity(0.2) 
+                          ? mode.color.withOpacity(0.2) 
                           : Colors.white.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(16),
                       border: isSelected 
-                          ? Border.all(color: mode["color"], width: 2) 
+                          ? Border.all(color: mode.color, width: 2) 
                           : Border.all(color: Colors.white12),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         // Image or Fallback Icon
-                        _buildModeIcon(mode["asset"], mode["icon"], mode["color"]),
+                        _buildModeIcon(mode.asset, mode.icon, mode.color),
                         const SizedBox(height: 12),
                         Text(
-                          mode["label"].toUpperCase(),
+                          mode.label.toUpperCase(),
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             color: isSelected ? Colors.white : Colors.white70,
                             fontWeight: FontWeight.bold,

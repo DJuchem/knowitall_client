@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
-import '../widgets/game_mode_sheet.dart'; // 🟢 Ensure this file exists
+import '../widgets/game_mode_sheet.dart'; 
 import '../theme/app_theme.dart';
 
 class CreateGameScreen extends StatefulWidget {
@@ -115,7 +115,13 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1000),
-              child: GlassContainer(
+              child: Container( // Using simple Container to avoid missing widgets
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: theme.cardColor.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white12),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -228,9 +234,10 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
     );
   }
 
-  // 🟢 NEW: VISUAL MODE SELECTOR BUTTON
+  // 🟢 UPDATED: Use game.getMode()
   Widget _buildModeSelector(BuildContext context, Color textColor) {
-    final modeData = GameModeSheet.getModeDetails(_selectedMode);
+    final game = Provider.of<GameProvider>(context, listen: false);
+    final modeData = game.getMode(_selectedMode);
     
     return InkWell(
       onTap: () {
@@ -249,19 +256,19 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor.withOpacity(0.5),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: (modeData['color'] as Color).withOpacity(0.5), width: 1.5),
+          border: Border.all(color: modeData.color.withOpacity(0.5), width: 1.5),
         ),
         child: Row(
           children: [
             // Icon or Image
-            Image.asset(modeData['asset'], width: 32, height: 32, errorBuilder: (_,__,___) => Icon(modeData['icon'], color: modeData['color'], size: 32)),
+            Image.asset(modeData.asset, width: 32, height: 32, errorBuilder: (_,__,___) => Icon(modeData.icon, color: modeData.color, size: 32)),
             const SizedBox(width: 16),
             // Text
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(modeData['label'], style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(modeData.label, style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16)),
                   Text("Tap to change", style: TextStyle(color: textColor.withOpacity(0.5), fontSize: 12)),
                 ],
               ),
