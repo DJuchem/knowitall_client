@@ -5,6 +5,7 @@ import 'package:animate_do/animate_do.dart';
 import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
 import '../widgets/avatar_selection_sheet.dart';
+import '../services/auth_service.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -13,21 +14,33 @@ class AccountScreen extends StatefulWidget {
   State<AccountScreen> createState() => _AccountScreenState();
 }
 
-class _AccountScreenState extends State<AccountScreen> {
+class _AccountScreenState extends State<AccountScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   Map<String, dynamic>? _stats;
+  List<dynamic> _leaderboard = [];
   bool _loading = true;
+  final AuthService _api = AuthService();
 
   @override
   void initState() {
     super.initState();
-    _fetchStats();
+    _tabController = TabController(length: 2, vsync: this);
+    _fetchData();
   }
 
-  Future<void> _fetchStats() async {
+  Future<void> _fetchData() async {
     final game = Provider.of<GameProvider>(context, listen: false);
     try {
-      final data = await game.getMyStats(); 
-      if (mounted) setState(() { _stats = data; _loading = false; });
+      final results = await Future.wait([
+        game.getMyStats(),
+        _api.getLeaderboard()
+      ]);
+      
+      if (mounted) setState(() { 
+        _stats = results[0] as Map<String, dynamic>; 
+        _leaderboard = results[1] as List<dynamic>;
+        _loading = false; 
+      });
     } catch (e) {
       if (mounted) setState(() => _loading = false);
     }
@@ -43,9 +56,7 @@ class _AccountScreenState extends State<AccountScreen> {
         onAvatarSelected: (path) async {
           String finalPath = path.startsWith("assets/") ? path : "assets/$path";
           game.setPlayerInfo(game.myName, finalPath);
-          if (game.isLoggedIn) {
-             await game.updateAvatarOnServer(finalPath);
-          }
+          if (game.isLoggedIn) await game.updateAvatarOnServer(finalPath);
         },
       ),
     );
@@ -54,240 +65,261 @@ class _AccountScreenState extends State<AccountScreen> {
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
+
+    return BaseScaffold(
+      // 🟢 FIX: No 'extendBodyBehindAppBar' to prevent layout issues
+      appBar: AppBar(
+        title: const Text("RANKINGS", style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.cyanAccent,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w900),
+          tabs: const [Tab(text: "MY PROFILE"), Tab(text: "LEADERBOARD")],
+        ),
+      ),
+      body: _loading 
+        ? const Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
+        : SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildMyProfile(game),
+                      _buildLeaderboard(),
+                    ],
+                  ),
+                ),
+                
+                // 🟢 PINNED FOOTER (Solid)
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF1E1E2C), 
+                    border: Border(top: BorderSide(color: Colors.white10)),
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.logout, color: Colors.white),
+                      label: const Text("LOGOUT", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent.shade700,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () { 
+                        game.logout(); 
+                        Navigator.pop(context); 
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
+  Widget _buildMyProfile(GameProvider game) {
+    final gamesPlayed = _stats?['gamesPlayed']?.toString() ?? "0";
+    final wins = _stats?['wins']?.toString() ?? "0";
+    final points = _stats?['totalPoints']?.toString() ?? "0";
     
-    final gamesPlayed = _stats?['gamesPlayed'] ?? 0;
-    final wins = _stats?['wins'] ?? 0;
-    final points = _stats?['totalPoints'] ?? 0;
-    final List topics = _stats?['bestTopics'] ?? [];
+    final int correct = int.tryParse(_stats?['correctCount']?.toString() ?? "0") ?? 0;
+    final int total = int.tryParse(_stats?['answerCount']?.toString() ?? "0") ?? 0;
+    final double acc = total > 0 ? (correct / total * 100) : 0.0;
+    final String accString = "${acc.toStringAsFixed(1)}%";
+
+    final List badges = _stats?['badges'] ?? [];
 
     ImageProvider avatarImg;
     if (game.myAvatar.startsWith("data:")) {
        avatarImg = MemoryImage(base64Decode(game.myAvatar.split(',')[1]));
     } else {
-       // Ensure path is clean for asset loading
-       String assetPath = game.myAvatar.startsWith("assets/") ? game.myAvatar : "assets/${game.myAvatar}";
-       avatarImg = AssetImage(assetPath);
+       String p = game.myAvatar.startsWith("assets/") ? game.myAvatar : "assets/${game.myAvatar}";
+       avatarImg = AssetImage(p);
     }
 
-    return BaseScaffold(
-      // 🟢 Fix: Ensure Safe Area for notches
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Custom AppBar inside Body to allow seamless scrolling or separate
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Expanded(
-                    child: Text(
-                      "MY PROFILE", 
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 18, color: Colors.white)
-                    ),
-                  ),
-                  const SizedBox(width: 48), // Balance spacing
-                ],
-              ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          // 1. HEADER (Solid)
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E2C), 
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white10),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10)],
             ),
-            
-            Expanded(
-              child: _loading 
-                ? const Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
-                : SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
+            child: Column(
+              children: [
+                GestureDetector(
+                  onTap: () => _changeAvatar(game),
+                  child: Stack(
+                    alignment: Alignment.bottomRight,
                     children: [
-                      // 1. HEADER
-                      FadeInDown(
-                        duration: const Duration(milliseconds: 600),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(30),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E1E2C),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: Colors.white12),
-                            boxShadow: [
-                              BoxShadow(color: Colors.black.withOpacity(0.6), blurRadius: 20, offset: const Offset(0, 10))
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              GestureDetector(
-                                onTap: () => _changeAvatar(game),
-                                child: Stack(
-                                  alignment: Alignment.bottomRight,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.cyanAccent, width: 3),
-                                        boxShadow: [BoxShadow(color: Colors.cyanAccent.withOpacity(0.4), blurRadius: 25)],
-                                      ),
-                                      child: CircleAvatar(radius: 60, backgroundImage: avatarImg, backgroundColor: Colors.black26),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: const BoxDecoration(color: Colors.blueAccent, shape: BoxShape.circle),
-                                      child: const Icon(Icons.edit, size: 20, color: Colors.white),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              Text(game.myName.toUpperCase(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.5)),
-                              Text("Joined 2026", style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.5), fontStyle: FontStyle.italic)),
-                            ],
-                          ),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.cyanAccent, width: 3),
                         ),
+                        child: CircleAvatar(radius: 60, backgroundImage: avatarImg, backgroundColor: Colors.black26),
                       ),
-
-                      const SizedBox(height: 24),
-
-                      // 2. STATS ROW
-                      FadeInUp(
-                        delay: const Duration(milliseconds: 200),
-                        child: Row(
-                          children: [
-                            _buildStatCard("GAMES", "$gamesPlayed", Icons.videogame_asset, Colors.purpleAccent),
-                            const SizedBox(width: 12),
-                            _buildStatCard("WINS", "$wins", Icons.emoji_events, Colors.amber),
-                            const SizedBox(width: 12),
-                            _buildStatCard("POINTS", _formatPoints(points), Icons.bolt, Colors.cyanAccent),
-                          ],
-                        ),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(color: Colors.blueAccent, shape: BoxShape.circle),
+                        child: const Icon(Icons.edit, size: 20, color: Colors.white),
                       ),
-
-                      const SizedBox(height: 24),
-
-                      // 3. TOPIC MASTERY
-                      FadeInUp(
-                        delay: const Duration(milliseconds: 400),
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF252535),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: Colors.white10),
-                            boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 15)],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(20),
-                                child: Row(
-                                  children: const [
-                                    Icon(Icons.bar_chart, color: Colors.white70),
-                                    SizedBox(width: 10),
-                                    Text("TOPIC MASTERY", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                                  ],
-                                ),
-                              ),
-                              const Divider(height: 1, color: Colors.white10),
-                              
-                              if (topics.isEmpty)
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 40),
-                                  child: Center(child: Text("Play games to unlock stats!", style: TextStyle(color: Colors.white30))),
-                                )
-                              else
-                                ListView.separated(
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
-                                  itemCount: topics.length,
-                                  separatorBuilder: (_,__) => const Divider(color: Colors.white10, height: 1),
-                                  itemBuilder: (ctx, i) => _buildTopicRow(topics[i], i + 1),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      // 4. LOGOUT BUTTON
-                      SizedBox(
-                        width: double.infinity,
-                        height: 60,
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.logout, color: Colors.white),
-                          label: const Text("LOGOUT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent.shade700,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            elevation: 5,
-                          ),
-                          onPressed: () {
-                            game.logout();
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ),
-                      
-                      // 🟢 Fix: Extra padding at bottom to prevent cutoff
-                      const SizedBox(height: 50),
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
+                Text(game.myName.toUpperCase(), style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
+                Text("Member since 2026", style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.5))),
+              ],
             ),
-          ],
-        ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // 2. STATS
+          Row(
+            children: [
+              _buildStatBox("GAMES", gamesPlayed, Colors.purpleAccent),
+              const SizedBox(width: 10),
+              _buildStatBox("WINS", wins, Colors.amber),
+              const SizedBox(width: 10),
+              _buildStatBox("POINTS", points, Colors.cyanAccent),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _buildStatBox("CORRECT", "$correct", Colors.green),
+              const SizedBox(width: 10),
+              _buildStatBox("ACCURACY", accString, acc > 80 ? Colors.greenAccent : Colors.orange),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // 3. BADGES
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E2C),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("BADGES", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                const Divider(height: 20, color: Colors.white10),
+                if (badges.isEmpty)
+                  const Center(child: Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: Text("Play more to earn badges!", style: TextStyle(color: Colors.white30)),
+                  ))
+                else
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4, 
+                      crossAxisSpacing: 10, 
+                      mainAxisSpacing: 10,
+                    ),
+                    itemCount: badges.length,
+                    itemBuilder: (ctx, i) => _buildBadgeItem(badges[i]),
+                  ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildBadgeItem(dynamic badge) {
+    String? path = badge['imagePath'];
+    IconData fallback = Icons.shield;
+    if (badge['name'] == 'Sharpshooter') fallback = Icons.my_location;
+
+    return Tooltip(
+      message: "${badge['name']}\n${badge['description']}",
+      triggerMode: TooltipTriggerMode.tap,
+      child: Column(
+        children: [
+          Expanded(
+            child: (path != null && path.isNotEmpty)
+              ? Image.asset(path, fit: BoxFit.contain, errorBuilder: (_,__,___) => Icon(fallback, color: Colors.amber))
+              : Icon(fallback, color: Colors.amber, size: 30),
+          ),
+          const SizedBox(height: 4),
+          Text(badge['name'], style: const TextStyle(color: Colors.white70, fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLeaderboard() {
+    if (_leaderboard.isEmpty) return const Center(child: Text("No data yet.", style: TextStyle(color: Colors.white54)));
+    
+    return ListView.separated(
+      padding: const EdgeInsets.all(20),
+      itemCount: _leaderboard.length,
+      separatorBuilder: (_,__) => const Divider(color: Colors.white10),
+      itemBuilder: (ctx, i) {
+        final u = _leaderboard[i];
+        final isMe = u['username'] == Provider.of<GameProvider>(context, listen: false).myName;
+        
+        return Container(
+          decoration: BoxDecoration(
+            color: isMe ? Colors.white.withOpacity(0.1) : const Color(0xFF1E1E2C),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: i < 3 ? Colors.amber : Colors.grey[800],
+              child: Text("#${i+1}", style: TextStyle(color: i < 3 ? Colors.black : Colors.white, fontWeight: FontWeight.bold)),
+            ),
+            title: Text(u['username'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            trailing: Text("${u['points']} PTS", style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold)),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatBox(String label, String value, Color color) {
     return Expanded(
       child: Container(
-        height: 110,
+        height: 80,
         decoration: BoxDecoration(
-          color: const Color(0xFF252535),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.3)),
-          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10, offset: const Offset(0, 4))],
+          color: const Color(0xFF1E1E2C),
+          borderRadius: BorderRadius.circular(16), 
+          border: Border.all(color: color.withOpacity(0.5))
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 8),
-            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)),
-            Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.5))),
+            Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+            Text(label, style: TextStyle(fontSize: 10, color: Colors.white54)),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildTopicRow(dynamic topic, int rank) {
-    String mode = (topic['mode'] ?? "Unknown").toString().toUpperCase().replaceAll("-", " ");
-    int pts = topic['points'] ?? 0;
-    
-    return ListTile(
-      leading: Container(
-        width: 36, height: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: rank == 1 ? Colors.amber : (rank == 2 ? Colors.grey : Colors.brown),
-          shape: BoxShape.circle,
-        ),
-        child: Text("#$rank", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-      ),
-      title: Text(mode, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-      trailing: Text("$pts pts", style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 15)),
-    );
-  }
-
-  String _formatPoints(int points) {
-    if (points > 1000) return "${(points / 1000).toStringAsFixed(1)}k";
-    return "$points";
   }
 }

@@ -11,6 +11,16 @@ class AuthService {
     return "http://10.0.2.2:5074/api/auth";
   }
 
+Future<List<dynamic>> getLeaderboard() async {
+    try {
+      final response = await http.get(Uri.parse("$_baseUrl/leaderboard"));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return [];
+  }
+  
   // inside AuthService class
 Future<void> updateAvatar(int userId, String newAvatar) async {
   await http.post(

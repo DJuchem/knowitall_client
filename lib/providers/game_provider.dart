@@ -156,7 +156,7 @@ Future<void> login(String loginIdentifier, String password) async {
       // Pass username/email to service
       final data = await _authService.login(loginIdentifier, password);
       
-      _myUserId = data['userId']; // 🟢 Capture ID
+      _myUserId = data['userId']; // 🟢 Capture ID from API
       _authToken = data['token'];
       _myName = data['username'];
       _myAvatar = data['avatar'];
@@ -165,7 +165,9 @@ Future<void> login(String loginIdentifier, String password) async {
       await prefs.setString('auth_token', _authToken!);
       await prefs.setString('username', _myName);
       await prefs.setString('avatar', _myAvatar);
-      await prefs.setInt('user_id', _myUserId); // 🟢 Save ID
+      
+      // ✅ CRITICAL FIX: Save User ID persistently
+      await prefs.setInt('user_id', _myUserId); 
       
       notifyListeners();
     } catch (e) {
@@ -212,23 +214,25 @@ Future<void> updateAvatarOnServer(String newAvatarPath) async {
 
 
 Future<void> _loadUser() async {
-  final prefs = await SharedPreferences.getInstance();
-  _authToken = prefs.getString('auth_token'); // Check if logged in
-  _myUserId = prefs.getInt('user_id') ?? 0; // 🟢 Load ID
+    final prefs = await SharedPreferences.getInstance();
+    _authToken = prefs.getString('auth_token'); // Check if logged in
+    
+    // ✅ CRITICAL FIX: Load User ID so we are not "Guest" (0)
+    _myUserId = prefs.getInt('user_id') ?? 0; 
 
-  _myName = prefs.getString('username') ?? "Player";
-  _myAvatar = prefs.getString('avatar') ?? "assets/avatars/avatar_0.png";
+    _myName = prefs.getString('username') ?? "Player";
+    _myAvatar = prefs.getString('avatar') ?? "assets/avatars/avatar_0.png";
 
-  if (prefs.containsKey('theme_scheme')) _colorScheme = prefs.getString('theme_scheme')!;
-  if (prefs.containsKey('theme_wallpaper')) _wallpaper = prefs.getString('theme_wallpaper')!;
-  if (prefs.containsKey('theme_music')) _bgMusic = prefs.getString('theme_music')!;
-  if (prefs.containsKey('theme_bright')) _brightness = prefs.getBool('theme_bright')! ? Brightness.dark : Brightness.light;
+    if (prefs.containsKey('theme_scheme')) _colorScheme = prefs.getString('theme_scheme')!;
+    if (prefs.containsKey('theme_wallpaper')) _wallpaper = prefs.getString('theme_wallpaper')!;
+    if (prefs.containsKey('theme_music')) _bgMusic = prefs.getString('theme_music')!;
+    if (prefs.containsKey('theme_bright')) _brightness = prefs.getBool('theme_bright')! ? Brightness.dark : Brightness.light;
 
-  // ✅ CRITICAL: keep hostKey stable (do NOT null it)
-  await _ensureHostKey();
+    // ✅ Keep hostKey stable (do NOT null it)
+    await _ensureHostKey();
 
-  notifyListeners();
-}
+    notifyListeners();
+  }
 
 
   void setPlayerInfo(String name, String avatar) {
