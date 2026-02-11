@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -73,9 +74,7 @@ class _AccountScreenState extends State<AccountScreen>
 
   @override
   Widget build(BuildContext context) {
-    final game = Provider.of<GameProvider>(context);
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
 
     return BaseScaffold(
       appBar: AppBar(
@@ -110,16 +109,16 @@ class _AccountScreenState extends State<AccountScreen>
           : SafeArea(
               child: TabBarView(
                 controller: _tabController,
-                children: [
-                  _buildProfile(theme, cs, game),
-                  _buildLeaderboard(theme, cs, game),
-                ],
+                children: [_buildProfile(theme), _buildLeaderboard(theme)],
               ),
             ),
     );
   }
 
-  Widget _buildProfile(ThemeData theme, ColorScheme cs, GameProvider game) {
+  Widget _buildProfile(ThemeData theme) {
+    final game = Provider.of<GameProvider>(context);
+    final cs = theme.colorScheme;
+
     final gamesPlayed =
         int.tryParse(_stats?['gamesPlayed']?.toString() ?? "0") ?? 0;
     final wins = int.tryParse(_stats?['wins']?.toString() ?? "0") ?? 0;
@@ -131,6 +130,7 @@ class _AccountScreenState extends State<AccountScreen>
     final acc = total > 0 ? (correct / max(total, 1)) : 0.0;
 
     final badges = (_stats?['badges'] ?? []) as List;
+    final bestCategories = (_stats?["bestCategories"] ?? []) as List;
 
     final ImageProvider avatarImg = game.myAvatar.startsWith("data:")
         ? MemoryImage(base64Decode(game.myAvatar.split(',')[1]))
@@ -197,6 +197,50 @@ class _AccountScreenState extends State<AccountScreen>
           const SizedBox(height: 16),
 
           _SectionCard(
+            title: "Best Categories",
+            child: bestCategories.isEmpty
+                ? Text(
+                    "Play more games in different categories to build your Trivial-Pursuit style profile.",
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: cs.onSurfaceVariant.withOpacity(0.85),
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ...bestCategories.map((c) {
+                        final String name = (c["category"] ?? "").toString();
+                        final int games =
+                            int.tryParse(c["games"]?.toString() ?? "0") ?? 0;
+                        final int total =
+                            int.tryParse(c["total"]?.toString() ?? "0") ?? 0;
+                        final int correct =
+                            int.tryParse(c["correct"]?.toString() ?? "0") ?? 0;
+                        final int points =
+                            int.tryParse(c["points"]?.toString() ?? "0") ?? 0;
+
+                        final double acc = total <= 0
+                            ? 0.0
+                            : (correct / total * 100.0);
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _CategoryRow({
+                            "category": name,
+                            "games": games,
+                            "total": total,
+                            "correct": correct,
+                            "points": points,
+                          }),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+          ),
+
+          const SizedBox(height: 14),
+
+          _SectionCard(
             title: "Badges",
             child: badges.isEmpty
                 ? Padding(
@@ -237,7 +281,9 @@ class _AccountScreenState extends State<AccountScreen>
     );
   }
 
-  Widget _buildLeaderboard(ThemeData theme, ColorScheme cs, GameProvider game) {
+  Widget _buildLeaderboard(ThemeData theme) {
+    final game = Provider.of<GameProvider>(context, listen: false);
+
     if (_leaderboard.isEmpty) {
       return Center(
         child: Text(
@@ -255,31 +301,12 @@ class _AccountScreenState extends State<AccountScreen>
         final u = _leaderboard[i];
         final isMe = (u['username']?.toString() ?? "") == game.myName;
 
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: isMe
-                ? cs.primary.withOpacity(0.18)
-                : const Color(0xFF1E1E2C),
-            border: Border.all(color: Colors.white10),
-          ),
+        return _GlassCard(
+          isMeAccent: isMe,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           child: ListTile(
-            leading: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                color: i < 3 ? Colors.amber.withOpacity(0.85) : Colors.white10,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                "#${i + 1}",
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: i < 3 ? Colors.black : Colors.white,
-                ),
-              ),
-            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+            leading: _RankPill(rank: i + 1),
             title: Text(
               u['username']?.toString() ?? "Unknown",
               style: const TextStyle(
@@ -287,16 +314,87 @@ class _AccountScreenState extends State<AccountScreen>
                 fontWeight: FontWeight.w800,
               ),
             ),
-            trailing: Text(
-              "${u['points'] ?? 0} PTS",
-              style: const TextStyle(
-                color: Colors.cyanAccent,
-                fontWeight: FontWeight.w900,
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(999),
+                color: Colors.cyanAccent.withOpacity(0.12),
+                border: Border.all(color: Colors.cyanAccent.withOpacity(0.30)),
+              ),
+              child: Text(
+                "${u['points'] ?? 0} PTS",
+                style: const TextStyle(
+                  color: Colors.cyanAccent,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  static int _toInt(dynamic v) => int.tryParse(v?.toString() ?? "0") ?? 0;
+  static double _toDouble(dynamic v) =>
+      double.tryParse(v?.toString() ?? "0") ?? 0.0;
+}
+
+///
+/// ONE TRUE CARD MATERIAL (matches HeroHeader)
+/// - Stronger base fill (fixes “background art bleeding through”)
+/// - Frosted blur (fixes “cheap transparency”)
+/// - Same radius/shadow/border everywhere (fixes “margins/edges feel off”)
+///
+class _GlassCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final bool isMeAccent;
+  final double radius;
+
+  const _GlassCard({
+    required this.child,
+    this.padding = const EdgeInsets.all(16),
+    this.isMeAccent = false,
+    this.radius = 22,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    final Color base = const Color(0xFF1E1E2C).withOpacity(0.94);
+    final Color a = (isMeAccent ? cs.primary : cs.primary).withOpacity(0.20);
+    final Color b = (isMeAccent ? cs.secondary : cs.secondary).withOpacity(
+      0.16,
+    );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(radius),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [a, b, base],
+            ),
+            border: Border.all(color: Colors.white10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.34),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: child,
+        ),
+      ),
     );
   }
 }
@@ -319,24 +417,8 @@ class _HeroHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Container(
+    return _GlassCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            cs.primary.withOpacity(0.20),
-            cs.secondary.withOpacity(0.16),
-            const Color(0xFF1E1E2C).withOpacity(0.95),
-          ],
-        ),
-        border: Border.all(color: Colors.white10),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 18),
-        ],
-      ),
       child: Row(
         children: [
           GestureDetector(
@@ -417,46 +499,54 @@ class _KpiCard extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Container(
+    return _GlassCard(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: const Color(0xFF1E1E2C),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: cs.primary.withOpacity(0.14),
+      radius: 20,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 78),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                color: Colors.white.withOpacity(0.06),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Icon(icon, color: Colors.cyanAccent.withOpacity(0.95)),
             ),
-            child: Icon(icon, color: cs.primary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onSurfaceVariant,
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                      letterSpacing: 0.6,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -472,13 +562,8 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
+    return _GlassCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        color: const Color(0xFF1E1E2C),
-        border: Border.all(color: Colors.white10),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -497,12 +582,117 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
+class _MiniStatCard extends StatelessWidget {
+  final String title;
+  final List<String> lines;
+  final IconData icon;
+
+  const _MiniStatCard({
+    required this.title,
+    required this.lines,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return _GlassCard(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+      radius: 20,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: Colors.cyanAccent.withOpacity(0.95)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...lines.map(
+            (t) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                t,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurfaceVariant.withOpacity(0.85),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RankPill extends StatelessWidget {
+  final int rank;
+  const _RankPill({required this.rank});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    final bool top3 = rank <= 3;
+
+    return Container(
+      width: 54,
+      height: 44,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: top3
+              ? [
+                  Colors.amber.withOpacity(0.95),
+                  Colors.orange.withOpacity(0.85),
+                  Colors.black.withOpacity(0.15),
+                ]
+              : [
+                  cs.primary.withOpacity(0.18),
+                  cs.secondary.withOpacity(0.14),
+                  Colors.white.withOpacity(0.04),
+                ],
+        ),
+        border: Border.all(color: Colors.white10),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        "#$rank",
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w900,
+          color: top3 ? Colors.black : Colors.white,
+        ),
+      ),
+    );
+  }
+}
+
 class _BadgeTile extends StatelessWidget {
   final dynamic badge;
   const _BadgeTile({required this.badge});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     final name = badge['name']?.toString() ?? "Badge";
     final desc = badge['description']?.toString() ?? "";
     final path = badge['imagePath']?.toString();
@@ -516,13 +706,9 @@ class _BadgeTile extends StatelessWidget {
       child: Column(
         children: [
           Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: Colors.white.withOpacity(0.06),
-                border: Border.all(color: Colors.white10),
-              ),
+            child: _GlassCard(
               padding: const EdgeInsets.all(10),
+              radius: 18,
               child: Center(
                 child: (path != null && path.isNotEmpty)
                     ? Image.asset(
@@ -538,10 +724,9 @@ class _BadgeTile extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             name,
-            style: const TextStyle(
+            style: theme.textTheme.labelSmall?.copyWith(
               color: Colors.white70,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -568,16 +753,11 @@ class _HintCard extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Container(
+    return _GlassCard(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: cs.primary.withOpacity(0.10),
-        border: Border.all(color: cs.primary.withOpacity(0.18)),
-      ),
       child: Row(
         children: [
-          Icon(icon, color: cs.primary),
+          Icon(icon, color: Colors.cyanAccent.withOpacity(0.95)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -600,6 +780,72 @@ class _HintCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CategoryRow extends StatelessWidget {
+  final dynamic data;
+  const _CategoryRow(this.data);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    final String name = (data["category"] ?? "").toString();
+    final int games = int.tryParse(data["games"]?.toString() ?? "0") ?? 0;
+    final int total = int.tryParse(data["total"]?.toString() ?? "0") ?? 0;
+    final int correct = int.tryParse(data["correct"]?.toString() ?? "0") ?? 0;
+    final int points = int.tryParse(data["points"]?.toString() ?? "0") ?? 0;
+
+    final double acc = total <= 0 ? 0.0 : (correct / total * 100.0);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: _GlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        radius: 18,
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name.isEmpty ? "(Unspecified)" : name,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "$games games • $correct/$total correct • ${acc.toStringAsFixed(1)}%",
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.cyanAccent.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: Colors.cyanAccent.withOpacity(0.30)),
+              ),
+              child: Text(
+                "+$points",
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: Colors.cyanAccent,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

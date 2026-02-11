@@ -3,7 +3,11 @@ import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 
 class TvConnectSheet extends StatefulWidget {
-  const TvConnectSheet({super.key});
+  /// When this sheet is opened standalone (not via the App Menu sub-pages),
+  /// you may want a close (X) button. Inside the App Menu we rely on the AppBar back arrow.
+  final bool showClose;
+
+  const TvConnectSheet({super.key, this.showClose = false});
 
   @override
   State<TvConnectSheet> createState() => _TvConnectSheetState();
@@ -72,10 +76,12 @@ class _TvConnectSheetState extends State<TvConnectSheet> {
                   style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, letterSpacing: 1),
                 ),
               ),
-              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+              if (widget.showClose)
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
             ],
           ),
           const SizedBox(height: 14),
+
           Text(
             "Enter the TV code shown on the spectator screen.",
             style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),

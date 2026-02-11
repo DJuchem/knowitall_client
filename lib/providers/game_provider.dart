@@ -28,10 +28,7 @@ class GameModeDefinition {
 class GameConfig {
   String appTitle;
   String logoPath;
-  GameConfig({
-    this.appTitle = "KNOW IT ALL",
-    this.logoPath = "logo2.png", 
-  });
+  GameConfig({this.appTitle = "KNOW IT ALL", this.logoPath = "logo2.png"});
 }
 
 enum AppState { welcome, create, lobby, quiz, results, gameOver }
@@ -43,18 +40,24 @@ class GameProvider extends ChangeNotifier {
   final AudioPlayer _sfxPlayer = AudioPlayer();
   final GameConfig config = GameConfig();
   final AuthService _authService = AuthService();
-  
+
   Completer<void>? _lobbyCompleter;
-  
+
   // --- USER DATA ---
-  int _myUserId = 0; 
+  int _myUserId = 0;
   String? _authToken;
   String _myName = "Player";
   String _myAvatar = "assets/avatars/avatar_0.png";
-  
+
   // --- PAIRING ---
   String? _hostKey;
   String? _pendingTvCode;
+
+  // --- GUEST CREATE AUTH ---
+  bool _guestCreateAuthorized = false;
+  String _guestCreateCode = "";
+
+  bool get guestCreateAuthorized => _guestCreateAuthorized;
 
   // --- STATE ---
   AppState _appState = AppState.welcome;
@@ -66,28 +69,106 @@ class GameProvider extends ChangeNotifier {
 
   // --- SETTINGS ---
   String _colorScheme = "Default";
-  String _wallpaper = "assets/bg/background_default.webp"; 
+  String _wallpaper = "assets/bg/background_default.webp";
   String _bgMusic = "assets/music/background-music.mp3";
   Brightness _brightness = Brightness.dark;
-  bool _isMusicEnabled = false; 
+  bool _isMusicEnabled = false;
   bool _isPlaying = false;
   double _volume = 0.5;
 
   // 🟢 1. MASTER MODE LIST (Fixes "Missing Modes")
   final List<GameModeDefinition> availableModes = [
-    GameModeDefinition(id: "general-knowledge", label: "General Knowledge", asset: "assets/modes/general.png", icon: Icons.school_rounded, color: Colors.blueAccent),
-    GameModeDefinition(id: "music", label: "Music Quiz", asset: "assets/modes/music.png", icon: Icons.music_note_rounded, color: Colors.pinkAccent),
-    GameModeDefinition(id: "calculations", label: "Math Chaos", asset: "assets/modes/math.png", icon: Icons.calculate_rounded, color: Colors.orangeAccent),
-    GameModeDefinition(id: "image", label: "Images", asset: "assets/modes/image.png", icon: Icons.image_rounded, color: Colors.purpleAccent),
-    GameModeDefinition(id: "flags", label: "Guess the Flag", asset: "assets/modes/flags.png", icon: Icons.flag_rounded, color: Colors.redAccent),
-    GameModeDefinition(id: "capitals", label: "Capitals", asset: "assets/modes/capitals.png", icon: Icons.location_city_rounded, color: Colors.deepPurpleAccent),
-    GameModeDefinition(id: "odd_one_out", label: "Odd One Out", asset: "assets/modes/odd.png", icon: Icons.rule_rounded, color: Colors.greenAccent),
-    GameModeDefinition(id: "fill_in_the_blank", label: "Fill The Blank", asset: "assets/modes/fill.png", icon: Icons.text_fields_rounded, color: Colors.tealAccent),
-    GameModeDefinition(id: "true_false", label: "True / False", asset: "assets/modes/tf.png", icon: Icons.check_circle_outline, color: Colors.cyanAccent),
-    GameModeDefinition(id: "population", label: "Population", asset: "assets/modes/pop.png", icon: Icons.groups_rounded, color: Colors.indigoAccent),
-    GameModeDefinition(id: "star_trek", label: "Star Trek", asset: "assets/modes/startrek.png", icon: Icons.rocket_launch_rounded, color: Colors.blueGrey),
-    GameModeDefinition(id: "kpop", label: "K-Pop", asset: "assets/modes/kpop.png", icon: Icons.queue_music_rounded, color: Colors.pink),
-    GameModeDefinition(id: "thai_culture", label: "Thai Culture", asset: "assets/modes/thai.png", icon: Icons.temple_buddhist_rounded, color: Colors.amber),
+    GameModeDefinition(
+      id: "general-knowledge",
+      label: "General Knowledge",
+      asset: "assets/modes/general.png",
+      icon: Icons.school_rounded,
+      color: Colors.blueAccent,
+    ),
+    GameModeDefinition(
+      id: "music",
+      label: "Music Quiz",
+      asset: "assets/modes/music.png",
+      icon: Icons.music_note_rounded,
+      color: Colors.pinkAccent,
+    ),
+    GameModeDefinition(
+      id: "calculations",
+      label: "Math Chaos",
+      asset: "assets/modes/math.png",
+      icon: Icons.calculate_rounded,
+      color: Colors.orangeAccent,
+    ),
+    GameModeDefinition(
+      id: "image",
+      label: "Images",
+      asset: "assets/modes/image.png",
+      icon: Icons.image_rounded,
+      color: Colors.purpleAccent,
+    ),
+    GameModeDefinition(
+      id: "flags",
+      label: "Guess the Flag",
+      asset: "assets/modes/flags.png",
+      icon: Icons.flag_rounded,
+      color: Colors.redAccent,
+    ),
+    GameModeDefinition(
+      id: "capitals",
+      label: "Capitals",
+      asset: "assets/modes/capitals.png",
+      icon: Icons.location_city_rounded,
+      color: Colors.deepPurpleAccent,
+    ),
+    GameModeDefinition(
+      id: "odd_one_out",
+      label: "Odd One Out",
+      asset: "assets/modes/odd.png",
+      icon: Icons.rule_rounded,
+      color: Colors.greenAccent,
+    ),
+    GameModeDefinition(
+      id: "fill_in_the_blank",
+      label: "Fill The Blank",
+      asset: "assets/modes/fill.png",
+      icon: Icons.text_fields_rounded,
+      color: Colors.tealAccent,
+    ),
+    GameModeDefinition(
+      id: "true_false",
+      label: "True / False",
+      asset: "assets/modes/tf.png",
+      icon: Icons.check_circle_outline,
+      color: Colors.cyanAccent,
+    ),
+    GameModeDefinition(
+      id: "population",
+      label: "Population",
+      asset: "assets/modes/pop.png",
+      icon: Icons.groups_rounded,
+      color: Colors.indigoAccent,
+    ),
+    GameModeDefinition(
+      id: "star_trek",
+      label: "Star Trek",
+      asset: "assets/modes/startrek.png",
+      icon: Icons.rocket_launch_rounded,
+      color: Colors.blueGrey,
+    ),
+    GameModeDefinition(
+      id: "kpop",
+      label: "K-Pop",
+      asset: "assets/modes/kpop.png",
+      icon: Icons.queue_music_rounded,
+      color: Colors.pink,
+    ),
+    GameModeDefinition(
+      id: "thai_culture",
+      label: "Thai Culture",
+      asset: "assets/modes/thai.png",
+      icon: Icons.temple_buddhist_rounded,
+      color: Colors.amber,
+    ),
   ];
 
   // 🟢 2. CONFIG OPTIONS (Fixes "Undefined Getter" errors)
@@ -121,8 +202,8 @@ class GameProvider extends ChangeNotifier {
   // Helper to find mode details
   GameModeDefinition getMode(String id) {
     return availableModes.firstWhere(
-      (m) => m.id == id, 
-      orElse: () => availableModes.first
+      (m) => m.id == id,
+      orElse: () => availableModes.first,
     );
   }
 
@@ -135,17 +216,22 @@ class GameProvider extends ChangeNotifier {
   String get myAvatar => _myAvatar;
   int get myUserId => _myUserId;
   bool get isLoggedIn => _authToken != null;
-  bool get amIHost => _currentLobby != null && _currentLobby!.host.trim().toLowerCase() == _myName.trim().toLowerCase();
-  
+  bool get amIHost =>
+      _currentLobby != null &&
+      _currentLobby!.host.trim().toLowerCase() == _myName.trim().toLowerCase();
+
   String get currentScheme => _colorScheme;
-  Color get themeColor => AppTheme.schemes[_colorScheme]?.primary ?? const Color(0xFFE91E63);
+  Color get themeColor =>
+      AppTheme.schemes[_colorScheme]?.primary ?? const Color(0xFFE91E63);
   String get wallpaper => _wallpaper;
   String get currentMusic => _bgMusic;
   bool get isMusicEnabled => _isMusicEnabled;
   bool get isMusicPlaying => _isPlaying;
   int get currentStreak => _currentStreak;
   Brightness get brightness => _brightness;
-  int get unreadCount => _currentLobby == null ? 0 : (_currentLobby!.chat.length - _lastChatReadIndex).clamp(0, 99);
+  int get unreadCount => _currentLobby == null
+      ? 0
+      : (_currentLobby!.chat.length - _lastChatReadIndex).clamp(0, 99);
   String get hostKey => _hostKey ?? "";
   String? get pendingTvCode => _pendingTvCode;
 
@@ -164,19 +250,33 @@ class GameProvider extends ChangeNotifier {
   Future<void> _loadUser() async {
     final prefs = await SharedPreferences.getInstance();
     _authToken = prefs.getString('auth_token');
-    _myUserId = prefs.getInt('user_id') ?? 0; 
+    _myUserId = prefs.getInt('user_id') ?? 0;
     _myName = prefs.getString('username') ?? "Player";
     _myAvatar = prefs.getString('avatar') ?? "assets/avatars/avatar_0.png";
 
+    // Guest create authorization code (local-only)
+    _guestCreateCode = prefs.getString("guest_create_code") ?? "";
+    if (_guestCreateCode.trim().isEmpty) {
+      _guestCreateCode = "BKK2026";
+      await prefs.setString("guest_create_code", _guestCreateCode);
+    }
+    _guestCreateAuthorized = false;
+
     if (_authToken != null && _myUserId == 0) {
-       logout(); // Call regular logout, don't await void
-       return;
+      logout(); // Call regular logout, don't await void
+      return;
     }
 
-    if (prefs.containsKey('theme_scheme')) _colorScheme = prefs.getString('theme_scheme')!;
-    if (prefs.containsKey('theme_wallpaper')) _wallpaper = prefs.getString('theme_wallpaper')!;
-    if (prefs.containsKey('theme_music')) _bgMusic = prefs.getString('theme_music')!;
-    if (prefs.containsKey('theme_bright')) _brightness = prefs.getBool('theme_bright')! ? Brightness.dark : Brightness.light;
+    if (prefs.containsKey('theme_scheme'))
+      _colorScheme = prefs.getString('theme_scheme')!;
+    if (prefs.containsKey('theme_wallpaper'))
+      _wallpaper = prefs.getString('theme_wallpaper')!;
+    if (prefs.containsKey('theme_music'))
+      _bgMusic = prefs.getString('theme_music')!;
+    if (prefs.containsKey('theme_bright'))
+      _brightness = prefs.getBool('theme_bright')!
+          ? Brightness.dark
+          : Brightness.light;
 
     await _ensureHostKey();
     notifyListeners();
@@ -189,13 +289,13 @@ class GameProvider extends ChangeNotifier {
       _authToken = data['token'];
       _myName = data['username'];
       _myAvatar = data['avatar'];
-      
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', _authToken!);
       await prefs.setString('username', _myName);
       await prefs.setString('avatar', _myAvatar);
-      await prefs.setInt('user_id', _myUserId); 
-      
+      await prefs.setInt('user_id', _myUserId);
+
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -213,7 +313,12 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> register(String username, String email, String password, String avatar) async {
+  Future<void> register(
+    String username,
+    String email,
+    String password,
+    String avatar,
+  ) async {
     await _authService.register(username, email, password, avatar);
   }
 
@@ -230,6 +335,25 @@ class GameProvider extends ChangeNotifier {
       prefs.setString('avatar', avatar);
     });
     notifyListeners();
+  }
+
+  // Guest: allow game creation only after a local code is entered on the Welcome screen
+  bool authorizeGuestCreate(String code) {
+    final input = code.trim();
+    if (input.isEmpty) return false;
+    if (input == _guestCreateCode) {
+      _guestCreateAuthorized = true;
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
+  void revokeGuestCreate() {
+    if (_guestCreateAuthorized) {
+      _guestCreateAuthorized = false;
+      notifyListeners();
+    }
   }
 
   Future<void> updateAvatarOnServer(String newAvatarPath) async {
@@ -282,20 +406,27 @@ class GameProvider extends ChangeNotifier {
   }
 
   Future<void> stopMusic({bool notify = true}) async {
-    try { await _musicPlayer.stop(); } catch (_) {}
+    try {
+      await _musicPlayer.stop();
+    } catch (_) {}
     _isPlaying = false;
     if (notify) notifyListeners();
   }
 
   void toggleMusic(bool enable) {
     _isMusicEnabled = enable;
-    if (enable) initMusic(); else stopMusic();
+    if (enable)
+      initMusic();
+    else
+      stopMusic();
     notifyListeners();
   }
 
   void setMusicTrack(String track) {
     _bgMusic = track;
-    SharedPreferences.getInstance().then((prefs) => prefs.setString('theme_music', track));
+    SharedPreferences.getInstance().then(
+      (prefs) => prefs.setString('theme_music', track),
+    );
     if (_isMusicEnabled) {
       stopMusic();
       initMusic();
@@ -307,10 +438,18 @@ class GameProvider extends ChangeNotifier {
     try {
       String file = "";
       switch (type) {
-        case "correct": file = "audio/correct.mp3"; break;
-        case "wrong": file = "audio/wrong.mp3"; break;
-        case "streak": file = "audio/streak.mp3"; break;
-        case "gameover": file = "audio/gameover.mp3"; break;
+        case "correct":
+          file = "audio/correct.mp3";
+          break;
+        case "wrong":
+          file = "audio/wrong.mp3";
+          break;
+        case "streak":
+          file = "audio/streak.mp3";
+          break;
+        case "gameover":
+          file = "audio/gameover.mp3";
+          break;
       }
       if (file.isNotEmpty) {
         await _sfxPlayer.stop();
@@ -335,24 +474,35 @@ class GameProvider extends ChangeNotifier {
 
   // --- SIGNALR & LOBBY ---
   Future<void> connect(String url) async {
-    if (_hubConnection != null && _hubConnection!.state == HubConnectionState.Connected) return;
+    if (_hubConnection != null &&
+        _hubConnection!.state == HubConnectionState.Connected)
+      return;
     if (_hubConnection != null) {
-      try { await _hubConnection!.stop(); } catch (_) {}
+      try {
+        await _hubConnection!.stop();
+      } catch (_) {}
       _hubConnection = null;
     }
-    _hubConnection = HubConnectionBuilder().withUrl(url).withAutomaticReconnect().build();
+    _hubConnection = HubConnectionBuilder()
+        .withUrl(url)
+        .withAutomaticReconnect()
+        .build();
 
     _hubConnection!.on("game_created", _handleLobbyUpdate);
     _hubConnection!.on("game_joined", _handleLobbyUpdate);
     _hubConnection!.on("lobby_update", _handleLobbyUpdate);
-    _hubConnection!.on("error", (args) { _errorMessage = args?[0]?.toString(); notifyListeners(); });
+    _hubConnection!.on("error", (args) {
+      _errorMessage = args?[0]?.toString();
+      notifyListeners();
+    });
 
     _hubConnection!.on("game_started", (args) {
       if (args == null || args.isEmpty) return;
       _handleLobbyUpdate(args);
       _appState = AppState.quiz;
       _currentStreak = 0;
-      if ((_currentLobby?.mode ?? "").toLowerCase() == "music") stopMusic(notify: false);
+      if ((_currentLobby?.mode ?? "").toLowerCase() == "music")
+        stopMusic(notify: false);
       notifyListeners();
     });
 
@@ -360,7 +510,8 @@ class GameProvider extends ChangeNotifier {
       if (args == null || args.isEmpty) return;
       final map = args[0] as Map<String, dynamic>;
       _handleLobbyUpdate(args);
-      if (_currentLobby != null) _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
+      if (_currentLobby != null)
+        _currentLobby!.currentQuestionIndex = map['questionIndex'] ?? 0;
       _appState = AppState.quiz;
       notifyListeners();
     });
@@ -401,7 +552,9 @@ class GameProvider extends ChangeNotifier {
       }
     } catch (e) {
       _errorMessage = e.toString();
-      try { await _hubConnection!.stop(); } catch (_) {}
+      try {
+        await _hubConnection!.stop();
+      } catch (_) {}
       _hubConnection = null;
       notifyListeners();
       rethrow;
@@ -411,7 +564,10 @@ class GameProvider extends ChangeNotifier {
   void _handleStreakUpdate(Map<String, dynamic>? results) {
     if (results == null) return;
     final list = (results['results'] ?? []) as List;
-    final myResult = list.firstWhere((r) => r['name'] == _myName, orElse: () => null);
+    final myResult = list.firstWhere(
+      (r) => r['name'] == _myName,
+      orElse: () => null,
+    );
     if (myResult != null) {
       if (myResult['correct'] == true) {
         _currentStreak++;
@@ -427,29 +583,66 @@ class GameProvider extends ChangeNotifier {
     if (args != null && args.isNotEmpty) {
       final map = args[0] as Map<String, dynamic>;
       final newLobby = LobbyData.fromJson(map);
-      if (_currentLobby?.quizData != null && (newLobby.quizData == null || newLobby.quizData!.isEmpty)) {
+      if (_currentLobby?.quizData != null &&
+          (newLobby.quizData == null || newLobby.quizData!.isEmpty)) {
         newLobby.quizData = _currentLobby!.quizData;
       }
       if (_currentLobby == null || _currentLobby!.code != newLobby.code) {
         _lastChatReadIndex = newLobby.chat.length;
       }
       _currentLobby = newLobby;
-      if (_lobbyCompleter != null && !_lobbyCompleter!.isCompleted) _lobbyCompleter!.complete();
+      if (_lobbyCompleter != null && !_lobbyCompleter!.isCompleted)
+        _lobbyCompleter!.complete();
       notifyListeners();
     }
   }
 
   // LOBBY ACTIONS
-  Future<void> createLobby(String name, String avatar, String mode, int qCount, String cat, int timer, String diff, String customCode) async {
+  Future<void> createLobby(
+    String name,
+    String avatar,
+    String mode,
+    int qCount,
+    String cat,
+    int timer,
+    String diff,
+    String customCode,
+  ) async {
+    if (!isLoggedIn && !_guestCreateAuthorized) {
+      throw Exception("Guest code required before you can create a game");
+    }
+
     if (_hubConnection == null) return;
     _myName = name;
-    if (mode.toLowerCase() == "music") stopMusic(); else initMusic();
+    if (mode.toLowerCase() == "music")
+      stopMusic();
+    else
+      initMusic();
     _lobbyCompleter = Completer<void>();
-    await _hubConnection!.invoke("CreateGame", args: <Object>[
-      name, avatar, mode, qCount, cat, timer, diff, customCode, _hostKey ?? "", _myUserId
-    ]);
-    await _lobbyCompleter!.future.timeout(const Duration(seconds: 5), onTimeout: () => null);
-    if (_currentLobby != null) { _appState = AppState.lobby; await syncTvTheme(); notifyListeners(); }
+    await _hubConnection!.invoke(
+      "CreateGame",
+      args: <Object>[
+        name,
+        avatar,
+        mode,
+        qCount,
+        cat,
+        timer,
+        diff,
+        customCode,
+        _hostKey ?? "",
+        _myUserId,
+      ],
+    );
+    await _lobbyCompleter!.future.timeout(
+      const Duration(seconds: 5),
+      onTimeout: () => null,
+    );
+    if (_currentLobby != null) {
+      _appState = AppState.lobby;
+      await syncTvTheme();
+      notifyListeners();
+    }
   }
 
   Future<void> joinLobby(String code, String name, String avatar) async {
@@ -457,10 +650,14 @@ class GameProvider extends ChangeNotifier {
     _myName = name;
     initMusic();
     _lobbyCompleter = Completer<void>();
-    await _hubConnection!.invoke("JoinGame", args: <Object>[
-      code, name, avatar, false, _hostKey ?? "", _myUserId
-    ]);
-    await _lobbyCompleter!.future.timeout(const Duration(seconds: 5), onTimeout: () => null);
+    await _hubConnection!.invoke(
+      "JoinGame",
+      args: <Object>[code, name, avatar, false, _hostKey ?? "", _myUserId],
+    );
+    await _lobbyCompleter!.future.timeout(
+      const Duration(seconds: 5),
+      onTimeout: () => null,
+    );
     if (_currentLobby != null) {
       _appState = AppState.lobby;
       if (_currentLobby?.mode.toLowerCase() == "music") stopMusic();
@@ -470,22 +667,88 @@ class GameProvider extends ChangeNotifier {
   }
 
   Future<void> leaveLobby() async {
-    if (_hubConnection != null && _currentLobby != null) await _hubConnection!.invoke("LeaveLobby", args: <Object>[_currentLobby!.code]);
-    _appState = AppState.welcome; _currentLobby = null; _hostKey = null; notifyListeners();
+    revokeGuestCreate();
+    if (_hubConnection != null && _currentLobby != null)
+      await _hubConnection!.invoke(
+        "LeaveLobby",
+        args: <Object>[_currentLobby!.code],
+      );
+    _appState = AppState.welcome;
+    _currentLobby = null;
+    _hostKey = null;
+    notifyListeners();
   }
 
-  Future<void> updateSettings(String mode, int qCount, String cat, int timer, String diff) async {
-    if (_currentLobby != null) await _hubConnection!.invoke("UpdateSettings", args: <Object>[_currentLobby!.code, mode, qCount, cat, timer, diff]);
+  Future<void> updateSettings(
+    String mode,
+    int qCount,
+    String cat,
+    int timer,
+    String diff,
+  ) async {
+    if (_currentLobby != null)
+      await _hubConnection!.invoke(
+        "UpdateSettings",
+        args: <Object>[_currentLobby!.code, mode, qCount, cat, timer, diff],
+      );
   }
-  
-  Future<void> startGame() async { if (_currentLobby != null) await _hubConnection!.invoke("StartGame", args: <Object>[_currentLobby!.code]); }
-  Future<void> submitAnswer(String answer, double time, int qIndex) async { if (_currentLobby != null) await _hubConnection!.invoke("SubmitAnswer", args: <Object>[_currentLobby!.code, qIndex, answer, time]); }
-  Future<void> nextQuestion() async { if (_currentLobby != null) await _hubConnection!.invoke("NextQuestion", args: <Object>[_currentLobby!.code]); }
-  Future<void> playAgain() async { if (_currentLobby != null) await _hubConnection!.invoke("PlayAgain", args: <Object>[_currentLobby!.code]); }
-  Future<void> resetToLobby() async { if (_currentLobby != null) await _hubConnection!.invoke("ResetToLobby", args: <Object>[_currentLobby!.code]); }
-  Future<void> toggleReady(bool isReady) async { if (_currentLobby != null) await _hubConnection!.invoke("ToggleReady", args: <Object>[_currentLobby!.code, isReady]); }
-  Future<void> sendChat(String msg) async { if (_currentLobby != null) await _hubConnection!.invoke("PostChat", args: <Object>[_currentLobby!.code, msg]); }
-  
+
+  Future<void> startGame() async {
+    if (_currentLobby != null)
+      await _hubConnection!.invoke(
+        "StartGame",
+        args: <Object>[_currentLobby!.code],
+      );
+  }
+
+  Future<void> submitAnswer(String answer, double time, int qIndex) async {
+    if (_currentLobby != null)
+      await _hubConnection!.invoke(
+        "SubmitAnswer",
+        args: <Object>[_currentLobby!.code, qIndex, answer, time],
+      );
+  }
+
+  Future<void> nextQuestion() async {
+    if (_currentLobby != null)
+      await _hubConnection!.invoke(
+        "NextQuestion",
+        args: <Object>[_currentLobby!.code],
+      );
+  }
+
+  Future<void> playAgain() async {
+    if (_currentLobby != null)
+      await _hubConnection!.invoke(
+        "PlayAgain",
+        args: <Object>[_currentLobby!.code],
+      );
+  }
+
+  Future<void> resetToLobby() async {
+    if (_currentLobby != null)
+      await _hubConnection!.invoke(
+        "ResetToLobby",
+        args: <Object>[_currentLobby!.code],
+      );
+  }
+
+  Future<void> toggleReady(bool isReady) async {
+    if (_currentLobby != null)
+      await _hubConnection!.invoke(
+        "ToggleReady",
+        args: <Object>[_currentLobby!.code, isReady],
+      );
+  }
+
+  Future<void> sendChat(String msg) async {
+    if (_currentLobby != null)
+      await _hubConnection!.invoke(
+        "PostChat",
+        args: <Object>[_currentLobby!.code, msg],
+      );
+  }
+
   void markChatAsRead() {
     if (_currentLobby != null) {
       _lastChatReadIndex = _currentLobby!.chat.length;
@@ -500,7 +763,8 @@ class GameProvider extends ChangeNotifier {
     _pendingTvCode = canon;
     await _ensureHostKey();
     notifyListeners();
-    if (_hubConnection != null && _hubConnection!.state == HubConnectionState.Connected) {
+    if (_hubConnection != null &&
+        _hubConnection!.state == HubConnectionState.Connected) {
       await _pairTvNow();
       await syncTvTheme();
     }
@@ -509,7 +773,10 @@ class GameProvider extends ChangeNotifier {
   Future<void> _pairTvNow() async {
     if (_hubConnection == null) return;
     try {
-      await _hubConnection!.invoke("PairTV", args: <Object>[_pendingTvCode!, _hostKey!]);
+      await _hubConnection!.invoke(
+        "PairTV",
+        args: <Object>[_pendingTvCode!, _hostKey!],
+      );
       _errorMessage = null;
       notifyListeners();
     } catch (e) {
@@ -522,7 +789,16 @@ class GameProvider extends ChangeNotifier {
   Future<void> syncTvTheme() async {
     if (_hubConnection == null || _currentLobby == null) return;
     try {
-      await _hubConnection!.invoke("SyncTheme", args: <Object>[_currentLobby!.code, _wallpaper, _bgMusic, _isMusicEnabled, _volume]);
+      await _hubConnection!.invoke(
+        "SyncTheme",
+        args: <Object>[
+          _currentLobby!.code,
+          _wallpaper,
+          _bgMusic,
+          _isMusicEnabled,
+          _volume,
+        ],
+      );
     } catch (_) {}
   }
 }

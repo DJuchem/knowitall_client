@@ -4,7 +4,11 @@ import '../providers/game_provider.dart';
 import '../theme/app_theme.dart';
 
 class ClientSettingsSheet extends StatelessWidget {
-  const ClientSettingsSheet({super.key});
+  /// When opened standalone (not via the App Menu sub-pages), you may want a close (X) button.
+  /// Inside the App Menu we rely on the AppBar back arrow.
+  final bool showClose;
+
+  const ClientSettingsSheet({super.key, this.showClose = false});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +38,8 @@ class ClientSettingsSheet extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("APP SETTINGS", style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-              IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+              if (showClose)
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
             ],
           ),
           const Divider(),

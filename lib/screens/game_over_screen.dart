@@ -150,12 +150,12 @@ class _GameOverScreenState extends State<GameOverScreen> {
                           children: [
                             if (game.amIHost) ...[
                               SizedBox(
-                                height: 90, // 🟢 MEGA BUTTON HEIGHT
+                                height: 110, // 🟢 MEGA BUTTON HEIGHT
                                 child: Row(
                                   children: [
                                     Expanded(
                                       child: ElevatedButton.icon(
-                                        icon: const Icon(Icons.refresh_rounded, size: 36),
+                                        icon: const Icon(Icons.refresh_rounded, size: 40),
                                         label: const Text("PLAY AGAIN", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: const Color(0xFF00E676), 
@@ -170,7 +170,7 @@ class _GameOverScreenState extends State<GameOverScreen> {
                                     Expanded(
                                       child: ElevatedButton.icon(
                                         icon: const Icon(Icons.home_rounded, size: 36, color: Colors.white),
-                                        label: const Text("LOBBY", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white)),
+                                        label: const Text("LOBBY", style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.white.withOpacity(0.15),
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -188,7 +188,7 @@ class _GameOverScreenState extends State<GameOverScreen> {
                             ] else ...[
                               SizedBox(
                                 width: double.infinity,
-                                height: 90, // 🟢 MEGA BUTTON HEIGHT
+                                height: 110, // 🟢 MEGA BUTTON HEIGHT
                                 child: OutlinedButton.icon(
                                   icon: const Icon(Icons.exit_to_app_rounded, size: 36),
                                   label: const Text("LEAVE GAME", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),

@@ -8,6 +8,9 @@ import '../widgets/chat_sheet.dart';
 import '../widgets/lobby_settings_sheet.dart';
 import '../widgets/game_avatar.dart';
 
+// ✅ NEW: global app menu button
+import '../widgets/app_quick_menu.dart';
+
 class LobbyScreen extends StatefulWidget {
   const LobbyScreen({Key? key}) : super(key: key);
 
@@ -34,9 +37,12 @@ class _LobbyScreenState extends State<LobbyScreen> {
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
     final lobby = game.lobby;
-    
+
     if (lobby == null) {
-      return const Scaffold(backgroundColor: Colors.black, body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
     // Dynamic Scaling Logic
@@ -51,7 +57,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
     if (lobby.players.length < _prevPlayerCount) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("A player left."), backgroundColor: Colors.orange));
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("A player left."),
+              backgroundColor: Colors.orange,
+            ),
+          );
       });
     }
     _prevPlayerCount = lobby.players.length;
@@ -59,9 +71,12 @@ class _LobbyScreenState extends State<LobbyScreen> {
     bool isHost = game.amIHost;
     bool isPlayerReady(Player p) => (p.name == lobby.host) || p.isReady;
     int readyCount = lobby.players.where(isPlayerReady).length;
-    bool allReady = lobby.players.isNotEmpty && readyCount == lobby.players.length;
+    bool allReady =
+        lobby.players.isNotEmpty && readyCount == lobby.players.length;
     bool iAmReady = false;
-    try { iAmReady = lobby.players.firstWhere((p) => p.name == game.myName).isReady; } catch (_) {}
+    try {
+      iAmReady = lobby.players.firstWhere((p) => p.name == game.myName).isReady;
+    } catch (_) {}
 
     return PopScope(
       canPop: false,
@@ -75,21 +90,34 @@ class _LobbyScreenState extends State<LobbyScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
+
+          // ✅ Keep: leave button (session)
           leading: IconButton(
-            icon: const Icon(Icons.meeting_room_rounded, color: Colors.redAccent, size: 32),
+            icon: const Icon(
+              Icons.meeting_room_rounded,
+              color: Colors.redAccent,
+              size: 32,
+            ),
             onPressed: () => _confirmLeave(context, game),
           ),
+
+          // ✅ FIX: host-only cogwheel (lobby/session settings) + global menu button
           actions: [
             if (isHost)
               IconButton(
+                tooltip: "Lobby settings",
                 icon: const Icon(Icons.settings, color: Colors.white, size: 32),
                 onPressed: () => showModalBottomSheet(
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
-                  builder: (_) => const LobbySettingsSheet(), 
+                  builder: (_) => const LobbySettingsSheet(),
                 ),
               ),
+
+            // ✅ NEW: global app menu button (Account / Connect TV / App Settings)
+            const AppQuickMenuButton(iconColor: Colors.white),
+
             const SizedBox(width: 8),
           ],
         ),
@@ -107,12 +135,33 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   GestureDetector(
                     onTap: () {
                       Clipboard.setData(ClipboardData(text: lobby.code));
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Copied!")));
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(const SnackBar(content: Text("Copied!")));
                     },
                     child: Column(
                       children: [
-                        Text("LOBBY CODE", style: TextStyle(color: Colors.white.withOpacity(0.8), letterSpacing: 2, fontSize: 14, fontWeight: FontWeight.bold)),
-                        FittedBox(child: Text(lobby.code, style: const TextStyle(fontSize: 72, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 4, height: 1.0))),
+                        Text(
+                          "LOBBY CODE",
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            letterSpacing: 2,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        FittedBox(
+                          child: Text(
+                            lobby.code,
+                            style: const TextStyle(
+                              fontSize: 72,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 4,
+                              height: 1.0,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -120,11 +169,22 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   const SizedBox(height: 10),
 
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(color: Colors.black.withOpacity(0.5), borderRadius: BorderRadius.circular(30), border: Border.all(color: game.themeColor, width: 2)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: game.themeColor, width: 2),
+                    ),
                     child: Text(
-                      "${lobby.mode.toUpperCase()}  •  ${lobby.timer}s  •  ${lobby.difficulty ?? 'Mixed'}", 
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
+                      "${lobby.mode.toUpperCase()}  •  ${lobby.timer}s  •  ${lobby.difficulty ?? 'Mixed'}",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
 
@@ -138,7 +198,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
                       child: ListView.separated(
                         padding: EdgeInsets.zero,
                         itemCount: playerCount,
-                        separatorBuilder: (_, __) => SizedBox(height: itemSpacing),
+                        separatorBuilder: (_, __) =>
+                            SizedBox(height: itemSpacing),
                         itemBuilder: (ctx, i) {
                           final p = lobby.players[i];
                           bool ready = p.name == lobby.host || p.isReady;
@@ -149,22 +210,41 @@ class _LobbyScreenState extends State<LobbyScreen> {
                               color: Colors.black.withOpacity(0.7),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: isMe ? game.themeColor : (ready ? Colors.green.withOpacity(0.8) : Colors.white12), 
-                                width: isMe ? 2 : 1
+                                color: isMe
+                                    ? game.themeColor
+                                    : (ready
+                                          ? Colors.green.withOpacity(0.8)
+                                          : Colors.white12),
+                                width: isMe ? 2 : 1,
                               ),
                             ),
                             child: ListTile(
                               dense: isCompact,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: verticalPadding),
-                              leading: GameAvatar(path: p.avatar ?? "", radius: avatarRadius),
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: verticalPadding,
+                              ),
+                              leading: GameAvatar(
+                                path: p.avatar ?? "",
+                                radius: avatarRadius,
+                              ),
                               title: Text(
-                                p.name + (p.name == lobby.host ? " (HOST)" : ""), 
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: nameSize)
+                                p.name +
+                                    (p.name == lobby.host ? " (HOST)" : ""),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: nameSize,
+                                ),
                               ),
                               trailing: Icon(
-                                ready ? Icons.check_circle : Icons.hourglass_empty, 
-                                color: ready ? Colors.greenAccent : Colors.white24, 
-                                size: isVeryCompact ? 24 : 32
+                                ready
+                                    ? Icons.check_circle
+                                    : Icons.hourglass_empty,
+                                color: ready
+                                    ? Colors.greenAccent
+                                    : Colors.white24,
+                                size: isVeryCompact ? 24 : 32,
                               ),
                             ),
                           );
@@ -176,52 +256,86 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   Container(
                     width: double.infinity,
                     constraints: const BoxConstraints(maxWidth: 500),
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 160), 
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 160),
                     child: SizedBox(
                       height: 60,
                       child: isHost
-                        ? ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: allReady ? Colors.green : Colors.grey[800], 
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
+                          ? ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: allReady
+                                    ? Colors.green
+                                    : Colors.grey[800],
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              onPressed: (allReady && !_isStarting)
+                                  ? () async {
+                                      setState(() => _isStarting = true);
+                                      try {
+                                        await game.startGame();
+                                      } catch (e) {
+                                        if (mounted) {
+                                          setState(() => _isStarting = false);
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                "Failed to start game",
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    }
+                                  : null,
+                              child: _isStarting
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 3,
+                                      ),
+                                    )
+                                  : Text(
+                                      allReady
+                                          ? "START GAME"
+                                          : "WAITING ($readyCount/$playerCount)",
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                            )
+                          : ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: iAmReady
+                                    ? Colors.redAccent
+                                    : Colors.green,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                              ),
+                              onPressed: () => game.toggleReady(!iAmReady),
+                              child: Text(
+                                iAmReady ? "CANCEL READY" : "I'M READY!",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                ),
+                              ),
                             ),
-                            // 🟢 UPDATE: Logic to handle loading state
-                            onPressed: (allReady && !_isStarting) ? () async {
-                              setState(() => _isStarting = true);
-                              try {
-                                await game.startGame();
-                              } catch (e) {
-                                if (mounted) {
-                                  setState(() => _isStarting = false);
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to start game")));
-                                }
-                              }
-                            } : null,
-                            // 🟢 UPDATE: Show Spinner if starting, otherwise show Text
-                            child: _isStarting 
-                              ? const SizedBox(
-                                  width: 24, 
-                                  height: 24, 
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
-                                )
-                              : Text(allReady ? "START GAME" : "WAITING ($readyCount/$playerCount)", 
-                                  style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 18)),
-                          )
-                        : ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: iAmReady ? Colors.redAccent : Colors.green, 
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
-                            ),
-                            onPressed: () => game.toggleReady(!iAmReady),
-                            child: Text(iAmReady ? "CANCEL READY" : "I'M READY!", style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 20)),
-                          ),
                     ),
                   ),
                 ],
               ),
             ),
 
-            Align(alignment: Alignment.bottomCenter, child: ChatSheet())
+            Align(alignment: Alignment.bottomCenter, child: ChatSheet()),
           ],
         ),
       ),
@@ -234,7 +348,10 @@ class _LobbyScreenState extends State<LobbyScreen> {
       builder: (_) => AlertDialog(
         title: const Text("Leave Game?"),
         actions: [
-          TextButton(child: const Text("Cancel"), onPressed: () => Navigator.pop(context)),
+          TextButton(
+            child: const Text("Cancel"),
+            onPressed: () => Navigator.pop(context),
+          ),
           TextButton(
             child: const Text("LEAVE"),
             onPressed: () async {

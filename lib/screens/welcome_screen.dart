@@ -4,14 +4,17 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+
 import 'account_screen.dart';
+import 'login_screen.dart';
+import 'register_screen.dart';
 
 import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
-import '../widgets/client_settings_sheet.dart';
 import '../widgets/avatar_selection_sheet.dart';
-import 'login_screen.dart';
-import 'register_screen.dart';
+
+// ✅ MENU: unified menu button
+import '../widgets/app_quick_menu.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -20,10 +23,13 @@ class WelcomeScreen extends StatefulWidget {
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderStateMixin {
+class _WelcomeScreenState extends State<WelcomeScreen>
+    with SingleTickerProviderStateMixin {
   final _nameController = TextEditingController();
   final _codeController = TextEditingController();
   final _tvCodeController = TextEditingController();
+  final _guestCodeController = TextEditingController();
+
   String _selectedAvatar = "avatars/avatar10.webp";
 
   // 🎬 Animation Controllers
@@ -49,34 +55,45 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
     super.initState();
     _loadUserPrefs();
 
-    // 🎬 MASTER CINEMATIC SEQUENCE (2.5 Seconds Total)
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
 
-    // 1. Text Fades In
     _textOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.25, curve: Curves.easeIn)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.25, curve: Curves.easeIn),
+      ),
     );
 
-    // 2. Text Collapses/Removes
     _textSize = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.6, 0.75, curve: Curves.easeInOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.6, 0.75, curve: Curves.easeInOut),
+      ),
     );
 
-    // 3. Logo Bounces In
     _logoScale = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.2, 0.6, curve: Curves.elasticOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.2, 0.6, curve: Curves.elasticOut),
+      ),
     );
 
-    // 4. UI Slides Up
     _uiOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.5, 1.0, curve: Curves.easeIn)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.5, 1.0, curve: Curves.easeIn),
+      ),
     );
-    _uiSlide = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.5, 1.0, curve: Curves.easeOutQuad)),
-    );
+    _uiSlide = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.5, 1.0, curve: Curves.easeOutQuad),
+          ),
+        );
 
     _controller.forward();
   }
@@ -87,6 +104,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
     _nameController.dispose();
     _codeController.dispose();
     _tvCodeController.dispose();
+    _guestCodeController.dispose();
     super.dispose();
   }
 
@@ -95,8 +113,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
     if (!mounted) return;
     if (!Provider.of<GameProvider>(context, listen: false).isLoggedIn) {
       setState(() {
-        if (prefs.containsKey('username')) _nameController.text = prefs.getString('username')!;
-        if (prefs.containsKey('avatar')) _selectedAvatar = _cleanPath(prefs.getString('avatar')!);
+        if (prefs.containsKey('username')) {
+          _nameController.text = prefs.getString('username')!;
+        }
+        if (prefs.containsKey('avatar')) {
+          _selectedAvatar = _cleanPath(prefs.getString('avatar')!);
+        }
       });
     }
   }
@@ -126,12 +148,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
   }
 
   bool _validateInput(BuildContext context) {
-    if (Provider.of<GameProvider>(context, listen: false).isLoggedIn) return true;
+    if (Provider.of<GameProvider>(context, listen: false).isLoggedIn)
+      return true;
 
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
           content: const Text("Please enter a Nickname!"),
-          backgroundColor: Theme.of(context).colorScheme.error));
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
       return false;
     }
     return true;
@@ -166,12 +192,22 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: 500,
-        decoration: const BoxDecoration(color: Colors.black, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        decoration: const BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
         child: Column(
           children: [
             const Padding(
               padding: EdgeInsets.all(16.0),
-              child: Text("Scan TV QR Code", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text(
+                "Scan TV QR Code",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             Expanded(
               child: MobileScanner(
@@ -180,7 +216,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                   if (barcodes.isNotEmpty) {
                     final String? code = barcodes.first.rawValue;
                     if (code != null && code.length == 4) {
-                      setState(() => _tvCodeController.text = code.toUpperCase());
+                      setState(
+                        () => _tvCodeController.text = code.toUpperCase(),
+                      );
                       Navigator.pop(context);
                     }
                   }
@@ -198,16 +236,26 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E2C),
-        title: const Text("CONNECT TO TV", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "CONNECT TO TV",
+          style: TextStyle(color: Colors.white),
+        ),
         content: TextField(
           controller: _tvCodeController,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 8, color: Colors.white),
+          style: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 8,
+            color: Colors.white,
+          ),
           decoration: InputDecoration(
             hintText: "ABCD",
             hintStyle: TextStyle(color: Colors.white.withOpacity(0.1)),
             border: const OutlineInputBorder(),
-            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white.withOpacity(0.2))),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+            ),
             suffixIcon: IconButton(
               icon: const Icon(Icons.qr_code_scanner, color: Colors.cyanAccent),
               onPressed: () {
@@ -218,9 +266,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
           ),
         ),
         actions: [
-          TextButton(child: const Text("CANCEL"), onPressed: () => Navigator.pop(context)),
+          TextButton(
+            child: const Text("CANCEL"),
+            onPressed: () => Navigator.pop(context),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.cyanAccent, foregroundColor: Colors.black),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.cyanAccent,
+              foregroundColor: Colors.black,
+            ),
             onPressed: () async {
               if (_tvCodeController.text.isNotEmpty) {
                 await game.linkTv(_tvCodeController.text.toUpperCase());
@@ -238,7 +292,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
   Widget build(BuildContext context) {
     final game = Provider.of<GameProvider>(context);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final screenHeight = MediaQuery.of(context).size.height;
 
     String avatarPath = game.isLoggedIn ? game.myAvatar : _selectedAvatar;
@@ -252,52 +305,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        // 🎬 Fade In Left Icons
-        leading: FadeTransition(
-          opacity: _uiOpacity,
-          child: IconButton(
-            icon: const Icon(Icons.tv, color: Colors.white),
-            tooltip: "Connect TV",
-            onPressed: () => _showTvDialog(context, game),
-          ),
-        ),
-     actions: [
-          // 🟢 AUTH BUTTONS
+        leading: null,
+        actions: [
           FadeTransition(
             opacity: _uiOpacity,
-            child: game.isLoggedIn 
-              ? IconButton(
-                  icon: const Icon(Icons.person, color: Colors.cyanAccent), // User Profile Icon
-                  tooltip: "My Account",
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountScreen())),
-                )
-              : Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.login, color: Colors.white),
-                      tooltip: "Login",
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.person_add, color: Colors.cyanAccent),
-                      tooltip: "Register",
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                    ),
-                  ],
-                ),
-          ),
-          // Settings Icon
-          FadeTransition(
-            opacity: _uiOpacity,
-            child: IconButton(
-              icon: const Icon(Icons.settings, color: Colors.white),
-              onPressed: () => showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => const ClientSettingsSheet(),
-              ),
-            ),
+            child: const AppQuickMenuButton(iconColor: Colors.white),
           ),
           const SizedBox(width: 8),
         ],
@@ -310,34 +322,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                
-                // 🎬 PHASE 1: "WELCOME TO"
-                SizeTransition(
-                  sizeFactor: _textSize,
-                  axisAlignment: 1.0,
-                  child: FadeTransition(
-                    opacity: _textSize,
-                    child: FadeTransition(
-                      opacity: _textOpacity,
-                      child: Column(
-                        children: [
-                          Text(
-                            "WELCOME TO",
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
-                              letterSpacing: 6.0,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // 🎬 PHASE 2: LOGO FLY IN
                 ScaleTransition(
                   scale: _logoScale,
                   child: Hero(
@@ -346,103 +330,317 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                       _getAssetPath(game.config.logoPath),
                       height: screenHeight * 0.25,
                       fit: BoxFit.contain,
-                      errorBuilder: (_,__,___) => const Icon(Icons.quiz, size: 150, color: Colors.amber),
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.quiz,
+                        size: 150,
+                        color: Colors.amber,
+                      ),
                     ),
                   ),
                 ),
 
                 const SizedBox(height: 30),
 
-                // 🎬 PHASE 3: UI SLIDE UP
                 FadeTransition(
                   opacity: _uiOpacity,
                   child: SlideTransition(
                     position: _uiSlide,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 24),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 30,
+                        horizontal: 24,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.5),
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                        ),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 20, spreadRadius: 5),
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                          ),
                         ],
                       ),
                       child: Column(
                         children: [
-                          // 🟢 DYNAMIC USER SECTION
                           if (game.isLoggedIn) ...[
-                             Text("WELCOME BACK", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-                             const SizedBox(height: 8),
-                             Text(game.myName.toUpperCase(), style: const TextStyle(color: Colors.cyanAccent, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                             const SizedBox(height: 16),
-                             Container(
+                            Text(
+                              "WELCOME BACK",
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.5),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              game.myName.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.cyanAccent,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            GestureDetector(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const AccountScreen(),
+                                ),
+                              ),
+                              child: Container(
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: theme.colorScheme.primary, width: 3),
-                                  boxShadow: [BoxShadow(color: theme.colorScheme.primary.withOpacity(0.4), blurRadius: 15)],
-                                ),
-                                child: CircleAvatar(radius: 50, backgroundColor: Colors.black26, backgroundImage: displayImage),
-                             ),
-                             const SizedBox(height: 24),
-                          ] else ...[
-                             // Guest Edit Mode
-                             const Text("EDIT AVATAR", style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-                             const SizedBox(height: 16),
-                             GestureDetector(
-                                onTap: _openAvatarSheet,
-                                child: Stack(
-                                  alignment: Alignment.bottomRight,
-                                  children: [
-                                    CircleAvatar(radius: 55, backgroundColor: Colors.black26, backgroundImage: displayImage),
-                                    Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: const BoxDecoration(color: Color(0xFF2979FF), shape: BoxShape.circle),
-                                      child: const Icon(Icons.edit, size: 16, color: Colors.white),
+                                  border: Border.all(
+                                    color: theme.colorScheme.primary,
+                                    width: 3,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: theme.colorScheme.primary
+                                          .withOpacity(0.4),
+                                      blurRadius: 15,
                                     ),
                                   ],
                                 ),
-                             ),
-                             const SizedBox(height: 24),
-                             Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
-                                child: TextField(
-                                  controller: _nameController,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1),
-                                  decoration: InputDecoration(
-                                    hintText: "NICKNAME",
-                                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), fontWeight: FontWeight.w900),
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.zero,
+                                child: CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: Colors.black26,
+                                  backgroundImage: displayImage,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ] else ...[
+                            const Text(
+                              "EDIT AVATAR",
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            GestureDetector(
+                              onTap: _openAvatarSheet,
+                              child: Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 55,
+                                    backgroundColor: Colors.black26,
+                                    backgroundImage: displayImage,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF2979FF),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.edit,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              child: TextField(
+                                controller: _nameController,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 1,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: "NICKNAME",
+                                  hintStyle: TextStyle(
+                                    color: Colors.white.withOpacity(0.3),
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Guest gate: required to CREATE a game (joining is still allowed).
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              child: TextField(
+                                controller: _guestCodeController,
+                                textAlign: TextAlign.center,
+                                obscureText: true,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 2,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: "GUEST ACCESS CODE (CREATE)",
+                                  hintStyle: TextStyle(
+                                    color: Colors.white.withOpacity(0.25),
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.black.withOpacity(0.25),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide(
+                                      color: Colors.white.withOpacity(0.15),
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide(
+                                      color: Colors.white.withOpacity(0.15),
+                                    ),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
                                   ),
                                 ),
-                             ),
-                             const SizedBox(height: 24),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      side: BorderSide(
+                                        color: Colors.white.withOpacity(0.25),
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    onPressed: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const LoginScreen(),
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.login),
+                                    label: const Text(
+                                      "Login",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.cyanAccent,
+                                      side: BorderSide(
+                                        color: Colors.cyanAccent.withOpacity(
+                                          0.6,
+                                        ),
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    onPressed: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const RegisterScreen(),
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.person_add),
+                                    label: const Text(
+                                      "Register",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
                           ],
 
-                          // 🟢 CREATE GAME BUTTON
                           SizedBox(
                             width: double.infinity,
                             height: 56,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF8E24AA), // Purple Accent
+                                backgroundColor: const Color(0xFF8E24AA),
                                 foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                                 elevation: 10,
-                                shadowColor: const Color(0xFF8E24AA).withOpacity(0.5),
+                                shadowColor: const Color(
+                                  0xFF8E24AA,
+                                ).withOpacity(0.5),
                               ),
                               onPressed: () async {
                                 if (!_validateInput(context)) return;
+
                                 if (!game.isLoggedIn) {
+                                  final ok = await game.authorizeGuestCreate(
+                                    _guestCodeController.text,
+                                  );
+                                  if (!ok) {
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text(
+                                          "Guest access code required to create a game",
+                                        ),
+                                        backgroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.error,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
                                   await _saveUserPrefs();
-                                  game.setPlayerInfo(_nameController.text.trim(), _selectedAvatar);
+                                  game.setPlayerInfo(
+                                    _nameController.text.trim(),
+                                    _selectedAvatar,
+                                  );
                                 }
+
                                 await game.connect(_serverUrl);
                                 game.setAppState(AppState.create);
                               },
-                              child: const Text("CREATE NEW GAME", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                              child: const Text(
+                                "CREATE NEW GAME",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1,
+                                ),
+                              ),
                             ),
                           ),
 
@@ -450,34 +648,65 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
 
                           Row(
                             children: [
-                              Expanded(child: Divider(color: Colors.white.withOpacity(0.2))),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 10),
-                                child: Text("OR JOIN", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.bold)),
+                              Expanded(
+                                child: Divider(
+                                  color: Colors.white.withOpacity(0.2),
+                                ),
                               ),
-                              Expanded(child: Divider(color: Colors.white.withOpacity(0.2))),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                ),
+                                child: Text(
+                                  "OR JOIN",
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.5),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Divider(
+                                  color: Colors.white.withOpacity(0.2),
+                                ),
+                              ),
                             ],
                           ),
 
                           const SizedBox(height: 20),
 
-                          // 🟢 JOIN GAME ROW
                           Row(
                             children: [
                               Expanded(
                                 flex: 3,
                                 child: Container(
                                   height: 56,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  decoration: BoxDecoration(color: Colors.black.withOpacity(0.3), borderRadius: BorderRadius.circular(16)),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
                                   child: TextField(
                                     controller: _codeController,
                                     textAlign: TextAlign.left,
-                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 4, color: Colors.white),
-                                    textCapitalization: TextCapitalization.characters,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 4,
+                                      color: Colors.white,
+                                    ),
+                                    textCapitalization:
+                                        TextCapitalization.characters,
                                     decoration: InputDecoration(
                                       hintText: "CODE",
-                                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), letterSpacing: 2, fontWeight: FontWeight.bold),
+                                      hintStyle: TextStyle(
+                                        color: Colors.white.withOpacity(0.3),
+                                        letterSpacing: 2,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                       border: InputBorder.none,
                                     ),
                                   ),
@@ -490,30 +719,49 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                                   height: 56,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF1565C0), // Blue Accent
+                                      backgroundColor: const Color(0xFF1565C0),
                                       foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
                                       elevation: 0,
                                     ),
                                     onPressed: () async {
                                       if (!_validateInput(context)) return;
                                       final code = _codeController.text.trim();
                                       if (code.isEmpty) return;
-                                      
+
                                       if (!game.isLoggedIn) {
                                         await _saveUserPrefs();
-                                        game.setPlayerInfo(_nameController.text.trim(), _selectedAvatar);
+                                        game.setPlayerInfo(
+                                          _nameController.text.trim(),
+                                          _selectedAvatar,
+                                        );
                                       }
-                                      
+
                                       await game.connect(_serverUrl);
-                                      await game.joinLobby(code, game.myName, game.myAvatar);
+                                      await game.joinLobby(
+                                        code,
+                                        game.myName,
+                                        game.myAvatar,
+                                      );
                                     },
-                                    child: const Text("JOIN", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+                                    child: const Text(
+                                      "JOIN",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
                             ],
                           ),
+
+                          const SizedBox(height: 14),
+
+                          // Optional shortcut if logged in (nice UX, but not required)
                         ],
                       ),
                     ),

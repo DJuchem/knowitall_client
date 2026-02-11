@@ -19,8 +19,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passCtrl = TextEditingController();
   final _passConfirmCtrl = TextEditingController();
   final _secretCodeCtrl = TextEditingController();
-  
-  String _selectedAvatar = "avatars/avatar10.webp"; 
+
+  String _selectedAvatar = "avatars/avatar10.webp";
   bool _isLoading = false;
 
   void _openAvatarSheet() {
@@ -34,7 +34,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             return AvatarSelectionSheet(
               currentAvatar: _selectedAvatar,
               onAvatarSelected: (path) {
-                String cleanPath = path.startsWith("assets/") ? path.substring(7) : path;
+                String cleanPath = path.startsWith("assets/")
+                    ? path.substring(7)
+                    : path;
                 setState(() => _selectedAvatar = cleanPath);
               },
             );
@@ -45,8 +47,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   bool _isValidEmail(String email) {
-    if (email.isEmpty) return true; 
-    return RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(email);
+    if (email.isEmpty) return true;
+    return RegExp(
+      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+    ).hasMatch(email);
   }
 
   @override
@@ -58,7 +62,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_selectedAvatar.startsWith("data:")) {
       displayImage = MemoryImage(base64Decode(_selectedAvatar.split(',')[1]));
     } else {
-      String assetPath = _selectedAvatar.startsWith("assets/") ? _selectedAvatar : "assets/$_selectedAvatar";
+      String assetPath = _selectedAvatar.startsWith("assets/")
+          ? _selectedAvatar
+          : "assets/$_selectedAvatar";
       displayImage = AssetImage(assetPath);
     }
 
@@ -84,12 +90,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   color: Colors.black.withOpacity(0.6),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: Colors.white.withOpacity(0.1)),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 20)],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 20,
+                    ),
+                  ],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text("CREATE ACCOUNT", style: theme.textTheme.headlineMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                    Text(
+                      "CREATE ACCOUNT",
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                      ),
+                    ),
                     const SizedBox(height: 30),
 
                     GestureDetector(
@@ -97,16 +115,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Stack(
                         alignment: Alignment.bottomRight,
                         children: [
-                          CircleAvatar(radius: 50, backgroundColor: Colors.white10, backgroundImage: displayImage),
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.white10,
+                            backgroundImage: displayImage,
+                          ),
                           Container(
                             padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(color: Color(0xFF2979FF), shape: BoxShape.circle),
-                            child: const Icon(Icons.edit, size: 16, color: Colors.white),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF2979FF),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.edit,
+                              size: 16,
+                              color: Colors.white,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 30),
                     _buildInput("USERNAME *", _userCtrl, false),
                     const SizedBox(height: 16),
@@ -117,9 +146,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     _buildInput("CONFIRM PASSWORD *", _passConfirmCtrl, true),
                     const SizedBox(height: 16),
                     _buildInput("REGISTRATION CODE *", _secretCodeCtrl, true),
-                    
+
                     const SizedBox(height: 30),
-                    
+
                     SizedBox(
                       width: double.infinity,
                       height: 55,
@@ -127,46 +156,105 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF8E24AA),
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           elevation: 0,
                         ),
-                        onPressed: _isLoading ? null : () async {
-                          if (_userCtrl.text.isEmpty || _passCtrl.text.isEmpty) {
-                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Username and Password are required!"), backgroundColor: Colors.red));
-                             return;
-                          }
-                          if (!_isValidEmail(_emailCtrl.text.trim())) {
-                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Invalid Email Address"), backgroundColor: Colors.red));
-                             return;
-                          }
-                          if (_passCtrl.text != _passConfirmCtrl.text) {
-                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Passwords do not match!"), backgroundColor: Colors.red));
-                             return;
-                          }
-                          if (_secretCodeCtrl.text != "BANGKOK@2026!") {
-                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Invalid Registration Code!"), backgroundColor: Colors.red));
-                             return;
-                          }
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                if (_userCtrl.text.isEmpty ||
+                                    _passCtrl.text.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Username and Password are required!",
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                if (!_isValidEmail(_emailCtrl.text.trim())) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Invalid Email Address"),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                if (_passCtrl.text != _passConfirmCtrl.text) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Passwords do not match!"),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                if (_secretCodeCtrl.text != "BKK2026") {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Invalid Registration Code!",
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
 
-                          setState(() => _isLoading = true);
-                          try {
-                            String finalAvatar = _selectedAvatar.startsWith("assets/") ? _selectedAvatar : "assets/$_selectedAvatar";
-                            
-                            await game.register(_userCtrl.text.trim(), _emailCtrl.text.trim(), _passCtrl.text.trim(), finalAvatar);
-                            
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Account Created! Please Login."), backgroundColor: Colors.green));
-                              Navigator.pop(context);
-                            }
-                          } catch (e) {
-                            if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
-                          } finally {
-                            if (mounted) setState(() => _isLoading = false);
-                          }
-                        },
-                        child: _isLoading 
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text("REGISTER", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                setState(() => _isLoading = true);
+                                try {
+                                  String finalAvatar =
+                                      _selectedAvatar.startsWith("assets/")
+                                      ? _selectedAvatar
+                                      : "assets/$_selectedAvatar";
+
+                                  await game.register(
+                                    _userCtrl.text.trim(),
+                                    _emailCtrl.text.trim(),
+                                    _passCtrl.text.trim(),
+                                    finalAvatar,
+                                  );
+
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          "Account Created! Please Login.",
+                                        ),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                    Navigator.pop(context);
+                                  }
+                                } catch (e) {
+                                  if (mounted)
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text("Error: $e"),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                } finally {
+                                  if (mounted)
+                                    setState(() => _isLoading = false);
+                                }
+                              },
+                        child: _isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                "REGISTER",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -184,7 +272,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white54,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
         const SizedBox(height: 8),
         Container(
           height: 55,

@@ -8,6 +8,8 @@ import '../providers/game_provider.dart';
 import '../widgets/base_scaffold.dart';
 import '../widgets/game_mode_sheet.dart'; 
 import '../theme/app_theme.dart';
+import '../widgets/app_quick_menu.dart';
+import '../widgets/client_settings_sheet.dart';
 
 class CreateGameScreen extends StatefulWidget {
   const CreateGameScreen({super.key});
@@ -98,17 +100,25 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
 
     return BaseScaffold(
       extendBodyBehindAppBar: true, 
-      showSettings: true,
+      showSettings: false,
       appBar: AppBar(
-        title: Text("CONFIGURE GAME", style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
-        iconTheme: IconThemeData(color: textColor),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => game.setAppState(AppState.welcome),
-        ),
-      ),
+  title: Text("CONFIGURE GAME",
+      style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+  iconTheme: IconThemeData(color: textColor),
+  backgroundColor: Colors.transparent,
+  elevation: 0,
+  leading: IconButton(
+    icon: const Icon(Icons.close),
+    onPressed: () => game.setAppState(AppState.welcome),
+  ),
+
+  // ✅ ADD THIS
+  actions: [
+    AppQuickMenuButton(iconColor: textColor),
+    const SizedBox(width: 6),
+  ],
+),
+
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -145,6 +155,8 @@ class _CreateGameScreenState extends State<CreateGameScreen> {
                         }),
                       ),
                     ],
+
+                    
 
                     const SizedBox(height: 16),
                     Row(
